@@ -43,7 +43,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Root endpoint
+// Root endpoint - serve home.html
+app.get('/', (req, res) => {
+  res.sendFile('home.html', { root: '.' });
+});
+
+// API info endpoint
 app.get('/api', (req, res) => {
   res.json({ message: 'SuperrJump API server is running' });
 });

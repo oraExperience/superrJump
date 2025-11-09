@@ -17,6 +17,10 @@
     {
       "src": "logo.png",
       "use": "@vercel/static"
+    },
+    {
+      "src": "dashboard.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -35,6 +39,14 @@
     {
       "src": "/logo.png",
       "dest": "/logo.png"
+    },
+    {
+      "src": "/dashboard.html",
+      "dest": "/dashboard.html"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/dashboard.html"
     },
     {
       "src": "/api/(.*)",

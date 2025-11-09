@@ -5,6 +5,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const leadRoutes = require('./routes/leadRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use(express.static('.'));
 
 // Mount API routes
 app.use('/api/leads', leadRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

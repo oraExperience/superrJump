@@ -83,7 +83,16 @@
 
 <!-- User Info Card -->
 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 border border-border-light dark:border-border-dark">
-<h2 class="text-2xl font-bold mb-6">Profile Information</h2>
+<div class="flex items-center gap-6 mb-8 pb-6 border-b border-border-light dark:border-border-dark">
+<div class="flex-shrink-0">
+<img id="profileImage" src="" alt="Profile" class="w-24 h-24 rounded-full object-cover border-4 border-primary shadow-lg" onerror="this.src='https://ui-avatars.com/api/?name=User&size=96&background=2A6EBB&color=fff'" />
+</div>
+<div class="flex-1">
+<h2 class="text-2xl font-bold mb-1" id="profileNameHeader"></h2>
+<p class="text-text-dark/70 dark:text-text-light/70" id="profileRoleHeader"></p>
+</div>
+</div>
+<h2 class="text-xl font-bold mb-6">Profile Information</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 <div class="flex flex-col gap-2">
 <label class="text-sm font-medium text-text-dark/70 dark:text-text-light/70">Full Name</label>
@@ -155,10 +164,21 @@ if (!user) {
     document.getElementById('userName').textContent = user.name;
     document.getElementById('displayName').textContent = user.name;
     document.getElementById('profileName').textContent = user.name;
+    document.getElementById('profileNameHeader').textContent = user.name;
     document.getElementById('profileEmail').textContent = user.email;
     document.getElementById('profileOrganisation').textContent = user.organisation;
     document.getElementById('profileRole').textContent = user.role;
+    document.getElementById('profileRoleHeader').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
     document.getElementById('profileId').textContent = `#${user.id}`;
+    
+    // Set profile image
+    const profileImg = document.getElementById('profileImage');
+    if (user.user_image) {
+        profileImg.src = user.user_image;
+    } else {
+        // Use initials as fallback
+        profileImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=96&background=2A6EBB&color=fff`;
+    }
     
     // Format date
     const createdDate = new Date(user.created_at);

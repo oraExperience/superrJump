@@ -64,7 +64,7 @@ exports.login = async (req, res) => {
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, organisation, role = 'user' } = req.body;
+    const { name, email, password, organisation, role = 'user', user_image = null } = req.body;
 
     // Validate input
     if (!name || !email || !password || !organisation) {
@@ -90,9 +90,9 @@ exports.register = async (req, res) => {
 
     // Insert new user
     const insertQuery = `
-      INSERT INTO users (name, email, password, organisation, role)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, name, email, organisation, role, created_at
+      INSERT INTO users (name, email, password, organisation, role, user_image)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, name, email, organisation, role, user_image, created_at
     `;
     
     const insertResult = await pool.query(insertQuery, [
@@ -100,7 +100,8 @@ exports.register = async (req, res) => {
       email,
       hashedPassword,
       organisation,
-      role
+      role,
+      user_image
     ]);
 
     res.status(201).json({

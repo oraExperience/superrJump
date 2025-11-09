@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Superjump - Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f4c025",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#221e10",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+    </style>
+</head>
+<body class="font-display">
+<div class="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 md:p-6">
+<div class="absolute inset-0 z-0 h-full w-full bg-cover bg-center bg-no-repeat" data-alt="A beautifully rendered Ghibli-style illustration of a sunlit classroom, with wooden desks, large windows, and plants." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCcWK5Ce4ZH2vYl8bB8sfQXsloN5kgFzSfn0rRD-nQ6dSXT9IWKaUZIsgM4vGokZzV6zqz5PT_KSbRVvf5mRir_h77_F9v3JOz0mE_tjAQ2BHYFS3r5y9citDf0guHLNZ2_V1B4y7-OXWYhxfinF324OnBEI50saV_rmxAURS_4l2YTR2jjDQHX08T0j2qsK9Tuk6ER6W8UTBJbE-nw1sTPm2OCL4HTe3ey5fLHFKXxgDxpKm8bfPEZ5bYKsT75imzUvReP5umfrTqO');">
+</div>
+<div class="relative z-10 flex w-full max-w-md flex-col items-center">
+<div class="w-full rounded-lg bg-white dark:bg-background-dark p-8 shadow-2xl md:p-10">
+<div class="mb-6 flex flex-col items-center">
+<div class="flex items-center">
+<img src="logo.png" alt="SuperrJump Logo" class="h-16 w-16" />
+<h2 class="text-4xl font-extrabold leading-tight tracking-tighter text-[#1c180d] dark:text-white md:text-5xl lg:text-4xl">SuperrJump</h2>
+</div>
+<!-- <p class="mt-3 text-xl text-[#1c180d] dark:text-white/90">Your AI partner</p> -->
+</div>
+<h1 class="text-2xl font-extrabold text-[#1c180d] dark:text-white">Sign In</h1>
+<!-- <p class="mt-2 text-base text-slate-500 dark:text-white/70">Welcome back! Please enter your details.</p> -->
+<form class="mt-8 flex flex-col gap-6">
+<label class="flex flex-col">
+<p class="pb-2 text-sm font-medium leading-normal text-[#1c180d] dark:text-white/90">Email Address</p>
+<input class="form-input h-12 w-full rounded-md border border-slate-300 dark:border-primary/20 bg-white dark:bg-background-dark/50 px-4 text-base font-normal text-[#1c180d] dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/40 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/50" placeholder="" type="email" value=""/>
+</label>
+<label class="flex flex-col">
+<p class="pb-2 text-sm font-medium leading-normal text-[#1c180d] dark:text-white/90">Password</p>
+<div class="relative flex w-full flex-1 items-stretch">
+<input class="form-input h-12 w-full rounded-md border border-slate-300 dark:border-primary/20 bg-white dark:bg-background-dark/50 px-4 text-base font-normal text-[#1c180d] dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/40 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/50" placeholder="" type="password" value=""/>
+</div>
+</label>
+<div class="mt-4">
+<button class="flex h-12 w-full items-center justify-center rounded-md bg-primary px-6 text-base font-bold text-background-dark shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]" type="submit">Sign In</button>
+</div>
+<div class="flex items-center justify-between">
+<a class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400" href="#">Forgot Password?</a>
+<a class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400" href="/">Home</a>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+</body></html>

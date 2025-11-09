@@ -62,17 +62,19 @@
 </div>
 <h2 class="text-xl font-bold">SuperrJump</h2>
 </div>
+<div class="flex items-center gap-2 md:gap-8">
 <div class="hidden items-center gap-8 md:flex">
 <a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#" onclick="scrollToSection('howItWorks', event)">How it Works</a>
 <a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#" onclick="scrollToSection('testimonials', event)">Testimonials</a>
 <a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#" onclick="scrollToTop(event)">About</a>
-<button onclick="document.getElementById('contactSection').scrollIntoView({behavior: 'smooth'})" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-6 bg-accent-yellow text-text-dark text-sm font-bold shadow-sm transition-transform hover:scale-105">
-<span class="truncate">Book Demo</span>
 </div>
-
-<button onclick="window.location.href='login.html'" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-6 bg-primary text-white text-sm font-bold shadow-sm transition-transform hover:scale-105">
+<button onclick="document.getElementById('contactSection').scrollIntoView({behavior: 'smooth'})" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 md:px-6 bg-accent-yellow text-text-dark text-xs md:text-sm font-bold shadow-sm transition-transform hover:scale-105">
+<span class="truncate">Book Demo</span>
+</button>
+<button onclick="window.location.href='login.html'" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 md:px-6 bg-primary text-white text-xs md:text-sm font-bold shadow-sm transition-transform hover:scale-105">
 <span class="truncate">Login</span>
 </button>
+</div>
 </div>
 </header>
 <main class="flex flex-col items-center w-full">

@@ -11,6 +11,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "login.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "logo.png",
       "use": "@vercel/static"
     }
@@ -19,6 +23,10 @@
     {
       "src": "/home.html",
       "dest": "/home.html"
+    },
+    {
+      "src": "/login.html",
+      "dest": "/login.html"
     },
     {
       "src": "/logo.png",

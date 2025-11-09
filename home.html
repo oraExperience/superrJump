@@ -397,8 +397,8 @@ contactForm.addEventListener('submit', function(e) {
         message: contactForm.querySelector('textarea[name="message"]').value
     };
     
-    // Submit form data to Node.js API
-    fetch('http://localhost:3000/api/leads/submit', {
+    // Submit form data to API (works both locally and on Vercel)
+    fetch('/api/leads/submit', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

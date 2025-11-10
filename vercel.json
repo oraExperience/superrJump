@@ -19,6 +19,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "visualisation.png",
+      "use": "@vercel/static"
+    },
+    {
       "src": "dashboard.html",
       "use": "@vercel/static"
     }
@@ -39,6 +43,10 @@
     {
       "src": "/logo.png",
       "dest": "/logo.png"
+    },
+    {
+      "src": "/visualisation.png",
+      "dest": "/visualisation.png"
     },
     {
       "src": "/dashboard.html",

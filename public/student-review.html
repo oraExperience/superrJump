@@ -1,0 +1,1426 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Answer Review - SuperrJump</title>
+<link rel="icon" type="image/png" href="logo.png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#2A6EBB",
+                    "background-light": "#FFFFFF",
+                    "background-dark": "#111821",
+                    "accent-yellow": "#FFC857",
+                    "accent-green": "#A2D7D2",
+                    "text-dark": "#333333",
+                    "text-light": "#F8FAFC",
+                    "border-light": "#e7ecf3",
+                    "border-dark": "#374151"
+                },
+                fontFamily: {
+                    "display": ["Lexend", "sans-serif"]
+                }
+            }
+        }
+    }
+</script>
+<style>
+    body {
+        font-family: 'Lexend', sans-serif;
+    }
+    .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+    
+    /* Split screen layout */
+    .split-container {
+        display: grid;
+        grid-template-columns: 60px 300px 1fr 1fr;
+        height: calc(100vh - 64px);
+        overflow: hidden;
+        transition: grid-template-columns 0.3s ease;
+    }
+    
+    .split-container.sidebar-hidden {
+        grid-template-columns: 60px 0px 1fr 1fr;
+    }
+    
+    .question-numbers-column {
+        background: #f1f5f9;
+        border-right: 2px solid #e7ecf3;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .dark .question-numbers-column {
+        background: #0f172a;
+        border-right-color: #374151;
+    }
+    
+    .hamburger-button {
+        width: 100%;
+        padding: 1.25rem 0 1rem 0;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-bottom: 2px solid #e7ecf3;
+        transition: background-color 0.2s ease;
+    }
+    
+    .hamburger-button:hover {
+        background: #e2e8f0;
+    }
+    
+    .dark .hamburger-button {
+        border-bottom-color: #374151;
+    }
+    
+    .dark .hamburger-button:hover {
+        background: #1e293b;
+    }
+    
+    .question-numbers-list {
+        padding: 1rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: center;
+        flex: 1;
+        transition: opacity 0.3s ease, visibility 0.3s ease, padding 0.3s ease;
+    }
+    
+    /* Hide number badges when sidebar is open */
+    .split-container:not(.sidebar-hidden) .question-numbers-list {
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    /* Show number badges when sidebar is closed */
+    .split-container.sidebar-hidden .question-numbers-list {
+        opacity: 1;
+        visibility: visible;
+        padding-top: 1rem;
+    }
+    
+    /* Add top padding only when sidebar is open for alignment */
+    .split-container:not(.sidebar-hidden) .question-numbers-list {
+        padding-top: 4.5rem;
+    }
+    
+    .question-number-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        position: relative;
+    }
+    
+    .question-number-badge:hover {
+        transform: scale(1.1);
+    }
+    
+    .question-number-badge.active {
+        border-color: #2A6EBB;
+        box-shadow: 0 0 0 3px rgba(42, 110, 187, 0.1);
+    }
+    
+    .question-number-badge.checked {
+        background: #22c55e;
+        color: white;
+    }
+    
+    .question-number-badge.checked::after {
+        content: '✓';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        background: #16a34a;
+        color: white;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #f1f5f9;
+    }
+    
+    .dark .question-number-badge.checked::after {
+        border-color: #0f172a;
+    }
+    
+    .question-number-badge:not(.checked) {
+        background: #e2e8f0;
+        color: #475569;
+    }
+    
+    .dark .question-number-badge:not(.checked) {
+        background: #334155;
+        color: #cbd5e1;
+    }
+    
+    .questions-sidebar {
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-right: 2px solid #e7ecf3;
+        background: #f8fafc;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .split-container.sidebar-hidden .questions-sidebar {
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .dark .questions-sidebar {
+        background: #1e293b;
+        border-right-color: #374151;
+    }
+    
+    .left-panel {
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-right: 2px solid #e7ecf3;
+        padding: 2rem 2rem 6rem 2rem;
+        position: relative;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .navigation-buttons {
+        position: fixed;
+        bottom: 0;
+        left: 360px;
+        right: 50%;
+        background: white;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        padding-left: 0;
+        padding-right: 0;
+        z-index: 20;
+        transition: left 0.3s ease;
+    }
+    
+    .split-container.sidebar-hidden .navigation-buttons {
+        left: 60px;
+    }
+    
+    .navigation-buttons-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 100%;
+        gap: 0;
+        padding-left: 2rem;
+        padding-right: 0.5rem;
+    }
+    
+    .dark .navigation-buttons {
+        background: #1e293b;
+        border-top-color: #374151;
+    }
+    
+    .right-panel {
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .question-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+    
+    .question-nav-item:hover {
+        background: white;
+        border-color: #e5e7eb;
+    }
+    
+    .dark .question-nav-item:hover {
+        background: #334155;
+        border-color: #4b5563;
+    }
+    
+    .question-nav-item.active {
+        background: white;
+        border-color: #2A6EBB;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .question-nav-item.active {
+        background: #334155;
+        border-color: #2A6EBB;
+    }
+    
+    .question-nav-item.checked {
+        background: #d1fae5;
+        border-color: #10b981;
+    }
+    
+    .dark .question-nav-item.checked {
+        background: #064e3b;
+        border-color: #10b981;
+    }
+    
+    .question-nav-item.checked.active {
+        background: #a7f3d0;
+        border-color: #059669;
+    }
+    
+    .dark .question-nav-item.checked.active {
+        background: #065f46;
+        border-color: #059669;
+    }
+    
+    .pdf-viewer {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1e293b;
+    }
+    
+    /* Question card styling */
+    .question-card {
+        transition: all 0.3s ease;
+        border: 2px solid #d1d5db;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .question-card:hover {
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .dark .question-card {
+        border-color: #4b5563;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+    }
+    
+    .dark .question-card:hover {
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Input focus states */
+    input[type="number"]:focus {
+        outline: 2px solid #2A6EBB;
+        outline-offset: 2px;
+    }
+    
+    /* Remove spinner buttons from number inputs */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+    
+    /* PDF controls */
+    .pdf-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-bottom: 1px solid #e7ecf3;
+    }
+    
+    .pdf-page {
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 1280px) {
+        .split-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        
+        .questions-sidebar {
+            border-right: none;
+            border-bottom: 2px solid #e7ecf3;
+            max-height: 300px;
+        }
+        
+        .left-panel {
+            border-right: none;
+            border-bottom: 2px solid #e7ecf3;
+        }
+        
+        .navigation-buttons {
+            left: 0;
+            right: 0;
+        }
+        
+        .right-panel {
+            min-height: 600px;
+        }
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+    
+    .modal-overlay.active .modal-content {
+        transform: scale(1);
+    }
+    
+    .dark .modal-content {
+        background: #1e293b;
+    }
+</style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-dark dark:text-text-light">
+
+<!-- Header -->
+<header class="sticky top-0 z-30 border-b border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
+    <div class="w-full px-6 py-4">
+        <div class="flex items-center gap-4">
+            <!-- Back Button -->
+            <button onclick="goBack()" class="flex items-center gap-2 text-primary hover:text-blue-700 transition-colors flex-shrink-0">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="font-medium">Back</span>
+            </button>
+            
+            <!-- Student Info Card -->
+            <div class="bg-gradient-to-r from-blue-100 to-white dark:from-blue-900/30 dark:to-gray-800/30 rounded-xl px-4 py-3 border-l-4 border-blue-500 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-2xl">person</span>
+                    <div>
+                        <h1 class="text-base font-bold text-text-dark dark:text-text-light" id="studentName">Student Name</h1>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" id="studentId">ST00001</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assessment Info Card -->
+            <div class="flex-1 bg-gradient-to-r from-amber-100 to-white dark:from-amber-900/30 dark:to-gray-800/30 rounded-xl px-5 py-3 border-l-4 border-amber-500">
+                <h2 class="text-lg font-bold text-text-dark dark:text-text-light mb-1" id="assessmentTitle">Assessment Title</h2>
+                <div class="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">tag</span>
+                        <span id="assessmentId">#100</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">school</span>
+                        <span id="assessmentClass">Class</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">book</span>
+                        <span id="assessmentSubject">Subject</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">calendar_today</span>
+                        <span id="assessmentDate">Date</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Score -->
+            <div class="text-right flex-shrink-0">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Score</p>
+                <p class="text-2xl font-bold text-primary" id="totalScore">0/100</p>
+            </div>
+            
+            <!-- Save & Approve Button -->
+            <button onclick="saveAndApprove()" id="saveApproveBtn" disabled class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>Save & Approve</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Split Screen Container -->
+<div class="split-container sidebar-hidden">
+    <!-- Question Numbers Column (Always Visible) -->
+    <div class="question-numbers-column">
+        <div class="hamburger-button" onclick="toggleQuestionsSidebar()" title="Toggle questions panel">
+            <span class="material-symbols-outlined text-2xl text-gray-600 dark:text-gray-400">menu</span>
+        </div>
+        <div class="question-numbers-list" id="questionNumbers">
+            <!-- Question number badges will be generated here -->
+        </div>
+    </div>
+    
+    <!-- Questions Sidebar (Toggleable) -->
+    <div class="questions-sidebar">
+        <h3 class="text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-4">Questions</h3>
+        <div id="questionsSidebar">
+            <!-- Question navigation items will be generated here -->
+        </div>
+    </div>
+    
+    <!-- Middle Panel - Current Question and Grading -->
+    <div class="left-panel">
+        <div id="currentQuestionContainer">
+            <!-- Current question will be displayed here -->
+        </div>
+    </div>
+    
+    <!-- Fixed Navigation Buttons -->
+    <div class="navigation-buttons">
+        <div class="navigation-buttons-inner">
+            <button onclick="previousQuestion()" id="prevBtn" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Previous
+            </button>
+            <button onclick="nextQuestion()" id="nextBtn" class="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
+                Approve, Next
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Right Panel - PDF Viewer -->
+    <div class="right-panel">
+        <!-- PDF Controls -->
+        <div class="pdf-controls">
+            <button onclick="previousPage()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Previous Page">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <span class="text-sm font-medium px-3">
+                Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+            </span>
+            <button onclick="nextPage()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Next Page">
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+            <div class="flex-1"></div>
+            <button onclick="zoomOut()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Zoom Out">
+                <span class="material-symbols-outlined">zoom_out</span>
+            </button>
+            <span class="text-sm font-medium px-2" id="zoomLevel">100%</span>
+            <button onclick="zoomIn()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Zoom In">
+                <span class="material-symbols-outlined">zoom_in</span>
+            </button>
+            <button onclick="rotateDocument()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Rotate">
+                <span class="material-symbols-outlined">rotate_right</span>
+            </button>
+            <button onclick="downloadPDF()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Download">
+                <span class="material-symbols-outlined">download</span>
+            </button>
+        </div>
+        
+        <!-- PDF Viewer -->
+        <div class="pdf-viewer" id="pdfViewerContainer">
+            <div class="text-center text-white" id="pdfPlaceholder">
+                <span class="material-symbols-outlined text-6xl mb-4 block">description</span>
+                <p class="text-lg font-medium mb-2">Student Answer Sheet</p>
+                <p class="text-sm opacity-70">Scanned copy will appear here</p>
+            </div>
+            <iframe id="pdfFrame" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Modal -->
+<div class="modal-overlay" id="summaryModal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">Test Summary</h2>
+            <button onclick="closeModal()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">close</span>
+            </button>
+        </div>
+        
+        <!-- Student Info -->
+        <div class="bg-gradient-to-r from-blue-100 to-white dark:from-blue-900/30 dark:to-gray-800/30 rounded-xl p-4 mb-4 border-l-4 border-blue-500">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl">person</span>
+                <div>
+                    <h3 class="text-lg font-bold text-text-dark dark:text-text-light" id="modalStudentName"></h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" id="modalStudentId"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assessment Info -->
+        <div class="bg-gradient-to-r from-amber-100 to-white dark:from-amber-900/30 dark:to-gray-800/30 rounded-xl p-4 mb-4 border-l-4 border-amber-500">
+            <h3 class="text-xl font-bold text-text-dark dark:text-text-light mb-3" id="modalAssessmentTitle"></h3>
+            <div class="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300 flex-wrap">
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">tag</span>
+                    <span id="modalAssessmentId"></span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">school</span>
+                    <span id="modalAssessmentClass"></span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">book</span>
+                    <span id="modalAssessmentSubject"></span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">calendar_today</span>
+                    <span id="modalAssessmentDate"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Score -->
+        <div class="bg-gradient-to-r from-green-100 to-white dark:from-green-900/30 dark:to-gray-800/30 rounded-xl p-6 mb-6 text-center border-l-4 border-green-500">
+            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Total Score</p>
+            <p class="text-6xl font-bold text-green-600 dark:text-green-400" id="modalTotalScore"></p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+            <button onclick="closeModal()" class="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors">
+                Cancel
+            </button>
+            <button onclick="confirmSaveAndApprove()" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">check_circle</span>
+                Confirm & Submit
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Check if user is logged in
+const user = JSON.parse(sessionStorage.getItem('user'));
+
+if (!user) {
+    window.location.href = '/login';
+}
+
+// Get student ID and assessment ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const studentId = urlParams.get('studentId');
+const assessmentId = urlParams.get('assessmentId');
+
+if (!studentId || !assessmentId) {
+    window.location.href = '/assessments.html';
+}
+
+// API Configuration
+const API_BASE_URL = 'http://localhost:3000/api';
+
+// Data storage
+let assessmentData = null;
+let studentData = null;
+let questions = [];
+let currentQuestionIndex = 0;
+
+// Load student submission data from backend
+async function loadStudentSubmission() {
+    try {
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/submissions/${studentId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                window.location.href = '/login.html';
+                return;
+            }
+            throw new Error('Failed to load submission data');
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load submission data');
+        }
+
+        // Format assessment data
+        assessmentData = {
+            id: data.data.assessment.id,
+            displayId: `#${data.data.assessment.display_id}`,
+            title: data.data.assessment.title,
+            subject: data.data.assessment.subject,
+            date: new Date(data.data.assessment.date_created).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            }),
+            class: data.data.assessment.class_name,
+            questionPaperPdfLink: data.data.assessment.question_paper_pdf_link  // Store PDF link
+        };
+
+        // Format student data
+        const submission = data.data.submission;
+        studentData = {
+            id: submission.student_id,
+            name: submission.student_name,
+            totalMarks: parseFloat(submission.total_marks_obtained) || 0,
+            maxMarks: parseFloat(data.data.assessment.total_marks) || 0,
+            answerSheetPdfLink: submission.answer_sheet_pdf_link  // Store PDF link
+        };
+
+        // Format questions with answers
+        questions = data.data.answers.map((answer, index) => ({
+            id: answer.question_number,
+            answerId: answer.answer_id,  // Store the answer_id for API calls
+            question: answer.question_text,
+            maxMarks: parseFloat(answer.question_max_marks) || 0,
+            aiMarks: parseFloat(answer.marks_obtained) || 0,
+            studentAnswer: answer.answer_text || 'No answer provided',
+            aiAnalysis: answer.ai_generated_feedback || 'No AI analysis available',  // AI-generated feedback
+            teacherComment: answer.teacher_comment || '',  // Teacher's comment
+            pageReference: `Page ${Math.floor(index / 2) + 1}, Q${answer.question_number}`,
+            checked: answer.approved || false,  // Use the approved status from backend
+            comment: answer.teacher_comment || ''  // Initialize comment from teacher_comment
+        }));
+
+        // Initialize page with loaded data
+            initializePage();
+            
+            // Load PDF if available
+            loadAnswerSheetPDF();
+            
+        } catch (error) {
+            console.error('Error loading submission:', error);
+            console.error('Error details:', error.message, error.stack);
+            alert(`Failed to load student submission: ${error.message}`);
+            window.location.href = `/assessment-details.html?id=${assessmentId}`;
+        }
+    }
+    
+    // Load answer sheet PDF in viewer
+    function loadAnswerSheetPDF() {
+        if (studentData && studentData.answerSheetPdfLink) {
+            const pdfFrame = document.getElementById('pdfFrame');
+            const placeholder = document.getElementById('pdfPlaceholder');
+            
+            // Hide placeholder and show PDF
+            placeholder.style.display = 'none';
+            pdfFrame.style.display = 'block';
+            pdfFrame.src = studentData.answerSheetPdfLink;
+        }
+    }
+
+// Save questions data to localStorage
+function saveQuestionsToStorage() {
+    const storageKey = `assessment_${assessmentId}_student_${studentId}`;
+    localStorage.setItem(storageKey, JSON.stringify(questions));
+}
+
+// Load questions data from localStorage
+function loadQuestionsFromStorage() {
+    const storageKey = `assessment_${assessmentId}_student_${studentId}`;
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+        const savedQuestions = JSON.parse(saved);
+        // Merge saved data with current questions
+        savedQuestions.forEach(savedQ => {
+            const question = questions.find(q => q.id === savedQ.id);
+            if (question) {
+                question.checked = savedQ.checked || false;
+                question.aiMarks = savedQ.aiMarks;
+                question.comment = savedQ.comment || '';
+            }
+        });
+    }
+}
+
+// Initialize the page
+function initializePage() {
+    // Set student details
+    document.getElementById('studentName').textContent = studentData.name;
+    document.getElementById('studentId').textContent = studentData.id;
+    
+    // Set assessment details in header
+    document.getElementById('assessmentTitle').textContent = assessmentData.title;
+    document.getElementById('assessmentId').textContent = assessmentData.displayId;
+    document.getElementById('assessmentSubject').textContent = assessmentData.subject;
+    document.getElementById('assessmentClass').textContent = assessmentData.class;
+    document.getElementById('assessmentDate').textContent = assessmentData.date;
+    
+    // Load saved data
+    loadQuestionsFromStorage();
+    
+    // Find first unapproved question
+    const firstUnapprovedIndex = questions.findIndex(q => !q.checked);
+    if (firstUnapprovedIndex !== -1) {
+        currentQuestionIndex = firstUnapprovedIndex;
+    } else {
+        // All questions approved, stay on first question
+        currentQuestionIndex = 0;
+    }
+    
+    renderQuestionsSidebar();
+    renderCurrentQuestion();
+    calculateTotalScore();
+    updateNavigationButtons();
+}
+
+// Render questions sidebar
+function renderQuestionsSidebar() {
+    const sidebar = document.getElementById('questionsSidebar');
+    const numbersColumn = document.getElementById('questionNumbers');
+    
+    sidebar.innerHTML = '';
+    numbersColumn.innerHTML = '';
+    
+    questions.forEach((q, index) => {
+        // Render sidebar item
+        const navItem = document.createElement('div');
+        navItem.className = `question-nav-item ${index === currentQuestionIndex ? 'active' : ''} ${q.checked ? 'checked' : ''}`;
+        navItem.onclick = () => goToQuestion(index);
+        
+        const statusIcon = q.checked
+            ? '<span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>'
+            : '<span class="material-symbols-outlined text-gray-400 text-xl">radio_button_unchecked</span>';
+        
+        navItem.innerHTML = `
+            ${statusIcon}
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-text-dark dark:text-text-light">Question ${q.id}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">${q.pageReference}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-primary">${formatNumber(q.aiMarks)}/${formatNumber(q.maxMarks)}</p>
+            </div>
+        `;
+        
+        sidebar.appendChild(navItem);
+        
+        // Render number badge
+        const badge = document.createElement('div');
+        badge.className = `question-number-badge ${index === currentQuestionIndex ? 'active' : ''} ${q.checked ? 'checked' : ''}`;
+        badge.onclick = (e) => {
+            e.stopPropagation();
+            goToQuestion(index);
+        };
+        badge.textContent = q.id;
+        
+        numbersColumn.appendChild(badge);
+    });
+}
+
+// Render current question
+function renderCurrentQuestion() {
+    const container = document.getElementById('currentQuestionContainer');
+    const q = questions[currentQuestionIndex];
+    
+    container.innerHTML = `
+        <div class="question-card bg-white dark:bg-slate-800 rounded-xl p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="inline-flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm">
+                        ${q.id}
+                    </span>
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">${q.pageReference}</span>
+                </div>
+                <h3 class="text-base font-semibold text-text-dark dark:text-text-light mb-3">${q.question}</h3>
+            </div>
+            <!-- Your Grade in top right -->
+            <div class="ml-4 ${q.checked ? 'bg-gradient-to-r from-green-100 to-white dark:from-green-900/30 dark:to-gray-800/30 border-l-4 border-green-500' : 'bg-gradient-to-r from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-800/30 border-l-4 border-amber-400'} rounded-xl px-4 py-3">
+                <p class="text-sm font-semibold ${q.checked ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'} mb-2 text-center">Your Grade</p>
+                <div class="flex items-center justify-center gap-2">
+                    <input
+                        type="number"
+                        id="marks_${q.id}"
+                        min="0"
+                        max="${q.maxMarks}"
+                        step="0.1"
+                        value="${q.aiMarks}"
+                        oninput="updateMarks(${q.id})"
+                        class="w-16 px-2 py-1.5 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-center font-bold text-xl focus:ring-2 focus:ring-primary focus:border-primary"
+                    />
+                    <span class="text-gray-500 dark:text-gray-400 font-bold text-xl">/</span>
+                    <span class="text-text-dark dark:text-text-light text-center font-bold text-xl">${formatNumber(q.maxMarks)}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Student Answer -->
+        <div class="mb-4">
+            <p class="text-sm font-semibold text-text-dark dark:text-text-light mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">edit_note</span>
+                Student's Answer
+            </p>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
+                <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono">${q.studentAnswer}</pre>
+            </div>
+        </div>
+        
+        <!-- AI-Generated Analysis -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+            <div class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-text-dark dark:text-text-light mb-2">AI-Generated Analysis</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300 italic">${q.aiAnalysis}</p>
+                    <div class="flex items-center gap-2 mt-3">
+                        <span class="text-xs font-medium text-gray-600 dark:text-gray-400">AI Suggested Marks:</span>
+                        <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-bold">${formatNumber(q.aiMarks)}/${formatNumber(q.maxMarks)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teacher Comments -->
+        <div class="mt-4">
+            <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">
+                <span class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-lg">edit_note</span>
+                    Teacher's Comments (Optional)
+                </span>
+            </label>
+            <textarea
+                id="comment_${q.id}"
+                rows="3"
+                placeholder="Add your own feedback for the student..."
+                oninput="handleCommentChange(${q.id})"
+                class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm focus:ring-2 focus:ring-primary resize-none"
+            >${q.comment || ''}</textarea>
+        </div>
+        
+    </div>
+    `;
+}
+
+// Navigation functions
+function goToQuestion(index) {
+    // Save current question's comment
+    const currentQ = questions[currentQuestionIndex];
+    const commentEl = document.getElementById(`comment_${currentQ.id}`);
+    if (commentEl) {
+        currentQ.comment = commentEl.value;
+        saveQuestionsToStorage();
+    }
+    
+    currentQuestionIndex = index;
+    renderQuestionsSidebar();
+    renderCurrentQuestion();
+    updateNavigationButtons();
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        goToQuestion(currentQuestionIndex - 1);
+    }
+}
+
+async function nextQuestion() {
+    // Get current question
+    const currentQuestion = questions[currentQuestionIndex];
+    if (!currentQuestion) return;
+    
+    try {
+        // Call API to approve the answer
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(
+            `${API_BASE_URL}/assessments/${assessmentId}/submissions/${studentId}/answers/${currentQuestion.answerId}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    marks: currentQuestion.aiMarks,
+                    comment: currentQuestion.comment || currentQuestion.aiAnalysis
+                })
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Failed to approve answer');
+        }
+        
+        // Mark current question as reviewed/approved
+        currentQuestion.checked = true;
+        
+        // Save to localStorage
+        saveQuestionsToStorage();
+        
+        // Update sidebar to show the checked status
+        renderQuestionsSidebar();
+        
+        // Update Save & Approve button state
+        updateSaveApproveButton();
+        
+        // Move to next question (only if not the last one)
+        if (currentQuestionIndex < questions.length - 1) {
+            goToQuestion(currentQuestionIndex + 1);
+        } else {
+            // Update grade box styling to show green background
+            updateGradeBoxStyling(currentQuestion.id);
+            // Update navigation buttons to disable the Approve button
+            updateNavigationButtons();
+        }
+        
+    } catch (error) {
+        console.error('Error approving answer:', error);
+        alert('Failed to approve answer. Please try again.');
+    }
+}
+
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    prevBtn.disabled = currentQuestionIndex === 0;
+    
+    // Change button text and behavior for last question
+    if (isLastQuestion) {
+        nextBtn.innerHTML = `
+            Approve
+            <span class="material-symbols-outlined">check</span>
+        `;
+        
+        // Disable button if last question is already approved
+        if (currentQuestion.checked) {
+            nextBtn.disabled = true;
+            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    } else {
+        nextBtn.innerHTML = `
+            Approve, Next
+            <span class="material-symbols-outlined">arrow_forward</span>
+        `;
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    
+    if (prevBtn.disabled) {
+        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    
+    // Update Save & Approve button state
+    updateSaveApproveButton();
+}
+
+function updateSaveApproveButton() {
+    const saveApproveBtn = document.getElementById('saveApproveBtn');
+    const allReviewed = questions.every(q => q.checked);
+    
+    if (allReviewed) {
+        saveApproveBtn.disabled = false;
+        saveApproveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+        saveApproveBtn.disabled = true;
+        saveApproveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+function toggleQuestionChecked(questionId) {
+    const question = questions.find(q => q.id === questionId);
+    if (question) {
+        question.checked = document.getElementById(`checked_${questionId}`).checked;
+        renderQuestionsSidebar();
+    }
+}
+
+// Update the grade box styling based on question status
+function updateGradeBoxStyling(questionId) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    const gradeBox = document.getElementById(`marks_${questionId}`)?.closest('.ml-4');
+    if (!gradeBox) return;
+    
+    // Remove all existing gradient classes
+    gradeBox.classList.remove(
+        'bg-gradient-to-r', 'from-green-100', 'from-amber-50', 'to-white',
+        'border-green-500', 'border-amber-400',
+        'dark:from-green-900/30', 'dark:from-amber-900/20', 'dark:to-gray-800/30'
+    );
+    
+    // Add appropriate classes based on checked status
+    if (question.checked) {
+        gradeBox.classList.add(
+            'bg-gradient-to-r', 'from-green-100', 'to-white',
+            'border-green-500', 'dark:from-green-900/30', 'dark:to-gray-800/30'
+        );
+    } else {
+        gradeBox.classList.add(
+            'bg-gradient-to-r', 'from-amber-50', 'to-white',
+            'border-amber-400', 'dark:from-amber-900/20', 'dark:to-gray-800/30'
+        );
+    }
+    
+    // Update title color
+    const titleElement = gradeBox.querySelector('p');
+    if (titleElement) {
+        titleElement.classList.remove('text-green-700', 'dark:text-green-300', 'text-gray-700', 'dark:text-gray-300');
+        if (question.checked) {
+            titleElement.classList.add('text-green-700', 'dark:text-green-300');
+        } else {
+            titleElement.classList.add('text-gray-700', 'dark:text-gray-300');
+        }
+    }
+}
+
+// Update marks for a question
+function updateMarks(questionId) {
+    const marksInput = document.getElementById(`marks_${questionId}`);
+    let marks = parseFloat(marksInput.value);
+    
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    const maxMarks = question.maxMarks;
+    
+    // Handle empty or invalid input
+    if (isNaN(marks) || marksInput.value === '') {
+        marks = 0;
+        marksInput.value = 0;
+    }
+    
+    // Enforce constraints: >= 0, <= maxMarks, up to 1 decimal
+    if (marks < 0) {
+        marks = 0;
+        marksInput.value = 0;
+    } else if (marks > maxMarks) {
+        marks = maxMarks;
+        marksInput.value = maxMarks;
+    } else {
+        // Round to 1 decimal place
+        marks = Math.round(marks * 10) / 10;
+        // Only update input value if it changed (to avoid cursor jump)
+        if (parseFloat(marksInput.value) !== marks) {
+            marksInput.value = marks;
+        }
+    }
+    
+    question.aiMarks = marks;
+    
+    // Reset checked status if marks changed after approval (for any question)
+    if (question.checked) {
+        question.checked = false;
+        renderQuestionsSidebar();
+        // Update grade box styling if this is the current question
+        if (questionId === questions[currentQuestionIndex].id) {
+            updateGradeBoxStyling(questionId);
+            updateNavigationButtons();
+        }
+        updateSaveApproveButton();
+    }
+    
+    calculateTotalScore();
+    renderQuestionsSidebar();
+    saveQuestionsToStorage();
+}
+
+// Handle comment changes
+function handleCommentChange(questionId) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    // Get the comment textarea value
+    const commentTextarea = document.getElementById(`comment_${questionId}`);
+    if (commentTextarea) {
+        question.comment = commentTextarea.value;
+    }
+    
+    // Reset checked status if comment changed after approval (for any question)
+    if (question.checked) {
+        question.checked = false;
+        renderQuestionsSidebar();
+        // Update grade box styling and navigation buttons if this is the current question
+        if (questionId === questions[currentQuestionIndex].id) {
+            updateGradeBoxStyling(questionId);
+            updateNavigationButtons();
+        }
+        updateSaveApproveButton();
+    }
+    
+    saveQuestionsToStorage();
+}
+
+// Update max marks for a question
+function updateMaxMarks(questionId) {
+    const maxMarksInput = document.getElementById(`maxMarks_${questionId}`);
+    const marksInput = document.getElementById(`marks_${questionId}`);
+    const maxMarks = parseFloat(maxMarksInput.value) || 0;
+    const marks = parseFloat(marksInput.value) || 0;
+    
+    if (maxMarks < 0) {
+        alert('Maximum marks cannot be negative');
+        maxMarksInput.value = 0;
+        return;
+    }
+    
+    const question = questions.find(q => q.id === questionId);
+    if (question) {
+        question.maxMarks = maxMarks;
+        
+        // Adjust awarded marks if it exceeds new max
+        if (marks > maxMarks) {
+            question.aiMarks = maxMarks;
+            marksInput.value = maxMarks;
+        }
+        
+        calculateTotalScore();
+    }
+}
+
+// Calculate total score
+function calculateTotalScore() {
+    const totalAwarded = questions.reduce((sum, q) => sum + q.aiMarks, 0);
+    const totalMax = questions.reduce((sum, q) => sum + q.maxMarks, 0);
+    
+    studentData.totalMarks = totalAwarded;
+    studentData.maxMarks = totalMax;
+    
+    document.getElementById('totalScore').textContent = `${formatNumber(totalAwarded)}/${formatNumber(totalMax)}`;
+}
+
+// PDF controls (mock functions)
+let currentPageNum = 1;
+let totalPagesNum = 3;
+let zoomPercent = 100;
+let rotation = 0;
+
+function previousPage() {
+    if (currentPageNum > 1) {
+        currentPageNum--;
+        document.getElementById('currentPage').textContent = currentPageNum;
+    }
+}
+
+function nextPage() {
+    if (currentPageNum < totalPagesNum) {
+        currentPageNum++;
+        document.getElementById('currentPage').textContent = currentPageNum;
+    }
+}
+
+function zoomIn() {
+    zoomPercent = Math.min(200, zoomPercent + 10);
+    document.getElementById('zoomLevel').textContent = `${zoomPercent}%`;
+}
+
+function zoomOut() {
+    zoomPercent = Math.max(50, zoomPercent - 10);
+    document.getElementById('zoomLevel').textContent = `${zoomPercent}%`;
+}
+
+function rotateDocument() {
+    rotation = (rotation + 90) % 360;
+}
+
+function downloadPDF() {
+    if (studentData && studentData.answerSheetPdfLink) {
+        // Open PDF in new tab for download
+        window.open(studentData.answerSheetPdfLink, '_blank');
+    } else {
+        alert('No answer sheet PDF available');
+    }
+}
+
+// Save and approve - Show modal
+function saveAndApprove() {
+    // Save current question's comment before showing modal
+    const currentQ = questions[currentQuestionIndex];
+    const commentEl = document.getElementById(`comment_${currentQ.id}`);
+    if (commentEl) {
+        currentQ.comment = commentEl.value;
+        saveQuestionsToStorage();
+    }
+    
+    // Populate modal with summary data
+    populateModal();
+    
+    // Show modal
+    const modal = document.getElementById('summaryModal');
+    modal.classList.add('active');
+}
+
+// Format number - remove .0 or .00 if not needed
+function formatNumber(num) {
+    if (num % 1 === 0) {
+        return num.toString();
+    }
+    return num.toFixed(1);
+}
+
+// Populate modal with test summary
+function populateModal() {
+    // Student info (shown first)
+    document.getElementById('modalStudentName').textContent = studentData.name;
+    document.getElementById('modalStudentId').textContent = studentData.id;
+    
+    // Assessment info (shown second)
+    document.getElementById('modalAssessmentTitle').textContent = assessmentData.title;
+    document.getElementById('modalAssessmentId').textContent = assessmentData.displayId;
+    document.getElementById('modalAssessmentSubject').textContent = assessmentData.subject;
+    document.getElementById('modalAssessmentClass').textContent = assessmentData.class;
+    document.getElementById('modalAssessmentDate').textContent = assessmentData.date;
+    
+    // Total score (shown last, no percentage)
+    const totalAwarded = studentData.totalMarks;
+    const totalMax = studentData.maxMarks;
+    
+    document.getElementById('modalTotalScore').textContent = `${formatNumber(totalAwarded)}/${formatNumber(totalMax)}`;
+}
+
+// Close modal
+function closeModal() {
+    const modal = document.getElementById('summaryModal');
+    modal.classList.remove('active');
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('summaryModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+});
+
+// Confirm and save
+async function confirmSaveAndApprove() {
+    try {
+        const token = sessionStorage.getItem('token');
+        
+        // Call API to approve the entire submission
+        const response = await fetch(
+            `${API_BASE_URL}/assessments/${assessmentId}/submissions/${studentId}/approve`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Failed to approve submission');
+        }
+        
+        const data = await response.json();
+        console.log('Submission approved:', data);
+        
+        // Close modal
+        closeModal();
+        
+        // Navigate back immediately
+        goBack();
+        
+    } catch (error) {
+        console.error('Error approving submission:', error);
+        alert('Failed to approve submission. Please try again.');
+    }
+}
+
+// Toggle questions sidebar
+function toggleQuestionsSidebar() {
+    const container = document.querySelector('.split-container');
+    container.classList.toggle('sidebar-hidden');
+}
+
+// Toggle questions sidebar
+function toggleQuestionsSidebar() {
+    const container = document.querySelector('.split-container');
+    container.classList.toggle('sidebar-hidden');
+}
+
+// Go back to assessment details
+function goBack() {
+    window.location.href = `/assessment-details.html?id=${assessmentId}`;
+}
+
+// Initialize page by loading data from backend
+document.getElementById('totalPages').textContent = totalPagesNum;
+loadStudentSubmission();
+</script>
+</body>
+</html>

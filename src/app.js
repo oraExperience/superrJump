@@ -51,8 +51,11 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Serve static files from root directory
+// Serve static files from public directory
 const path = require('path');
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Also serve from root for backward compatibility
 app.use(express.static(path.join(__dirname, '..')));
 
 // Serve uploaded files (PDFs, etc.)

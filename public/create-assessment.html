@@ -1,0 +1,1115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>New Assessment - SuperrJump</title>
+<link rel="icon" type="image/png" href="logo.png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#2A6EBB",
+                    "background-light": "#FFFFFF",
+                    "background-dark": "#111821",
+                    "accent-yellow": "#FFC857",
+                    "accent-green": "#A2D7D2",
+                    "text-dark": "#333333",
+                    "text-light": "#F8FAFC",
+                    "border-light": "#e7ecf3",
+                    "border-dark": "#374151"
+                },
+                fontFamily: {
+                    "display": ["Lexend", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.5rem",
+                    "lg": "0.75rem",
+                    "xl": "1rem",
+                    "full": "9999px"
+                },
+            },
+        },
+    }
+</script>
+<style>
+    body {
+        font-family: 'Lexend', sans-serif;
+    }
+    .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+    
+    /* Animated progress bar shimmer effect */
+    @keyframes shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+    
+    .progress-shimmer {
+        background: linear-gradient(
+            90deg,
+            #2A6EBB 0%,
+            #4A8ED8 25%,
+            #FFC857 50%,
+            #4A8ED8 75%,
+            #2A6EBB 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 2s linear infinite;
+    }
+    .file-upload-area {
+        border: 2px dashed #e7ecf3;
+        transition: all 0.3s ease;
+    }
+    .file-upload-area:hover {
+        border-color: #2A6EBB;
+        background-color: rgba(42, 110, 187, 0.05);
+    }
+    .file-upload-area.drag-over {
+        border-color: #FFC857;
+        background-color: rgba(255, 200, 87, 0.1);
+    }
+    
+    /* Custom Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+    
+    .modal-overlay.active .modal-content {
+        transform: scale(1);
+    }
+    
+    .dark .modal-content {
+        background: #1e293b;
+    }
+    
+    /* Form field filled state */
+    input:not(:placeholder-shown),
+    select:valid:not([value=""]) {
+        background-color: #f0f9ff !important;
+        border-color: #2A6EBB !important;
+    }
+    
+    .dark input:not(:placeholder-shown),
+    .dark select:valid:not([value=""]) {
+        background-color: #1e3a5f !important;
+        border-color: #2A6EBB !important;
+    }
+    
+    input:focus,
+    select:focus {
+        background-color: white !important;
+    }
+    
+    .dark input:focus,
+    .dark select:focus {
+        background-color: #334155 !important;
+    }
+
+    /* Quote fade animation */
+    #motivationalQuote {
+        transition: opacity 0.3s ease-in-out;
+    }
+</style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-dark dark:text-text-light">
+<div class="relative flex min-h-screen w-full flex-col">
+
+<!-- Sidebar Menu -->
+<div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-border-light dark:border-border-dark transform -translate-x-full transition-transform duration-300 ease-in-out">
+<div class="flex flex-col h-full">
+<!-- Sidebar Header -->
+<div class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-2">
+<div class="text-primary size-6">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+</div>
+<button onclick="toggleSidebar()" class="text-text-dark dark:text-text-light hover:text-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+
+<!-- Sidebar Menu Items -->
+<nav class="flex-1 px-4 py-6 space-y-2">
+<a href="/assessments.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+<span class="material-symbols-outlined">assignment</span>
+<span>Assessments</span>
+</a>
+<a href="/profile.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</a>
+</nav>
+
+<!-- Sidebar Footer -->
+<div class="mt-auto px-4 py-4 border-t border-border-light dark:border-border-dark">
+<button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</button>
+</div>
+</div>
+</div>
+
+<!-- Sidebar Backdrop -->
+<div id="sidebarBackdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleSidebar()"></div>
+
+<!-- TopNavBar -->
+<header class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
+<div class="flex items-center gap-3 text-text-dark dark:text-text-light">
+<button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+</div>
+<div class="flex items-center gap-4">
+<span id="orgName" class="text-sm font-medium">Organization Name</span>
+</div>
+</div>
+</header>
+
+<main class="flex flex-col items-center w-full flex-1">
+<div class="w-full max-w-7xl px-4 md:px-8 py-10">
+<!-- Page Header -->
+<div class="mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-6 rounded-xl border-l-4 border-accent-yellow">
+<h1 class="text-4xl font-bold mb-2">Create New Assessment</h1>
+<p class="text-lg text-text-dark/70 dark:text-text-light/70">Fill in the details below to create a new assessment</p>
+</div>
+
+<!-- Assessment Creation Form -->
+<form id="assessmentForm" class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 border border-border-light dark:border-border-dark">
+<div class="space-y-6">
+<!-- Title Field -->
+<div class="flex flex-col gap-2">
+<label for="assessmentTitle" class="text-sm font-semibold text-text-dark dark:text-text-light">
+Assessment Title <span class="text-red-500">*</span>
+</label>
+<input
+type="text"
+id="assessmentTitle"
+placeholder="e.g., Mathematics Mid-term Exam"
+required
+class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-base focus:ring-2 focus:ring-primary focus:border-transparent"
+/>
+</div>
+
+<!-- Class and Subject Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Class Field -->
+<div class="flex flex-col gap-2">
+<label for="assessmentClass" class="text-sm font-semibold text-text-dark dark:text-text-light">
+Class <span class="text-red-500">*</span>
+</label>
+<select
+id="assessmentClass"
+required
+class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-base focus:ring-2 focus:ring-primary focus:border-transparent"
+>
+<option value="">Loading classes...</option>
+</select>
+</div>
+
+<!-- Subject Field -->
+<div class="flex flex-col gap-2">
+<label for="assessmentSubject" class="text-sm font-semibold text-text-dark dark:text-text-light">
+Subject <span class="text-red-500">*</span>
+</label>
+<select
+id="assessmentSubject"
+required
+disabled
+class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-base focus:ring-2 focus:ring-primary focus:border-transparent"
+>
+<option value="">Select a class first</option>
+</select>
+</div>
+</div>
+
+<!-- Question Paper Upload -->
+<div class="flex flex-col gap-2">
+<label for="questionPaper" class="text-sm font-semibold text-text-dark dark:text-text-light">
+Question Paper <span class="text-red-500">*</span>
+</label>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+Upload the question paper. AI will extract questions and marks for your verification.
+</p>
+<div class="file-upload-area rounded-lg p-6 text-center cursor-pointer" id="questionPaperArea">
+<input
+type="file"
+id="questionPaper"
+accept=".pdf,.doc,.docx"
+required
+class="hidden"
+onchange="handleFileSelect(this, 'questionPaperName', 'questionPaperPreview')"
+/>
+<div id="questionPaperUpload">
+<span class="material-symbols-outlined text-5xl text-primary mb-3 block">upload_file</span>
+<p class="text-base font-medium text-text-dark dark:text-text-light mb-1">
+Click to upload or drag and drop
+</p>
+<p class="text-sm text-text-dark/60 dark:text-text-light/60">
+PDF, DOC, or DOCX (Max 10MB)
+</p>
+</div>
+<div id="questionPaperPreview" class="hidden">
+<div class="flex items-center justify-center gap-3 mb-3">
+<span class="material-symbols-outlined text-4xl text-green-600">check_circle</span>
+<div class="text-left">
+<p id="questionPaperName" class="text-sm font-semibold text-text-dark dark:text-text-light"></p>
+<p class="text-xs text-text-dark/60 dark:text-text-light/60">File uploaded successfully</p>
+</div>
+</div>
+<div class="flex gap-2 justify-center">
+<button type="button" onclick="event.stopPropagation(); viewFile('questionPaper')" class="px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">visibility</span>
+View
+</button>
+<button type="button" onclick="event.stopPropagation(); changeFile('questionPaper')" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-text-dark dark:text-text-light rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">swap_horiz</span>
+Change
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Action Buttons -->
+<div class="flex flex-col-reverse sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+<button
+type="button"
+onclick="window.location.href='/assessments.html'"
+class="w-full sm:w-auto px-6 py-3 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light font-semibold transition-colors"
+>
+Cancel
+</button>
+<button
+type="submit"
+class="w-full sm:flex-1 px-6 py-3 rounded-lg bg-primary hover:bg-blue-700 text-white font-semibold shadow-sm transition-colors flex items-center justify-center gap-2"
+>
+<span class="material-symbols-outlined">smart_toy</span>
+<span>Create & Extract Questions with AI</span>
+</button>
+</div>
+</div>
+</form>
+</div>
+</main>
+
+<!-- Footer -->
+<footer class="flex justify-center w-full mt-10 border-t border-border-light dark:border-border-dark">
+<div class="w-full max-w-7xl px-4 py-8 md:px-8">
+<div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+<div class="flex items-center gap-3">
+<div class="text-primary size-6">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold">SuperrJump</h2>
+</div>
+</div>
+</div>
+</footer>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay">
+<div class="modal-content">
+<h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-6">Proceed for AI Grading?</h3>
+<div id="confirmDetails" class="bg-gray-100 dark:bg-slate-700 rounded-lg p-4 mb-6 space-y-2">
+<!-- Details will be inserted here -->
+</div>
+<div class="flex flex-col-reverse sm:flex-row gap-3">
+<button
+id="modalCancelBtn"
+class="w-full sm:flex-1 px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors"
+>
+No, Cancel
+</button>
+<button
+id="modalConfirmBtn"
+class="w-full sm:flex-1 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors"
+>
+Yes, Proceed
+</button>
+</div>
+</div>
+</div>
+
+<!-- Grading Progress Screen -->
+<div id="gradingScreen" class="fixed inset-0 bg-background-light dark:bg-background-dark z-50 hidden overflow-y-auto">
+
+<!-- Sidebar Menu (inside grading screen) -->
+<div id="gradingSidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-border-light dark:border-border-dark transform -translate-x-full transition-transform duration-300 ease-in-out">
+<div class="flex flex-col h-full">
+<!-- Sidebar Header -->
+<div class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-2">
+<div class="text-primary size-6">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+</div>
+<button onclick="toggleGradingSidebar()" class="text-text-dark dark:text-text-light hover:text-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+
+<!-- Sidebar Menu Items -->
+<nav class="flex-1 px-4 py-6 space-y-2">
+<a href="/assessments.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+<span class="material-symbols-outlined">assignment</span>
+<span>Assessments</span>
+</a>
+<a href="/profile.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</a>
+</nav>
+
+<!-- Sidebar Footer -->
+<div class="mt-auto px-4 py-4 border-t border-border-light dark:border-border-dark">
+<button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</button>
+</div>
+</div>
+</div>
+
+<!-- Sidebar Backdrop (inside grading screen) -->
+<div id="gradingSidebarBackdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleGradingSidebar()"></div>
+
+<div class="min-h-screen flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
+<div class="flex items-center gap-3 text-text-dark dark:text-text-light">
+<button onclick="toggleGradingSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+</div>
+<div class="flex items-center gap-4">
+<span id="gradingOrgName" class="text-sm font-medium">Organization Name</span>
+</div>
+</div>
+</header>
+
+<!-- Main Content -->
+<div class="flex-1 flex items-center justify-center p-4 md:p-8">
+<div class="max-w-2xl w-full">
+<!-- Assessment Details Card with White Background -->
+<div class="bg-white dark:bg-slate-800 rounded-xl p-8 mb-6 shadow-lg">
+<div class="flex items-start gap-4 mb-6">
+<span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
+<div class="flex-1">
+<h1 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Extracting Questions...</h1>
+<p class="text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is analyzing the question paper and extracting all questions with their marks. This usually takes a few moments.</p>
+</div>
+</div>
+
+<!-- Assessment Details -->
+<div id="gradingAssessmentDetails" class="bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 rounded-xl p-5 space-y-3 border-l-4 border-accent-yellow">
+<!-- Will be populated by JS -->
+</div>
+</div>
+
+<!-- Motivational Quote Card (Outside main card) -->
+<div class="bg-white dark:bg-slate-700 rounded-xl p-6 border-l-4 border-primary shadow-md mb-6">
+<p id="motivationalQuote" class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed"></p>
+</div>
+
+<!-- Back Button Below Card -->
+<div class="flex justify-center mt-6">
+    <div class="text-center">
+        <button onclick="goToAssessmentDetails()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
+            <span class="material-symbols-outlined">refresh</span>
+            <span>Check Extraction Status</span>
+        </button>
+        <p class="text-xs text-text-dark/60 dark:text-text-light/60 mt-2">Extraction continues in background. Click to check if complete.</p>
+    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// API configuration - Define early so it's available for all functions
+const API_BASE_URL = 'http://localhost:3000/api';
+
+// Check if user is logged in
+const user = JSON.parse(sessionStorage.getItem('user'));
+
+if (!user) {
+    window.location.href = '/login';
+} else {
+    // Display organization name instead of user name
+    const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
+    document.getElementById('orgName').textContent = orgName;
+}
+
+// Store user mappings globally
+let userMappings = {
+    classes: [],
+    subjects: [],
+    classSubjectMap: {}
+};
+
+// Fetch user mappings and populate dropdowns
+async function fetchUserMappings() {
+    try {
+
+// Handle browser back button - show logout confirmation
+window.addEventListener('popstate', (event) => {
+    const token = sessionStorage.getItem('token');
+    
+    if (token) {
+        // Prevent actual navigation
+        window.history.pushState(null, null, window.location.href);
+        
+        // Show confirmation dialog
+        const confirmed = confirm('Going back will log you out. Do you want to continue?');
+        
+        if (confirmed) {
+            // User confirmed - log out and redirect to login
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            window.location.replace('/login.html');
+        }
+    }
+});
+
+
+        const token = sessionStorage.getItem('token');
+        
+        if (!token) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/mappings`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            userMappings = {
+                classes: data.classes || [],
+                subjects: data.subjects || [],
+                classSubjectMap: data.classSubjectMap || {}
+            };
+            
+            // Populate class dropdown
+            populateClassDropdown();
+            
+            console.log('User mappings loaded:', userMappings);
+        }
+    } catch (error) {
+        console.error('Error fetching user mappings:', error);
+        
+        // Show user-friendly error message without blocking the page
+        const classSelect = document.getElementById('assessmentClass');
+        classSelect.innerHTML = '<option value="">Error loading classes - Please run schema-user-mappings.sql</option>';
+        classSelect.disabled = true;
+        
+        const subjectSelect = document.getElementById('assessmentSubject');
+        subjectSelect.innerHTML = '<option value="">Error loading subjects</option>';
+        subjectSelect.disabled = true;
+        
+        // Show console message with instructions
+        console.error('==========================================');
+        console.error('USER MAPPING TABLE NOT FOUND');
+        console.error('==========================================');
+        console.error('Please run the following SQL in your database:');
+        console.error('File: schema-user-mappings.sql');
+        console.error('This will create the user_class_subject_mappings table');
+        console.error('==========================================');
+    }
+}
+
+// Populate class dropdown with mapped classes
+function populateClassDropdown() {
+    const classSelect = document.getElementById('assessmentClass');
+    
+    // Clear existing options except the first one
+    classSelect.innerHTML = '<option value="">Select a class</option>';
+    
+    // Add mapped classes
+    userMappings.classes.forEach(className => {
+        const option = document.createElement('option');
+        option.value = className;
+        option.textContent = className;
+        classSelect.appendChild(option);
+    });
+    
+    // If no classes available, show message
+    if (userMappings.classes.length === 0) {
+        classSelect.innerHTML = '<option value="">No classes assigned to you</option>';
+        classSelect.disabled = true;
+    }
+}
+
+// Update subject dropdown based on selected class
+function updateSubjectDropdown(selectedClass) {
+    const subjectSelect = document.getElementById('assessmentSubject');
+    
+    // Clear existing options
+    subjectSelect.innerHTML = '<option value="">Select a subject</option>';
+    
+    if (!selectedClass) {
+        subjectSelect.disabled = true;
+        return;
+    }
+    
+    // Get subjects for the selected class
+    const availableSubjects = userMappings.classSubjectMap[selectedClass] || [];
+    
+    // Add subjects
+    availableSubjects.forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject;
+        option.textContent = subject;
+        subjectSelect.appendChild(option);
+    });
+    
+    // Enable/disable based on available subjects
+    if (availableSubjects.length === 0) {
+        subjectSelect.innerHTML = '<option value="">No subjects assigned for this class</option>';
+        subjectSelect.disabled = true;
+    } else {
+        subjectSelect.disabled = false;
+    }
+}
+
+// Add event listener to class dropdown
+document.getElementById('assessmentClass').addEventListener('change', function() {
+    updateSubjectDropdown(this.value);
+});
+
+// Fetch mappings when page loads
+fetchUserMappings();
+
+// Handle page refresh during extraction
+window.addEventListener('DOMContentLoaded', () => {
+    // Clear any old grading state when opening create assessment page
+    // This ensures we start fresh each time
+    sessionStorage.removeItem('onExtractionScreen');
+    sessionStorage.removeItem('gradingState');
+});
+
+function logout() {
+    sessionStorage.removeItem('user');
+    window.location.href = '/login';
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    
+    if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+    }
+}
+
+// Sidebar toggle for grading screen
+function toggleGradingSidebar() {
+    const sidebar = document.getElementById('gradingSidebar');
+    const backdrop = document.getElementById('gradingSidebarBackdrop');
+    
+    if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+    }
+}
+
+// File upload handling
+function handleFileSelect(input, displayId, previewId) {
+    const displayElement = document.getElementById(displayId);
+    if (input.files && input.files[0]) {
+        const fileName = input.files[0].name;
+        const fileSize = (input.files[0].size / (1024 * 1024)).toFixed(2);
+        displayElement.textContent = `${fileName} (${fileSize} MB)`;
+        
+        // Show preview, hide upload prompt
+        const uploadDiv = document.getElementById(input.id + 'Upload');
+        const previewDiv = document.getElementById(previewId);
+        const areaDiv = document.getElementById(input.id + 'Area');
+        
+        if (uploadDiv && previewDiv) {
+            uploadDiv.classList.add('hidden');
+            previewDiv.classList.remove('hidden');
+            
+            // Add light blue background to show file is uploaded
+            areaDiv.style.backgroundColor = '#f0f9ff';
+            areaDiv.style.borderColor = '#2A6EBB';
+            document.documentElement.classList.contains('dark') && (areaDiv.style.backgroundColor = '#1e3a5f');
+        }
+    }
+}
+
+// View uploaded file
+function viewFile(inputId) {
+    const input = document.getElementById(inputId);
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
+    }
+}
+
+// Change uploaded file
+function changeFile(inputId) {
+    const input = document.getElementById(inputId);
+    input.click();
+}
+
+// Drag and drop functionality
+function setupDragAndDrop(areaId, inputId) {
+    const area = document.getElementById(areaId);
+    const input = document.getElementById(inputId);
+    
+    area.addEventListener('click', () => input.click());
+    
+    area.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        area.classList.add('drag-over');
+    });
+    
+    area.addEventListener('dragleave', () => {
+        area.classList.remove('drag-over');
+    });
+    
+    area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        area.classList.remove('drag-over');
+        
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            input.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+setupDragAndDrop('questionPaperArea', 'questionPaper');
+
+// Motivational quotes array for extraction process
+const motivationalQuotes = [
+    "AI is analyzing the structure and content of your question paper...",
+    "Identifying questions and their mark allocations with precision...",
+    "Smart extraction means less manual work and more time for teaching...",
+    "Our AI understands question patterns across different subjects and formats...",
+    "Extracting questions automatically saves hours of manual data entry...",
+    "Technology working behind the scenes to make your life easier...",
+    "AI-powered extraction ensures accuracy and consistency...",
+    "Questions are being parsed, marks are being detected...",
+    "Automated extraction means you can focus on what matters most - teaching...",
+    "Modern technology transforming assessment creation, one paper at a time..."
+];
+
+// Modal functions
+function showConfirmModal(formData) {
+    const modal = document.getElementById('confirmModal');
+    const detailsDiv = document.getElementById('confirmDetails');
+    
+    // Populate modal with form data
+    detailsDiv.innerHTML = `
+        <div class="flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary">title</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Title:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">${formData.title}</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary">school</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Class:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">${formData.class}</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary">book</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Subject:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">${formData.subject}</span>
+        </div>
+    `;
+    
+    modal.classList.add('active');
+}
+
+function hideConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    modal.classList.remove('active');
+}
+
+// Grading screen functions
+function showGradingScreen(formData, existingAssessmentNumber = null) {
+    const gradingScreen = document.getElementById('gradingScreen');
+    const detailsDiv = document.getElementById('gradingAssessmentDetails');
+    
+    // Populate organization name in grading screen header
+    const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
+    document.getElementById('gradingOrgName').textContent = orgName;
+    
+    // Use existing assessment number or generate a new one
+    const assessmentNumber = existingAssessmentNumber || Math.floor(Math.random() * 900) + 100;
+    
+    // Save grading state to sessionStorage for page refresh handling
+    const gradingState = {
+        assessmentNumber: assessmentNumber,
+        formData: formData,
+        startTime: new Date().toISOString(),
+        isGrading: true,
+        status: 'Processing Ques' // Initial status for new assessments
+    };
+    sessionStorage.setItem('gradingState', JSON.stringify(gradingState));
+    
+    // Set flag to indicate we're on the extraction screen
+    sessionStorage.setItem('onExtractionScreen', 'true');
+    
+    // Populate grading screen with assessment details
+    detailsDiv.innerHTML = `
+        <div class="flex items-center gap-2 text-sm mb-2">
+            <span class="material-symbols-outlined text-primary">tag</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Assessment Number:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">#${assessmentNumber}</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm mb-2">
+            <span class="material-symbols-outlined text-primary">title</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Title:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">${formData.title}</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm mb-2">
+            <span class="material-symbols-outlined text-primary">school</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Class:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">${formData.class}</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-primary">book</span>
+            <span class="font-semibold text-text-dark dark:text-text-light">Subject:</span>
+            <span class="text-text-dark/70 dark:text-text-light/70">${formData.subject}</span>
+        </div>
+    `;
+    
+    // Show grading screen
+    gradingScreen.classList.remove('hidden');
+    
+    // Start progress animation
+    animateProgress();
+    
+    // Start rotating quotes
+    rotateQuotes();
+}
+
+function animateProgress() {
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    let progress = 0;
+    
+    const interval = setInterval(() => {
+        progress += Math.random() * 3 + 1;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = progress + '%';
+        progressPercent.textContent = Math.floor(progress) + '%';
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            
+            // Get the grading state to retrieve assessment number
+            const gradingState = JSON.parse(sessionStorage.getItem('gradingState'));
+            const assessmentNumber = gradingState?.assessmentNumber || '001';
+            
+            // Update grading state to mark extraction as complete
+            if (gradingState) {
+                gradingState.questionCount = Math.floor(Math.random() * 11) + 5; // Mock: 5-15 questions
+                gradingState.extractionComplete = true;
+                sessionStorage.setItem('gradingState', JSON.stringify(gradingState));
+            }
+            
+            // Clear extraction screen flag
+            sessionStorage.removeItem('onExtractionScreen');
+            
+            // Redirect to verification page after extraction completion
+            setTimeout(() => {
+                window.location.href = `/verify-questions.html?id=${assessmentNumber}`;
+            }, 1500);
+        }
+    }, 300);
+}
+
+function rotateQuotes() {
+    const quoteElement = document.getElementById('motivationalQuote');
+    let currentIndex = 0;
+    
+    // Show first quote
+    quoteElement.textContent = motivationalQuotes[currentIndex];
+    
+    // Rotate quotes every 5 seconds
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % motivationalQuotes.length;
+        quoteElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            quoteElement.textContent = motivationalQuotes[currentIndex];
+            quoteElement.style.opacity = '1';
+        }, 300);
+    }, 5000);
+    
+    // Add transition to quote element
+    quoteElement.style.transition = 'opacity 0.3s ease';
+}
+
+// Function to navigate to verification page
+function goToAssessmentDetails() {
+    const gradingState = JSON.parse(sessionStorage.getItem('gradingState'));
+    const assessmentNumber = gradingState?.assessmentNumber || '001';
+    
+    // Navigate to verification page to review extracted questions
+    window.location.href = `/verify-questions.html?id=${assessmentNumber}`;
+}
+
+// Poll extraction status every 3 seconds
+function pollExtractionStatus(assessmentId) {
+    const token = sessionStorage.getItem('token');
+    let pollCount = 0;
+    const maxPolls = 60; // Maximum 3 minutes (60 * 3 seconds)
+    
+    const pollInterval = setInterval(async () => {
+        pollCount++;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to check status');
+                return;
+            }
+            
+            const data = await response.json();
+            const assessment = data.assessment;
+            
+            console.log(`📊 Status check ${pollCount}: ${assessment.status}`);
+            
+            // Check if extraction is complete
+            if (assessment.status === 'Ques Pending Approval' || assessment.status === 'questions_pending_approval') {
+                clearInterval(pollInterval);
+                console.log('✅ Extraction completed!');
+                
+                // Wait for progress bar to reach 100%
+                setTimeout(() => {
+                    // Redirect to verification page
+                    window.location.href = `/verify-questions.html?id=${assessmentId}`;
+                }, 1000);
+            } else if (assessment.status === 'Upload Failed' || assessment.status === 'Extraction Failed') {
+                clearInterval(pollInterval);
+                console.error('❌ Extraction failed');
+                alert('Failed to extract questions. Please try again or contact support.');
+                window.location.href = '/assessments.html';
+            } else if (pollCount >= maxPolls) {
+                clearInterval(pollInterval);
+                console.error('❌ Extraction timeout');
+                alert('Extraction is taking longer than expected. Please check the assessment details page.');
+                window.location.href = `/assessment-details.html?id=${assessmentId}`;
+            }
+            
+        } catch (error) {
+            console.error('Error polling status:', error);
+        }
+    }, 3000); // Poll every 3 seconds
+}
+
+// Form submission
+document.getElementById('assessmentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('assessmentTitle').value,
+        class: document.getElementById('assessmentClass').value,
+        subject: document.getElementById('assessmentSubject').value,
+        questionPaper: document.getElementById('questionPaper').files[0]?.name,
+        createdBy: user.name,
+        createdAt: new Date().toISOString()
+    };
+    
+    // Show custom confirmation modal
+    showConfirmModal(formData);
+    
+    // Handle modal confirmation
+    document.getElementById('modalConfirmBtn').onclick = async () => {
+        hideConfirmModal();
+        
+        try {
+            // Get JWT token from session
+            const token = sessionStorage.getItem('token');
+            
+            if (!token) {
+                alert('Session expired. Please login again.');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Get the PDF file
+            const fileInput = document.getElementById('questionPaper');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please upload a question paper PDF');
+                return;
+            }
+            
+            // Create FormData to upload file
+            const uploadData = new FormData();
+            uploadData.append('title', formData.title);
+            uploadData.append('class', formData.class);
+            uploadData.append('subject', formData.subject);
+            uploadData.append('questionPaper', file);
+            
+            console.log('📤 Uploading PDF and creating assessment...');
+            
+            // Upload PDF and create assessment via the upload endpoint
+            const response = await fetch(`${API_BASE_URL}/assessments/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Don't set Content-Type - browser will set it with boundary for FormData
+                },
+                body: uploadData
+            });
+            
+            if (response.status === 401) {
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                alert('Session expired. Please login again.');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            if (response.status === 403) {
+                const errorData = await response.json();
+                alert(errorData.message || 'You do not have permission to create assessments.');
+                return;
+            }
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            const createdAssessment = result.assessment;
+            
+            console.log('✅ Assessment created:', createdAssessment);
+            console.log('🤖 PDF uploaded - AI extraction will start automatically');
+            
+            // Add assessment ID to formData
+            formData.id = createdAssessment.id;
+            
+            // Show extraction screen with actual assessment ID
+            // The backend will automatically:
+            // 1. Upload PDF to Google Drive
+            // 2. Extract questions with AI
+            // 3. Update status to "Ques Pending Approval"
+            showGradingScreen(formData, createdAssessment.id);
+            
+            // Poll for extraction completion
+            pollExtractionStatus(createdAssessment.id);
+            
+        } catch (error) {
+            console.error('Error creating assessment:', error);
+            alert('Failed to create assessment. Please try again.');
+        }
+    };
+    
+    // Handle modal cancel
+    document.getElementById('modalCancelBtn').onclick = () => {
+        hideConfirmModal();
+    };
+});
+</script>
+</body>
+</html>

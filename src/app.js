@@ -79,7 +79,40 @@ app.get('/api', (req, res) => {
 
 // Root route handler - redirect to home page
 app.get('/', (req, res) => {
-  res.redirect('/home.html');
+  res.redirect('/home');
+});
+
+// Clean URL routes (without .html extension)
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/home.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/login.html'));
+});
+
+app.get('/assessments', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/assessments.html'));
+});
+
+app.get('/assessment-details', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/assessment-details.html'));
+});
+
+app.get('/create-assessment', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/create-assessment.html'));
+});
+
+app.get('/student-review', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/student-review.html'));
+});
+
+app.get('/verify-questions', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/verify-questions.html'));
+});
+
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/profile.html'));
 });
 
 // 404 Handler for API routes

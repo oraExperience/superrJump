@@ -494,7 +494,7 @@ let questions = [];
 async function loadAssessmentData() {
     try {
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/assessments/${assessmentId}`, {
+        const response = await fetch(`/api/assessments/${assessmentId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -572,7 +572,7 @@ function calculateTotalMarks() {
 async function loadQuestionsFromAPI() {
     try {
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/assessments/${assessmentId}/questions`, {
+        const response = await fetch(`/api/assessments/${assessmentId}/questions`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -834,7 +834,7 @@ async function updateQuestionText(questionId) {
 async function saveQuestionToAPI(question) {
     try {
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/assessments/${assessmentId}/questions/${question.dbId}`, {
+        const response = await fetch(`/api/assessments/${assessmentId}/questions/${question.dbId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -919,7 +919,7 @@ async function nextQuestion() {
         // Save verified status to database
         try {
             const token = sessionStorage.getItem('token');
-            const response = await fetch(`http://localhost:3000/api/assessments/${assessmentId}/questions/${currentQuestion.dbId}/verify`, {
+            const response = await fetch(`/api/assessments/${assessmentId}/questions/${currentQuestion.dbId}/verify`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1022,7 +1022,7 @@ async function approveAndFinalize() {
 
     try {
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/assessments/${assessmentId}/approve-questions`, {
+        const response = await fetch(`/api/assessments/${assessmentId}/approve-questions`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,

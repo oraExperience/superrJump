@@ -1,6 +1,7 @@
 
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+const { generateToken } = require('../middleware/auth');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -14,9 +15,9 @@ exports.login = async (req, res) => {
 
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email and password are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
       });
     }
 
@@ -25,38 +26,48 @@ exports.login = async (req, res) => {
     const userResult = await pool.query(userQuery, [email]);
 
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid email or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
       });
     }
 
     const user = userResult.rows[0];
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Compare password (column name in DB could be 'password' or 'password_hash')
+    const passwordHash = user.password_hash || user.password;
+    const isPasswordValid = await bcrypt.compare(password, passwordHash);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid email or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
       });
     }
 
-    // Return user data (excluding password)
-    const { password: _, ...userData } = user;
+    // Generate JWT token
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    });
+
+    // Return user data (excluding password fields) and token
+    const { password_hash, password: _, ...userData } = user;
 
     res.status(200).json({
       success: true,
       message: 'Login successful',
+      token: token,
       user: userData
     });
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'An error occurred during login' 
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred during login'
     });
   }
 };

@@ -94,6 +94,19 @@ function togglePassword() {
 </div>
 
 <script>
+// Prevent forward navigation to authenticated pages without login
+window.addEventListener('load', () => {
+    // Clear session data when on login page
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    
+    // Disable browser back/forward cache to prevent cached authenticated pages
+    window.history.pushState(null, null, window.location.href);
+    window.addEventListener('popstate', () => {
+        window.history.pushState(null, null, window.location.href);
+    });
+});
+
 // Login form handling
 const loginForm = document.querySelector('form');
 const emailInput = document.querySelector('input[type="email"]');
@@ -142,10 +155,13 @@ loginForm.addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (data.success) {
-            // Store user data in sessionStorage
+            // Store JWT token and user data in sessionStorage
+            sessionStorage.setItem('token', data.token);
             sessionStorage.setItem('user', JSON.stringify(data.user));
-            // Redirect to dashboard
-            window.location.href = '/dashboard.html';
+            sessionStorage.setItem('fromLogin', 'true');
+            
+            // Replace current history entry to prevent back navigation to login
+            window.location.replace('/assessments.html');
         } else {
             // Show error message
             errorDiv.textContent = data.message || 'Login failed. Please try again.';

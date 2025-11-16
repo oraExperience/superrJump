@@ -6,6 +6,8 @@ const morgan = require('morgan');
 
 const leadRoutes = require('./routes/leadRoutes');
 const userRoutes = require('./routes/userRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
+const mappingRoutes = require('./routes/mappingRoutes');
 
 const app = express();
 
@@ -36,9 +38,15 @@ app.use('/api', (req, res, next) => {
 // Serve static files from root directory
 app.use(express.static('.'));
 
+// Serve uploaded files (PDFs, etc.)
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Mount API routes
 app.use('/api/leads', leadRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/assessments', assessmentRoutes);
+app.use('/api/mappings', mappingRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

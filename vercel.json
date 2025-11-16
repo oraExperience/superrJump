@@ -29,6 +29,10 @@
     {
       "src": "dashboard.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "assessments.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -63,6 +67,14 @@
     {
       "src": "/dashboard",
       "dest": "/dashboard.html"
+    },
+    {
+      "src": "/assessments.html",
+      "dest": "/assessments.html"
+    },
+    {
+      "src": "/assessments",
+      "dest": "/assessments.html"
     },
     {
       "src": "/api/(.*)",

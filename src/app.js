@@ -1,10 +1,17 @@
 
-require('dotenv').config();
+// Only load dotenv in local development, not in Vercel
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 
 console.log('=== INITIALIZING EXPRESS APP ===');
+console.log('Environment:', process.env.NODE_ENV);
+console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
 
 console.log('Loading routes...');
 const leadRoutes = require('./routes/leadRoutes');
@@ -67,9 +74,19 @@ app.get('/api', (req, res) => {
   res.json({ message: 'SuperrJump API server is running' });
 });
 
-// 404 Handler
+// Root route handler - redirect to login
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
+// 404 Handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// 404 Handler for other routes
 app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).send('Page not found');
 });
 
 // Error handling middleware

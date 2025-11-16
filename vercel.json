@@ -11,6 +11,18 @@
       "config": {
         "maxDuration": 30
       }
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.png",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.jpg",
+      "use": "@vercel/static"
     }
   ],
   "routes": [

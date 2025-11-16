@@ -1,12 +1,12 @@
 
-// api/index.js - Vercel serverless function entry point
-// This wraps the Express app for Vercel's serverless environment
+// api/index.js - Vercel serverless function entry point with debug logging
 
-const app = require('../src/app');
-
-// Export for Vercel serverless
 module.exports = async (req, res) => {
-  // Set CORS headers for Vercel
+  console.log('=== SERVERLESS FUNCTION INVOKED ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -17,36 +17,57 @@ module.exports = async (req, res) => {
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
+    console.log('OPTIONS request - returning 200');
     res.status(200).end();
     return;
   }
 
   try {
-    // Check if critical environment variables are set
+    console.log('Checking environment variables...');
+    
+    // Check DATABASE_URL
     if (!process.env.DATABASE_URL) {
-      console.error('DATABASE_URL is not set');
+      console.error('ERROR: DATABASE_URL is not set');
       return res.status(500).json({
         success: false,
-        message: 'Server configuration error: DATABASE_URL is missing'
+        message: 'Server configuration error: DATABASE_URL is missing',
+        debug: 'DATABASE_URL environment variable is not configured'
       });
     }
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET (length: ' + process.env.DATABASE_URL.length + ')' : 'NOT SET');
 
+    // Check JWT_SECRET
     if (!process.env.JWT_SECRET) {
-      console.error('JWT_SECRET is not set');
+      console.error('ERROR: JWT_SECRET is not set');
       return res.status(500).json({
         success: false,
-        message: 'Server configuration error: JWT_SECRET is missing'
+        message: 'Server configuration error: JWT_SECRET is missing',
+        debug: 'JWT_SECRET environment variable is not configured'
       });
     }
+    console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET (length: ' + process.env.JWT_SECRET.length + ')' : 'NOT SET');
 
-    // Pass request to Express app
+    console.log('Loading Express app...');
+    const app = require('../src/app');
+    console.log('Express app loaded successfully');
+    
+    console.log('Passing request to Express app...');
     return app(req, res);
+    
   } catch (error) {
-    console.error('Serverless function error:', error);
+    console.error('=== FATAL ERROR IN SERVERLESS FUNCTION ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }
     });
   }
 };

@@ -4,12 +4,21 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 
-const leadRoutes = require('./routes/leadRoutes');
-const userRoutes = require('./routes/userRoutes');
-const assessmentRoutes = require('./routes/assessmentRoutes');
-const mappingRoutes = require('./routes/mappingRoutes');
+console.log('=== INITIALIZING EXPRESS APP ===');
 
+console.log('Loading routes...');
+const leadRoutes = require('./routes/leadRoutes');
+console.log('leadRoutes loaded');
+const userRoutes = require('./routes/userRoutes');
+console.log('userRoutes loaded');
+const assessmentRoutes = require('./routes/assessmentRoutes');
+console.log('assessmentRoutes loaded');
+const mappingRoutes = require('./routes/mappingRoutes');
+console.log('mappingRoutes loaded');
+
+console.log('Creating Express app...');
 const app = express();
+console.log('Express app created');
 
 // Middleware setup
 app.use(cors());

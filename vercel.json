@@ -4,27 +4,12 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 30
-      }
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.png",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.jpg",
-      "use": "@vercel/static"
+  "functions": {
+    "api/index.js": {
+      "memory": 1024,
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/(.*)",
@@ -38,11 +23,5 @@
       "src": "/",
       "dest": "/login.html"
     }
-  ],
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  }
+  ]
 }

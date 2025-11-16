@@ -52,10 +52,10 @@ app.use('/api', (req, res, next) => {
 });
 
 // Serve static files from root directory
-app.use(express.static('.'));
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..')));
 
 // Serve uploaded files (PDFs, etc.)
-const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount API routes

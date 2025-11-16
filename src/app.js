@@ -74,9 +74,9 @@ app.get('/api', (req, res) => {
   res.json({ message: 'SuperrJump API server is running' });
 });
 
-// Root route handler - redirect to login
+// Root route handler - redirect to home page
 app.get('/', (req, res) => {
-  res.redirect('/login.html');
+  res.redirect('/home.html');
 });
 
 // 404 Handler for API routes

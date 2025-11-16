@@ -27,11 +27,7 @@ migrations/
 # PDFs
 *.pdf
 
-# Images (except logo)
-visualisation.png
-visualisation2.png
-
-# Uploads directory
+# Uploads directory (runtime generated files)
 uploads/
 temp/
 

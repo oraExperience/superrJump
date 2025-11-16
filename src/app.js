@@ -82,6 +82,12 @@ app.get('/', (req, res) => {
   res.redirect('/home');
 });
 
+// Redirect .html URLs to clean URLs
+app.get('/*.html', (req, res) => {
+  const cleanUrl = req.path.replace('.html', '');
+  res.redirect(301, cleanUrl);
+});
+
 // Clean URL routes (without .html extension)
 app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/home.html'));

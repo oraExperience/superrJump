@@ -1,88 +1,36 @@
 
 {
   "version": 2,
+  "env": {
+    "NODE_ENV": "production"
+  },
   "builds": [
     {
       "src": "api/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "home.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "login.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "logo.png",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "visualisation.png",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "visualisation2.png",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "dashboard.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "assessments.html",
-      "use": "@vercel/static"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 30
+      }
     }
   ],
   "routes": [
-    {
-      "src": "/home.html",
-      "dest": "/home.html"
-    },
-    {
-      "src": "/login.html",
-      "dest": "/login.html"
-    },
-    {
-      "src": "/login",
-      "dest": "/login.html"
-    },
-    {
-      "src": "/logo.png",
-      "dest": "/logo.png"
-    },
-    {
-      "src": "/visualisation.png",
-      "dest": "/visualisation.png"
-    },
-    {
-      "src": "/visualisation2.png",
-      "dest": "/visualisation2.png"
-    },
-    {
-      "src": "/dashboard.html",
-      "dest": "/dashboard.html"
-    },
-    {
-      "src": "/dashboard",
-      "dest": "/dashboard.html"
-    },
-    {
-      "src": "/assessments.html",
-      "dest": "/assessments.html"
-    },
-    {
-      "src": "/assessments",
-      "dest": "/assessments.html"
-    },
     {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     },
     {
+      "src": "/(.*\\.(html|png|jpg|jpeg|gif|css|js))",
+      "dest": "/$1"
+    },
+    {
       "src": "/",
-      "dest": "/home.html"
+      "dest": "/login.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
 }

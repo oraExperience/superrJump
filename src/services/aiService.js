@@ -10,6 +10,9 @@ const visionConfig = require('../config/visionConfig');
 const { convertPdfToImages } = require('./pdfImageService');
 const { extractQuestionsWithCoordinates } = require('./advancedPdfParser');
 const { extractQuestionsFromImages: extractWithOpenRouter } = require('./openrouterVisionParser');
+const { extractQuestionsFromImages: extractWithOpenAI } = require('./openaiVisionParser');
+const { extractQuestionsFromImages: extractWithGemini } = require('./geminiVisionParser');
+const { extractQuestionsFromImages: extractWithHuggingFace } = require('./huggingfaceVisionParser');
 
 // Initialize Groq client with free API key
 const groq = new Groq({
@@ -152,8 +155,7 @@ Context:
 
 PDF Path: ${pdfUrl}`;
 
-    // VISION AI EXTRACTION - Uses OpenRouter with Claude 3.5 Sonnet
-    console.log('👁️  Using OpenRouter Vision AI (Claude 3.5 Sonnet)');
+    // VISION AI EXTRACTION - Try enabled models in priority order
     console.log('📸  Converting PDF to images...\n');
     
     // Convert PDF to images
@@ -166,39 +168,84 @@ PDF Path: ${pdfUrl}`;
       throw new Error(`Cannot process PDF: ${imageError.message}`);
     }
     
-    // Extract questions using OpenRouter Vision
-    if (imagePages && imagePages.length > 0) {
+    // Get enabled models in priority order from config
+    const enabledModels = visionConfig.getEnabledModels();
+    console.log(`🎯 Vision models enabled: ${enabledModels.map(m => m.name).join(', ') || 'NONE'}\n`);
+    
+    if (enabledModels.length === 0) {
+      throw new Error('No vision models enabled in visionConfig.js. Please enable at least one model.');
+    }
+    
+    // Try each enabled model in priority order
+    let lastError = null;
+    for (const modelConfig of enabledModels) {
       try {
-        const questions = await extractWithOpenRouter(imagePages);
+        console.log(`\n${'='.repeat(60)}`);
+        console.log(`🚀 Attempting vision extraction with: ${modelConfig.name.toUpperCase()}`);
+        console.log(`   Priority: ${modelConfig.priority}`);
+        if (modelConfig.model) {
+          console.log(`   Model: ${modelConfig.model}`);
+        }
+        console.log(`${'='.repeat(60)}\n`);
+        
+        let questions = null;
+        
+        switch (modelConfig.name) {
+          case 'openrouter':
+            questions = await extractWithOpenRouter(imagePages);
+            break;
+          case 'openai':
+            questions = await extractWithOpenAI(imagePages);
+            break;
+          case 'gemini':
+            questions = await extractWithGemini(imagePages);
+            break;
+          case 'huggingface':
+            questions = await extractWithHuggingFace(imagePages);
+            break;
+          default:
+            console.log(`⚠️  Unknown model: ${modelConfig.name}, skipping...`);
+            continue;
+        }
         
         if (questions && questions.length > 0) {
           console.log('\n' + '🎉'.repeat(40));
-          console.log('🎉 SUCCESS: Vision AI Extraction Complete');
-          console.log('🎉 Model: Claude 3.5 Sonnet via OpenRouter');
+          console.log(`🎉 SUCCESS: ${modelConfig.name.toUpperCase()} Vision AI Extraction Complete`);
+          if (modelConfig.model) {
+            console.log(`🎉 Model: ${modelConfig.model}`);
+          }
           console.log('🎉 Mathematical expressions preserved accurately');
           console.log('🎉'.repeat(40) + '\n');
           console.log(`✅ Extracted ${questions.length} questions from ${imagePages.length} page(s)\n`);
           return questions;
         }
         
-        console.log('⚠️  OpenRouter returned no questions');
-        throw new Error('No questions found in PDF');
+        console.log(`⚠️  ${modelConfig.name} returned no questions, trying next model...`);
         
-      } catch (openrouterError) {
-        console.error('\n❌ OpenRouter Vision failed:', openrouterError.message);
+      } catch (modelError) {
+        console.error(`\n❌ ${modelConfig.name} Vision failed:`, modelError.message);
+        lastError = modelError;
         
-        // Check if it's a credit/token issue
-        if (openrouterError.message.includes('402') || openrouterError.message.includes('credits')) {
-          throw new Error(`OpenRouter API credits exhausted. Please add credits at https://openrouter.ai/settings/credits`);
+        // Check if it's a critical error (API key missing, credits exhausted)
+        const isCriticalError = modelError.message.includes('API key') ||
+                               modelError.message.includes('not found') ||
+                               modelError.message.includes('402') ||
+                               modelError.message.includes('credits');
+        
+        if (isCriticalError) {
+          console.log(`   ⚠️  Critical error, trying next enabled model...`);
+        } else {
+          console.log(`   ⚠️  Transient error, trying next enabled model...`);
         }
-        
-        throw new Error(`Vision AI extraction failed: ${openrouterError.message}`);
       }
     }
     
-    // Note: All other vision models (OpenAI, Gemini, Hugging Face, Groq) are disabled
-    // Only OpenRouter with Claude 3.5 Sonnet is used for extraction
-    // This ensures consistent, high-quality results
+    // All enabled models failed
+    console.error('\n' + '❌'.repeat(40));
+    console.error('❌ ALL ENABLED VISION MODELS FAILED');
+    console.error('❌ Check your API keys and credits');
+    console.error('❌'.repeat(40) + '\n');
+    throw new Error(`All vision models failed. Last error: ${lastError?.message || 'Unknown error'}`);
     
   } catch (error) {
     console.error('\n❌ PDF extraction failed:', error.message);

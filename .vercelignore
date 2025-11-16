@@ -1,0 +1,42 @@
+
+# Development files
+node_modules
+.env
+.env.local
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+test-*.js
+check-*.js
+setup-*.js
+create-test-*.js
+fix-*.js
+list-*.js
+run-*.js
+drop-*.js
+add-*.js
+
+# SQL files
+*.sql
+migrations/
+
+# PDFs
+*.pdf
+
+# Images (except logo)
+visualisation.png
+visualisation2.png
+
+# Uploads directory
+uploads/
+temp/
+
+# Other files
+google-credentials.json
+test-upload.txt
+.git
+.gitignore

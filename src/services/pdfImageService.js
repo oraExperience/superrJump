@@ -65,8 +65,9 @@ async function convertPdfToImages(pdfPath) {
   try {
     const pageImages = await convertPDFToImages(pdfPath);
     
-    // Save each page to a temp file
-    const tempDir = path.join(__dirname, '../../temp/vision');
+    // Save each page to a temp file - use /tmp in production
+    const baseTemp = process.env.NODE_ENV === 'production' ? '/tmp' : path.join(__dirname, '../..');
+    const tempDir = path.join(baseTemp, 'temp/vision');
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
@@ -233,8 +234,12 @@ async function cropQuestionFromPage(pageImage, bbox, padding = 20) {
  */
 async function saveImage(imageBuffer, assessmentId, filename) {
   try {
-    // Create directory structure: /uploads/questions/assessment_X/
-    const uploadDir = path.join(__dirname, '../../uploads/questions', `assessment_${assessmentId}`);
+    // Use /tmp in production (Vercel), uploads in development
+    const baseDir = process.env.NODE_ENV === 'production'
+      ? '/tmp/uploads'
+      : path.join(__dirname, '../../uploads');
+    
+    const uploadDir = path.join(baseDir, 'questions', `assessment_${assessmentId}`);
     
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -262,7 +267,12 @@ async function saveImage(imageBuffer, assessmentId, filename) {
  */
 async function deleteAssessmentImages(assessmentId) {
   try {
-    const uploadDir = path.join(__dirname, '../../uploads/questions', `assessment_${assessmentId}`);
+    // Use /tmp in production (Vercel), uploads in development
+    const baseDir = process.env.NODE_ENV === 'production'
+      ? '/tmp/uploads'
+      : path.join(__dirname, '../../uploads');
+    
+    const uploadDir = path.join(baseDir, 'questions', `assessment_${assessmentId}`);
     
     if (fs.existsSync(uploadDir)) {
       fs.rmSync(uploadDir, { recursive: true, force: true });

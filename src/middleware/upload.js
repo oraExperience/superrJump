@@ -3,8 +3,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+// Use /tmp in production (Vercel), uploads in development
+const uploadsDir = process.env.NODE_ENV === 'production'
+  ? '/tmp/uploads'
+  : path.join(__dirname, '../../uploads');
+
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }

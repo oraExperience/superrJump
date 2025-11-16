@@ -2,10 +2,20 @@
 // PDF to Image Service - Converts PDFs to images and crops questions precisely
 // Uses pdf-to-img for conversion and sharp for image manipulation
 
-const { pdf: pdfToImg } = require('pdf-to-img');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+
+// Dynamic import for ES Module
+let pdfToImgModule = null;
+
+async function getPdfToImg() {
+  if (!pdfToImgModule) {
+    const module = await import('pdf-to-img');
+    pdfToImgModule = module.pdf;
+  }
+  return pdfToImgModule;
+}
 
 /**
  * Convert PDF to high-quality images (one per page)
@@ -16,6 +26,7 @@ async function convertPDFToImages(pdfPath) {
   try {
     console.log(`📄 Converting PDF to images: ${pdfPath}`);
     
+    const pdfToImg = await getPdfToImg();
     const document = await pdfToImg(pdfPath, {
       scale: 3.0  // 3.0 scale = 300 DPI (100 DPI * 3.0)
     });

@@ -553,7 +553,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const assessmentId = urlParams.get('id');
 
 if (!assessmentId) {
-    window.location.href = '/assessments.html';
+    window.location.href = '/assessments';
 }
 
 // Assessment data (will be loaded from API)
@@ -623,7 +623,7 @@ async function loadAssessmentData() {
         console.error('Error loading assessment:', error);
         showAlert('Failed to load assessment data. Redirecting...', 'Error', 'error');
         setTimeout(() => {
-            window.location.href = '/assessments.html';
+            window.location.href = '/assessments';
         }, 2000);
     }
 }
@@ -1305,7 +1305,7 @@ async function approveAndFinalize() {
             console.log('✅ Assessment approved successfully');
             // Redirect immediately without showing success popup
             isIntentionalNavigation = true; // Prevent beforeunload warning
-            window.location.href = `/assessment-details.html?id=${assessmentId}`;
+            window.location.href = `/assessment-details?id=${assessmentId}`;
         }
     } catch (error) {
         console.error('Error in approval process:', error);
@@ -1386,13 +1386,13 @@ async function goBack() {
             isIntentionalNavigation = true;
             // Use setTimeout to ensure flag is set before navigation
             setTimeout(() => {
-                window.location.href = `/assessment-details.html?id=${assessmentId}`;
+                window.location.href = `/assessment-details?id=${assessmentId}`;
             }, 0);
         }
     } else {
         // No questions, navigate directly
         isIntentionalNavigation = true;
-        window.location.href = `/assessment-details.html?id=${assessmentId}`;
+        window.location.href = `/assessment-details?id=${assessmentId}`;
     }
 }
 

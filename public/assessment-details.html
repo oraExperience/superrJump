@@ -229,11 +229,11 @@
 
 <!-- Sidebar Menu Items -->
 <nav class="flex-1 px-4 py-6 space-y-2">
-<a href="/assessments.html" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
+<a href="/assessments" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
 <span class="material-symbols-outlined">assignment</span>
 <span>Assessments</span>
 </a>
-<a href="/profile.html" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+<a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
 <span class="material-symbols-outlined">person</span>
 <span>Profile</span>
 </a>
@@ -259,7 +259,7 @@
 <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
 <span class="material-symbols-outlined text-2xl">menu</span>
 </button>
-<a href="/dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+<a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
 <div class="text-primary flex items-center" style="width: 28px; height: 28px;">
 <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
@@ -348,7 +348,7 @@
 <div class="flex-1">
 <h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Extracting Questions...</h3>
 <p class="text-base text-text-dark/70 dark:text-text-light/70 mb-4">Our AI is analyzing your question paper and extracting questions. This process continues in the background.</p>
-<button onclick="window.location.href='/assessments.html'" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md">
+<button onclick="window.location.href='/assessments'" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md">
 <span class="material-symbols-outlined">arrow_back</span>
 <span>Back to Assessments</span>
 </button>
@@ -402,7 +402,7 @@
             <!-- Back Button Below Card -->
             <div class="flex justify-center mt-6">
                 <div class="text-center">
-                    <button onclick="window.location.href='/assessments.html'" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
+                    <button onclick="window.location.href='/assessments'" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
                         <span class="material-symbols-outlined">arrow_back</span>
                         <span>Back to Assessments</span>
                     </button>
@@ -460,7 +460,7 @@
 Total Questions: <span id="questionsCount" class="font-bold text-primary">0</span> |
 Total Marks: <span id="questionsTotalMarks" class="font-bold text-green-600 dark:text-green-400">0</span>
 </div>
-<button id="editQuestionsBtn" onclick="window.location.href='/verify-questions.html?id=' + assessmentId" class="inline-flex items-center gap-1 text-sm text-primary hover:text-blue-700 font-medium" style="display: none;">
+<button id="editQuestionsBtn" onclick="window.location.href='/verify-questions?id=' + assessmentId" class="inline-flex items-center gap-1 text-sm text-primary hover:text-blue-700 font-medium" style="display: none;">
 <span class="material-symbols-outlined text-base">edit</span>
 Edit Questions
 </button>

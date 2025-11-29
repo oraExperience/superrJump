@@ -675,7 +675,7 @@ let isStudentSelectionMode = false; // Track if we're in student selection step
 document.addEventListener('DOMContentLoaded', () => {
     if (!submissionId) {
         alert('No submission ID provided');
-        window.location.href = '/assessments.html';
+        window.location.href = '/assessments';
         return;
     }
     loadSubmissionData();
@@ -801,7 +801,7 @@ async function loadSubmissionData() {
     } catch (error) {
         console.error('Error loading submission:', error);
         alert('Failed to load submission data: ' + error.message);
-        window.location.href = '/assessments.html';
+        window.location.href = '/assessments';
     }
 }
 
@@ -2088,11 +2088,11 @@ function goBack() {
     }
     // Otherwise, default to assessment details page
     else if (submission && submission.assessment_id) {
-        window.location.href = `/assessment-details.html?id=${submission.assessment_id}`;
+        window.location.href = `/assessment-details?id=${submission.assessment_id}`;
     } else if (assessmentId) {
-        window.location.href = `/assessment-details.html?id=${assessmentId}`;
+        window.location.href = `/assessment-details?id=${assessmentId}`;
     } else {
-        window.location.href = '/assessments.html';
+        window.location.href = '/assessments';
     }
 }
 </script>

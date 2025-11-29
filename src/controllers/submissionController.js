@@ -64,12 +64,30 @@ exports.uploadAnswerSheetNew = async (req, res) => {
 
         console.log(`✅ Answer sheet saved at: ${answerSheetLink}`);
         
-        // ALWAYS use multi-student detection (works for both single and multiple students)
-        console.log('🔍 Detecting students in PDF (handles single or multiple)...');
-        const multiStudentExtractionService = require('../services/multiStudentExtractionService');
+        // Update assessment status to "Processing Ans" IMMEDIATELY after upload
+        if (assessment.status === 'Ready for Grading' || assessment.status === 'Ans Pending Approval' || assessment.status === 'Completed') {
+            await pool.query(
+                `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+                [assessmentId]
+            );
+            console.log(`✅ Assessment ${assessmentId} status updated to "Processing Ans" (before AI detection)`);
+        }
         
-        const analysisResult = await multiStudentExtractionService.analyzeMultiStudentPDF(
-            answerSheetLink,
+        // Return immediately to show processing UI
+        res.status(202).json({
+            success: true,
+            message: 'Answer sheet uploaded. AI is now detecting students and grading...',
+            assessmentId
+        });
+        
+        // Continue AI detection and grading in background (non-blocking)
+        (async () => {
+            try {
+                console.log('🔍 Detecting students in PDF (handles single or multiple)...');
+                const multiStudentExtractionService = require('../services/multiStudentExtractionService');
+                
+                const analysisResult = await multiStudentExtractionService.analyzeMultiStudentPDF(
+                    answerSheetLink,
             {
                 title: assessment.title,
                 class: assessment.class,
@@ -80,15 +98,17 @@ exports.uploadAnswerSheetNew = async (req, res) => {
         const detectedStudents = analysisResult.students;
         console.log(`✅ Detected ${detectedStudents.length} student(s) in PDF`);
 
-        // Handle based on number of students detected
-        if (detectedStudents.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No students detected in the PDF. Please ensure the answer sheet has student information at the top.'
-            });
-        }
+                // Handle based on number of students detected
+                if (detectedStudents.length === 0) {
+                    console.log('⚠️ No students detected in PDF');
+                    await pool.query(
+                        `UPDATE assessments SET status = 'Failed', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+                        [assessmentId]
+                    );
+                    return; // Exit background processing
+                }
 
-        if (detectedStudents.length === 1) {
+                if (detectedStudents.length === 1) {
             // SINGLE STUDENT - Use existing flow
             console.log('👤 Single student detected - using standard flow');
             const student = detectedStudents[0];
@@ -144,101 +164,82 @@ exports.uploadAnswerSheetNew = async (req, res) => {
                 );
                 console.log(`✅ Submission ${submissionId} ready for verification`);
             })
-            .catch(error => {
-                console.error(`❌ Processing failed for submission ${submissionId}:`, error);
-                pool.query(`UPDATE student_submissions SET status = 'Failed' WHERE id = $1`, [submissionId]);
-            });
+                    .catch(error => {
+                        console.error(`❌ Processing failed for submission ${submissionId}:`, error);
+                        pool.query(`UPDATE student_submissions SET status = 'Failed' WHERE id = $1`, [submissionId]);
+                    });
 
-            // Update assessment status
-            if (assessment.status === 'Ready for Grading' || assessment.status === 'Ans Pending Approval' || assessment.status === 'Completed') {
-                await pool.query(
-                    `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-                    [assessmentId]
-                );
-                console.log(`✅ Assessment ${assessmentId} status updated to "Processing Ans"`);
-            }
-
-            // Return for single student
-            return res.status(201).json({
-                success: true,
-                message: 'Answer sheet uploaded. Redirecting to verification...',
-                submissionId,
-                assessmentId,
-                redirectUrl: `/verify-grades?id=${submissionId}&assessment=${assessmentId}`
-            });
-        }
-
-        // MULTIPLE STUDENTS - Auto-create all submissions
-        console.log(`👥 Multiple students detected (${detectedStudents.length}) - creating submissions automatically`);
-        
-        const createdSubmissions = [];
-        
-        for (const student of detectedStudents) {
-            try {
-                // Match or create student
-                const matchResult = await studentMatchingService.suggestStudentAction(
-                    {
-                        student_name: student.student_name,
-                        student_identifier: student.student_identifier,
-                        roll_number: student.roll_number
-                    },
-                    organisation,
-                    assessmentId
-                );
-
-                let studentId = null;
-                if (matchResult.action === 'select' && matchResult.matches.length > 0) {
-                    studentId = matchResult.matches[0].id;
-                    console.log(`✓ Matched ${student.student_name} to existing student ID: ${studentId}`);
-                } else {
-                    console.log(`⚠️ No matching student found for ${student.student_name} - creating submission with NULL student_id (teacher can assign later)`);
+                    console.log(`✅ Single student processing started for submission ${submissionId}`);
+                    return; // Exit background processing (single student flow complete)
                 }
 
-                // Create submission (student_id can be null)
-                const submission = await pool.query(
-                    `INSERT INTO student_submissions (
-                        assessment_id, student_id, answer_sheet_link,
-                        extracted_student_info, page_numbers, status, created_at, updated_at
-                    ) VALUES ($1, $2, $3, $4, $5, 'Pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    RETURNING id`,
-                    [
-                        assessmentId,
-                        studentId, // Can be null
-                        answerSheetLink,
-                        JSON.stringify({ ...student, ...matchResult }), // Store detected info
-                        JSON.stringify(student.page_numbers) // Store page numbers as JSONB
-                    ]
-                );
+                // MULTIPLE STUDENTS - Auto-create all submissions
+                console.log(`👥 Multiple students detected (${detectedStudents.length}) - creating submissions automatically`);
+        
+                const createdSubmissions = [];
+                
+                for (const student of detectedStudents) {
+                    try {
+                        // Match or create student
+                        const matchResult = await studentMatchingService.suggestStudentAction(
+                            {
+                                student_name: student.student_name,
+                                student_identifier: student.student_identifier,
+                                roll_number: student.roll_number
+                            },
+                            organisation,
+                            assessmentId
+                        );
+    
+                            let studentId = null;
+                            if (matchResult.action === 'select' && matchResult.matches.length > 0) {
+                                studentId = matchResult.matches[0].id;
+                                console.log(`✓ Matched ${student.student_name} to existing student ID: ${studentId}`);
+                            } else {
+                                console.log(`⚠️ No matching student found for ${student.student_name} - creating submission with NULL student_id (teacher can assign later)`);
+                            }
+    
+                            // Create submission (student_id can be null)
+                            const submission = await pool.query(
+                                `INSERT INTO student_submissions (
+                                    assessment_id, student_id, answer_sheet_link,
+                                    extracted_student_info, page_numbers, status, created_at, updated_at
+                                ) VALUES ($1, $2, $3, $4, $5, 'Pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                                RETURNING id`,
+                                [
+                                    assessmentId,
+                                    studentId, // Can be null
+                                    answerSheetLink,
+                                    JSON.stringify({ ...student, ...matchResult }), // Store detected info
+                                    JSON.stringify(student.page_numbers) // Store page numbers as JSONB
+                                ]
+                            );
+    
+                            const submissionId = submission.rows[0].id;
+                            createdSubmissions.push({
+                                submissionId,
+                                student_name: student.student_name,
+                                pages: student.page_numbers.join(', ')
+                            });
+    
+                            // Start grading
+                            answerGradingService.gradeAnswerSheet(submissionId, assessmentId, answerSheetLink)
+                                .catch(err => console.error(`❌ Grading failed for submission ${submissionId}:`, err));
+    
+                        } catch (err) {
+                            console.error(`❌ Error creating submission for ${student.student_name}:`, err);
+                        }
+                    }
 
-                const submissionId = submission.rows[0].id;
-                createdSubmissions.push({
-                    submissionId,
-                    student_name: student.student_name,
-                    pages: student.page_numbers.join(', ')
-                });
-
-                // Start grading
-                answerGradingService.gradeAnswerSheet(submissionId, assessmentId, answerSheetLink)
-                    .catch(err => console.error(`❌ Grading failed for submission ${submissionId}:`, err));
-
-            } catch (err) {
-                console.error(`❌ Error creating submission for ${student.student_name}:`, err);
+                // No need to update assessment status again (already done above)
+                console.log(`✅ Completed processing ${createdSubmissions.length} submissions in background`);
+                
+            } catch (error) {
+                console.error('❌ Background processing error:', error);
+                // Assessment status stays as "Processing Ans" even on error
+                // Individual submissions will have "Failed" status if they errored
             }
-        }
-
-        // Update assessment status
-        await pool.query(
-            `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-            [assessmentId]
-        );
-
-        return res.status(201).json({
-            success: true,
-            message: `Created ${createdSubmissions.length} submission(s) from multi-student PDF`,
-            studentsDetected: detectedStudents.length,
-            submissionsCreated: createdSubmissions,
-            assessmentId
-        });
+        })(); // Execute the async IIFE immediately but don't await it
 
     } catch (error) {
         console.error('Upload answer sheet error:', error);

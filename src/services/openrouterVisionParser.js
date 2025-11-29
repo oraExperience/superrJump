@@ -10,9 +10,10 @@ const visionConfig = require('../config/visionConfig');
 /**
  * Extract questions by sending PDF images to OpenRouter Vision
  * @param {Array} imagePages - Array of {pageNumber, imagePath}
+ * @param {Object} context - Assessment context {title, subject, class}
  * @returns {Promise<Array>} - Questions with coordinates
  */
-async function extractQuestionsFromImages(imagePages) {
+async function extractQuestionsFromImages(imagePages, context = {}) {
   try {
     console.log('🌐 Using OPENROUTER VISION AI - processing each page separately...\n');
     
@@ -28,7 +29,7 @@ async function extractQuestionsFromImages(imagePages) {
       console.log(`📄 Processing page ${page.pageNumber} with OpenRouter Vision...`);
       
       try {
-        const questions = await extractQuestionsFromImage(page.imagePath, page.pageNumber);
+        const questions = await extractQuestionsFromImage(page.imagePath, page.pageNumber, context);
         
         if (questions.length > 0) {
           allQuestions.push(...questions);
@@ -52,7 +53,7 @@ async function extractQuestionsFromImages(imagePages) {
  * Extract questions from ALL images in a single request using OpenRouter Vision
  * This is more efficient and provides better context to the AI
  */
-async function extractQuestionsFromAllImages(imagePages) {
+async function extractQuestionsFromAllImages(imagePages, context = {}) {
   try {
     // Read all images as base64
     const imageContents = [];
@@ -65,9 +66,35 @@ async function extractQuestionsFromAllImages(imagePages) {
       });
     }
     
+    const contextInfo = context.title || context.subject || context.class
+      ? `\n\n📚 ASSESSMENT CONTEXT (Use this to identify relevant topics):\n- Assessment: ${context.title || 'N/A'}\n- Subject: ${context.subject || 'N/A'}\n- Class/Grade: ${context.class || 'N/A'}\n\nWhen identifying topics for each question, consider what would typically be taught in ${context.class || 'this grade'} for ${context.subject || 'this subject'}. Be specific and accurate based on the curriculum for this level.\n`
+      : '';
+    
     const prompt = `You are a PRECISE exam paper reader. I'm giving you ${imagePages.length} page(s) of an exam paper. Extract EVERY question from ALL pages.
+${contextInfo}
 
-🚨 CRITICAL: Read mathematical expressions CHARACTER BY CHARACTER 🚨
+🚨 CRITICAL: EACH QUESTION MUST BE SELF-CONTAINED 🚨
+
+1. INCLUDE PARENT INSTRUCTION IN EVERY SUB-QUESTION:
+   
+   EXAMPLE FROM IMAGE:
+   If you see: "Q3. Write TRUE or FALSE for the given statements.
+                (i) If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   
+   Extract as: "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   
+   NOT just: "If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   
+2. MULTIPLE CHOICE - Include instruction:
+   "Choose the correct option: [question text]. Options: (a) ..., (b) ..., (c) ..., (d) ..."
+   
+3. FILL IN THE BLANK - Include instruction:
+   "Fill in the blank: [question with _____ or blank space]"
+   
+4. SHORT ANSWER - Include instruction if present:
+   "Answer the following: [question text]"
+
+5. READ MATHEMATICAL EXPRESSIONS CHARACTER BY CHARACTER:
 
 MATHEMATICAL NOTATION GUIDE:
 
@@ -136,19 +163,37 @@ WHAT TO SKIP:
 
 IMPORTANT: For each question, specify which page number it's from (1, 2, 3, etc.)
 
-EXAMPLE CONVERSION:
-Image shows: "If ∫₋π/₄⁴ x³·sin⁴x dx = k then k = _____."
-You write: "If integral from negative pi divided by 4 to 4 of x cubed times sine to the power 4 of x dx equals k then k equals blank."
+EXAMPLE CONVERSIONS:
+
+1. TRUE/FALSE Questions:
+   Image: "Q3. Write TRUE or FALSE. (i) Sum of all sides is called Area."
+   Extract: "Write TRUE or FALSE: Sum of all sides is called Area."
+
+2. Mathematical Expressions:
+   Image: "If ∫₋π/₄⁴ x³·sin⁴x dx = k then k = _____."
+   Extract: "Fill in the blank: If integral from negative pi divided by 4 to 4 of x cubed times sine to the power 4 of x dx equals k then k equals blank."
+
+3. Multiple Choice:
+   Image: "Choose correct answer. Q1. 2+2 = ? (a) 3 (b) 4 (c) 5"
+   Extract: "Choose the correct option: 2+2 = ? Options: (a) 3, (b) 4, (c) 5"
 
 Return JSON array ONLY (no markdown, no explanation):
 [
   {
-    "question_number": "1",
-    "question_text": "Complete question with ALL mathematical notation in plain English",
-    "marks": 2,
-    "page_number": 1
+    "question_identifier": "Q3(i)",
+    "question_text": "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.",
+    "marks": 1,
+    "page_number": 1,
+    "y_start": 500,
+    "y_end": 600
   }
-]`;
+]
+
+IMPORTANT:
+- Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
+- y_start: Y pixel coordinate where the question starts on the page
+- y_end: Y pixel coordinate where the question ends on the page
+- Measure these carefully to capture the entire question including any diagrams or images`;
 
     // Build content array with prompt + all images
     const contentArray = [
@@ -228,17 +273,20 @@ Return JSON array ONLY (no markdown, no explanation):
       throw new Error('AI response is not an array');
     }
     
-    // Convert to standard format
+    // Return questions as-is from AI (no conversion needed)
     const questions = questionsData.map(q => ({
-      number: q.question_number || 'unknown',
-      text: q.question_text || '',
+      question_identifier: q.question_identifier || 'unknown',
+      question_text: q.question_text || '',
       marks: q.marks || undefined,
       page: q.page_number || 1,
+      y_start: q.y_start || null,
+      y_end: q.y_end || null,
+      topics: q.topics || [],
       bbox: {
         x1: 100,
-        y1: 100,
+        y1: q.y_start || 100,
         x2: 1685,
-        y2: 350
+        y2: q.y_end || 350
       }
     }));
     
@@ -254,15 +302,41 @@ Return JSON array ONLY (no markdown, no explanation):
 /**
  * Extract questions from a single image using OpenRouter Vision (DEPRECATED - use extractQuestionsFromAllImages)
  */
-async function extractQuestionsFromImage(imagePath, pageNumber) {
+async function extractQuestionsFromImage(imagePath, pageNumber, context = {}) {
   try {
     // Read image file as base64
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
     
+    const contextInfo = context.title || context.subject || context.class
+      ? `\n\n📚 ASSESSMENT CONTEXT (Use this to identify relevant topics):\n- Assessment: ${context.title || 'N/A'}\n- Subject: ${context.subject || 'N/A'}\n- Class/Grade: ${context.class || 'N/A'}\n\nWhen identifying topics, consider what would typically be taught in ${context.class || 'this grade'} ${context.subject || 'subject'}.\n`
+      : '';
+    
     const prompt = `You are a PRECISE exam paper reader. Look VERY carefully at this image and extract EVERY question with COMPLETE mathematical notation.
+${contextInfo}
 
-🚨 CRITICAL: Read mathematical expressions CHARACTER BY CHARACTER 🚨
+🚨 CRITICAL: EACH QUESTION MUST BE SELF-CONTAINED 🚨
+
+1. INCLUDE PARENT INSTRUCTION IN EVERY SUB-QUESTION:
+   
+   EXAMPLE FROM IMAGE:
+   If you see: "Q3. Write TRUE or FALSE for the given statements.
+                (i) If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   
+   Extract as: "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   
+   NOT just: "If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   
+2. MULTIPLE CHOICE - Include instruction:
+   "Choose the correct option: [question text]. Options: (a) ..., (b) ..., (c) ..., (d) ..."
+   
+3. FILL IN THE BLANK - Include instruction:
+   "Fill in the blank: [question with _____ or blank space]"
+   
+4. SHORT ANSWER - Include instruction if present:
+   "Answer the following: [question text]"
+
+5. READ MATHEMATICAL EXPRESSIONS CHARACTER BY CHARACTER:
 
 MATHEMATICAL NOTATION GUIDE:
 
@@ -329,19 +403,41 @@ WHAT TO SKIP:
 - Page numbers
 - "multiple choice type of questions" text
 
-EXAMPLE CONVERSION:
-Image shows: "If ∫₋π/₄⁴ x³·sin⁴x dx = k then k = _____."
-You write: "If integral from negative pi divided by 4 to 4 of x cubed times sine to the power 4 of x dx equals k then k equals blank."
+EXAMPLE CONVERSIONS:
+
+1. TRUE/FALSE Questions:
+   Image: "Q3. Write TRUE or FALSE. (i) Sum of all sides is called Area."
+   Extract: "Write TRUE or FALSE: Sum of all sides is called Area."
+
+2. Mathematical Expressions:
+   Image: "If ∫₋π/₄⁴ x³·sin⁴x dx = k then k = _____."
+   Extract: "Fill in the blank: If integral from negative pi divided by 4 to 4 of x cubed times sine to the power 4 of x dx equals k then k equals blank."
+
+3. Multiple Choice:
+   Image: "Choose correct answer. Q1. 2+2 = ? (a) 3 (b) 4 (c) 5"
+   Extract: "Choose the correct option: 2+2 = ? Options: (a) 3, (b) 4, (c) 5"
 
 Return JSON array ONLY (no markdown, no explanation):
 [
   {
-    "question_number": "i",
-    "question_text": "Complete question with ALL mathematical notation in plain English",
-    "marks": 2,
-    "estimated_y": 500
+    "question_identifier": "Q3(i)",
+    "question_text": "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.",
+    "marks": 1,
+    "y_start": 500,
+    "y_end": 600,
+    "topics": [
+      {"topic": "Fractions", "weight": 80},
+      {"topic": "Number Theory", "weight": 20}
+    ]
   }
-]`;
+]
+
+IMPORTANT:
+- Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
+- y_start: Y pixel coordinate where the question starts on the page
+- y_end: Y pixel coordinate where the question ends on the page
+- Measure these carefully to capture the entire question including any diagrams or images
+- topics: Array of topics covered by this question with their weightage percentage (must sum to 100). Identify 1-3 main topics that this question tests. Be specific and accurate based on the question content.`;
 
     // Log prompt
     console.log('\n' + '='.repeat(80));
@@ -414,16 +510,19 @@ Return JSON array ONLY (no markdown, no explanation):
     
     const questions = JSON.parse(jsonMatch[0]);
     
-    // Convert to our format
+    // Return questions as-is from AI (no conversion needed)
     return questions.map((q, idx) => {
-      const y1 = q.estimated_y || (idx * 300 + 200);
-      const y2 = y1 + 250;
+      const y1 = q.y_start || (idx * 300 + 200);
+      const y2 = q.y_end || (y1 + 250);
       
       return {
-        questionNumber: q.question_number,
-        questionText: q.question_text,
+        question_identifier: q.question_identifier,
+        question_text: q.question_text,
         marks: q.marks || 1,
         page: pageNumber,
+        y_start: q.y_start || null,
+        y_end: q.y_end || null,
+        topics: q.topics || [],
         bbox: {
           x1: 100,
           y1: Math.max(0, y1),

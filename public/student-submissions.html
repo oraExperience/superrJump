@@ -1,0 +1,491 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Student Submissions - SuperrJump</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2A6EBB",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#111821",
+                        "accent-yellow": "#FFC857",
+                        "accent-green": "#A2D7D2",
+                        "text-dark": "#333333",
+                        "text-light": "#F8FAFC",
+                        "border-light": "#e7ecf3",
+                        "border-dark": "#374151"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-text-dark dark:text-text-light">
+    <div class="relative flex min-h-screen w-full flex-col">
+        <!-- Sidebar Menu -->
+        <div id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-border-light dark:border-border-dark transform -translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="flex flex-col h-full">
+                <!-- Sidebar Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+                    <div class="flex items-center gap-2">
+                        <div class="text-primary size-6">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-lg font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+                    </div>
+                    <button onclick="toggleSidebar()"
+                        class="text-text-dark dark:text-text-light hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <!-- Sidebar Menu Items -->
+                <nav class="flex-1 px-4 py-6 space-y-2">
+                    <a href="/dashboard.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/assessments.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+                        <span class="material-symbols-outlined">assignment</span>
+                        <span>Assessments</span>
+                    </a>
+                    <a href="/students.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
+                        <span class="material-symbols-outlined">school</span>
+                        <span>Students</span>
+                    </a>
+                    <a href="/profile.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>Profile</span>
+                    </a>
+                </nav>
+
+                <!-- Sidebar Footer -->
+                <div class="mt-auto px-4 py-4 border-t border-border-light dark:border-border-dark">
+                    <button onclick="logout()"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
+                        <span class="material-symbols-outlined">logout</span>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Backdrop -->
+        <div id="sidebarBackdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleSidebar()"></div>
+
+        <!-- TopNavBar -->
+        <header
+            class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+            <div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
+                <div class="flex items-center gap-3 text-text-dark dark:text-text-light">
+                    <button onclick="toggleSidebar()"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-2xl">menu</span>
+                    </button>
+                    <a href="/dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                        <div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="orgName" class="text-sm font-medium">Organization Name</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex flex-col items-center w-full flex-1">
+            <div class="w-full max-w-7xl px-4 md:px-8 py-10">
+                <!-- Back Button -->
+                <button onclick="window.location.href='/students'"
+                    class="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold mb-6 transition-colors">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    <span>Back to Students</span>
+                </button>
+
+                <!-- Header -->
+                <div class="mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-6 rounded-xl border-l-4 border-accent-yellow">
+                    <h1 class="text-4xl font-bold mb-2">Student Submissions</h1>
+                    <p class="text-lg text-text-dark/70 dark:text-text-light/70" id="studentInfo">Loading student information...</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Total Submissions</p>
+                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="totalSubmissions">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-2xl">assignment</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Approved</p>
+                                <p class="text-3xl font-bold text-green-600 dark:text-green-400" id="approvedCount">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-2xl">check_circle</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Pending</p>
+                                <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400" id="pendingCount">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-2xl">pending</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Average Score</p>
+                                <p class="text-3xl font-bold text-primary dark:text-blue-400" id="averageScore">0%</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary dark:text-blue-400 text-2xl">analytics</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submissions Table -->
+                <div class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg border-y md:border border-border-light dark:border-border-dark overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full" style="min-width: 1200px;">
+                            <thead class="bg-primary">
+                                <tr>
+                                    <th class="px-6 py-5 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Ass. No.</th>
+                                    <th class="px-6 py-5 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-white/30" style="min-width: 200px;">
+                                        Title</th>
+                                    <th class="px-6 py-5 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Class</th>
+                                    <th class="px-6 py-5 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Subject</th>
+                                    <th class="px-6 py-5 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Created</th>
+                                    <th class="px-6 py-5 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Status</th>
+                                    <th class="px-6 py-5 text-center text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Graded</th>
+                                    <th class="px-6 py-5 text-center text-sm font-bold text-white uppercase tracking-wider border-r border-white/30">
+                                        Class Rank</th>
+                                    <th class="px-6 py-5 text-center text-sm font-bold text-white uppercase tracking-wider">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissionsTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr>
+                                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                        <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                                        <p>Loading submissions...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="flex justify-center w-full mt-10 border-t border-border-light dark:border-border-dark">
+            <div class="w-full max-w-7xl px-4 py-8 md:px-8">
+                <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                    <div class="flex items-center gap-3">
+                        <div class="text-primary size-6">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-lg font-bold">SuperrJump</h2>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE_URL = '';
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        const token = sessionStorage.getItem('token');
+        
+        if (!user || !token) {
+            window.location.href = '/login';
+            throw new Error('Not authenticated');
+        }
+
+        // Set organization name
+        if (user && user.organisation) {
+            document.getElementById('orgName').textContent = user.organisation;
+        }
+
+        // Sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+
+        // Get student ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = urlParams.get('studentId');
+
+        if (!studentId) {
+            alert('No student ID provided');
+            window.history.back();
+            throw new Error('No student ID');
+        }
+
+        let studentData = null;
+        let submissions = [];
+
+        // Load student data and submissions
+        async function loadData() {
+            try {
+                // Fetch student details
+                const studentResponse = await fetch(`${API_BASE_URL}/api/students/${studentId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!studentResponse.ok) {
+                    throw new Error('Failed to fetch student details');
+                }
+
+                const studentResult = await studentResponse.json();
+                studentData = studentResult.student;
+
+                // Update page info
+                document.getElementById('studentInfo').textContent = 
+                    `${studentData.student_name} • ${studentData.student_identifier} • ${studentData.class || 'No Class'}`;
+
+                // Fetch student submissions
+                const submissionsResponse = await fetch(
+                    `${API_BASE_URL}/api/students/${studentId}/submissions`,
+                    {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }
+                );
+
+                if (!submissionsResponse.ok) {
+                    throw new Error('Failed to fetch submissions');
+                }
+
+                const submissionsResult = await submissionsResponse.json();
+                submissions = submissionsResult.submissions || [];
+
+                updateStats();
+                renderSubmissions();
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('submissionsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-red-500">
+                            Failed to load submissions. ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function updateStats() {
+            const total = submissions.length;
+            const approved = submissions.filter(s => s.status === 'Approved').length;
+            const pending = submissions.filter(s => s.status !== 'Approved').length;
+            
+            // Calculate average percentage for approved submissions
+            const approvedSubmissions = submissions.filter(s => s.status === 'Approved' && s.percentage);
+            const avgPercentage = approvedSubmissions.length > 0
+                ? (approvedSubmissions.reduce((sum, s) => sum + parseFloat(s.percentage || 0), 0) / approvedSubmissions.length).toFixed(1)
+                : 0;
+
+            document.getElementById('totalSubmissions').textContent = total;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('averageScore').textContent = `${avgPercentage}%`;
+        }
+
+        // Helper function to format numbers without unnecessary decimals
+        function formatNumber(num) {
+            if (!num) return '0';
+            const parsed = parseFloat(num);
+            return parsed % 1 === 0 ? parsed.toString() : parsed.toFixed(2).replace(/\.?0+$/, '');
+        }
+
+        function renderSubmissions() {
+            const tbody = document.getElementById('submissionsTableBody');
+
+            if (submissions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                            <span class="material-symbols-outlined text-4xl mb-2 text-gray-300">assignment</span>
+                            <p>No submissions found for this student</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = submissions.map(submission => {
+                const statusConfig = getStatusConfig(submission.status);
+                const percentage = submission.percentage ? Math.round(parseFloat(submission.percentage)) : '0';
+                const marksObtained = formatNumber(submission.total_marks_obtained);
+                const totalMarks = formatNumber(submission.total_marks_possible);
+                const marksDisplay = `${marksObtained}/${totalMarks}`;
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <div class="font-bold text-text-dark dark:text-text-light">#${submission.assessment_id}</div>
+                        </td>
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <div class="font-medium text-text-dark dark:text-text-light">${submission.assessment_title}</div>
+                        </td>
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <div class="text-sm text-text-dark/70 dark:text-text-light/70">${submission.class}</div>
+                        </td>
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <div class="text-sm text-text-dark/70 dark:text-text-light/70">${submission.subject}</div>
+                        </td>
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <div class="text-sm text-text-dark/70 dark:text-text-light/70">
+                                ${new Date(submission.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.textColor}">
+                                ${submission.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 border-r border-gray-200 dark:border-gray-700">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="font-bold ${getPercentageColor(percentage)}">${percentage}%</div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                    <div class="${getProgressBarColor(percentage)} h-full rounded-full transition-all" style="width: ${percentage}%"></div>
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${marksDisplay}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center border-r border-gray-200 dark:border-gray-700">
+                            <div class="font-semibold text-text-dark dark:text-text-light">
+                                ${submission.class_rank ? `#${submission.class_rank}` : '-'}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="viewSubmissionDetails(${submission.id}, ${submission.assessment_id})"
+                                class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getStatusConfig(status) {
+            const configs = {
+                'Processing': { bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-700 dark:text-blue-300' },
+                'Ready for Verification': { bgColor: 'bg-yellow-50 dark:bg-yellow-900/20', textColor: 'text-yellow-800 dark:text-yellow-300' },
+                'Verifying': { bgColor: 'bg-yellow-50 dark:bg-yellow-900/20', textColor: 'text-yellow-800 dark:text-yellow-300' },
+                'Pending': { bgColor: 'bg-yellow-50 dark:bg-yellow-900/20', textColor: 'text-yellow-800 dark:text-yellow-300' },
+                'Approved': { bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-700 dark:text-green-300' },
+                'Upload Failed': { bgColor: 'bg-red-100 dark:bg-red-900/30', textColor: 'text-red-700 dark:text-red-300' },
+                'Extraction Failed': { bgColor: 'bg-red-100 dark:bg-red-900/30', textColor: 'text-red-700 dark:text-red-300' }
+            };
+            return configs[status] || { bgColor: 'bg-gray-100 dark:bg-gray-900/30', textColor: 'text-gray-700 dark:text-gray-300' };
+        }
+
+        function getPercentageColor(percentage) {
+            const p = parseFloat(percentage);
+            if (p >= 75) return 'text-green-600 dark:text-green-400';
+            if (p >= 50) return 'text-yellow-600 dark:text-yellow-400';
+            if (p >= 35) return 'text-orange-600 dark:text-orange-400';
+            return 'text-red-600 dark:text-red-400';
+        }
+
+        function getProgressBarColor(percentage) {
+            const p = parseFloat(percentage);
+            if (p >= 75) return 'bg-green-500';
+            if (p >= 50) return 'bg-yellow-500';
+            if (p >= 35) return 'bg-orange-500';
+            return 'bg-red-500';
+        }
+
+        function viewSubmissionDetails(submissionId, assessmentId) {
+            // Pass returnTo parameter so verify-grades knows where to return after approval
+            window.location.href = `/verify-grades.html?id=${submissionId}&assessment=${assessmentId}&returnTo=student-submissions&studentId=${studentId}`;
+        }
+
+        function logout() {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+
+</html>

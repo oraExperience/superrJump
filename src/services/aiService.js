@@ -192,16 +192,16 @@ PDF Path: ${pdfUrl}`;
         
         switch (modelConfig.name) {
           case 'openrouter':
-            questions = await extractWithOpenRouter(imagePages);
+            questions = await extractWithOpenRouter(imagePages, context);
             break;
           case 'openai':
-            questions = await extractWithOpenAI(imagePages);
+            questions = await extractWithOpenAI(imagePages, context);
             break;
           case 'gemini':
-            questions = await extractWithGemini(imagePages);
+            questions = await extractWithGemini(imagePages, context);
             break;
           case 'huggingface':
-            questions = await extractWithHuggingFace(imagePages);
+            questions = await extractWithHuggingFace(imagePages, context);
             break;
           default:
             console.log(`⚠️  Unknown model: ${modelConfig.name}, skipping...`);

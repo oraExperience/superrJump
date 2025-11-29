@@ -19,6 +19,9 @@ router.get('/', assessmentController.getUserAssessments);
 // Trigger AI question extraction from PDF
 router.post('/:assessmentId/extract-questions', assessmentController.triggerQuestionExtraction);
 
+// Get question image (cropped from PDF) - MUST come before general questions route
+router.get('/:assessmentId/questions/:questionId/image', assessmentController.getQuestionImage);
+
 // Get all questions for an assessment
 router.get('/:assessmentId/questions', assessmentController.getAssessmentQuestions);
 

@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { convertPdfToImages } = require('./pdfImageService');
 
 /**
  * Extract questions by sending PDF images to OpenAI Vision
@@ -188,6 +189,174 @@ Return JSON array ONLY (no markdown, no explanation):
   }
 }
 
+/**
+ * Parse PDF with vision using OpenRouter API
+ * @param {Array} pdfUrls - Array of PDF URLs or local paths
+ * @param {string} prompt - The extraction/grading prompt
+ * @returns {Promise<string>} - AI response text
+ */
+async function parseWithVision(pdfUrls, prompt) {
+  try {
+    console.log('🤖 Using OpenRouter API for vision parsing...');
+    console.log('='.repeat(80));
+    console.log('📝 PROMPT BEING SENT TO AI:');
+    console.log('='.repeat(80));
+    console.log(prompt);
+    console.log('='.repeat(80));
+    console.log(`📊 Prompt length: ${prompt.length} characters`);
+    console.log('='.repeat(80));
+    
+    // Check for API key
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENROUTER_API_KEY or OPENAI_API_KEY not found in environment variables');
+    }
+    
+    // Determine which API to use
+    const useOpenRouter = !!process.env.OPENROUTER_API_KEY;
+    const apiUrl = useOpenRouter
+      ? 'https://openrouter.ai/api/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+    
+    const model = useOpenRouter
+      ? 'anthropic/claude-3.5-sonnet' // OpenRouter model
+      : 'gpt-4o'; // OpenAI model
+    
+    console.log(`📡 Using ${useOpenRouter ? 'OpenRouter' : 'OpenAI'} with model: ${model}`);
+    
+    // For local PDFs, we need to convert to base64
+    const pdfUrl = pdfUrls[0];
+    let imageContent;
+    
+    if (pdfUrl.startsWith('http')) {
+      // Remote URL - use directly
+      imageContent = {
+        type: 'image_url',
+        image_url: { url: pdfUrl }
+      };
+    } else {
+      // Local file - resolve to absolute path
+      const fs = require('fs');
+      const path = require('path');
+      
+      let absolutePath;
+      if (pdfUrl.startsWith('/uploads/') || pdfUrl.startsWith('uploads/')) {
+        absolutePath = path.join(process.cwd(), pdfUrl.startsWith('/') ? pdfUrl.substring(1) : pdfUrl);
+      } else if (path.isAbsolute(pdfUrl)) {
+        absolutePath = pdfUrl;
+      } else {
+        absolutePath = path.join(process.cwd(), pdfUrl);
+      }
+      
+      console.log(`📂 Reading file from: ${absolutePath}`);
+      
+      if (!fs.existsSync(absolutePath)) {
+        throw new Error(`File not found: ${absolutePath}. Please check if the file was uploaded correctly.`);
+      }
+      
+      // Check if it's a PDF - if so, convert to image first (Claude can't process PDFs directly)
+      if (absolutePath.toLowerCase().endsWith('.pdf')) {
+        console.log(`🔄 Converting PDF to images (Claude can't process PDFs directly)...`);
+        const imagePages = await convertPdfToImages(absolutePath);
+        
+        if (imagePages.length === 0) {
+          throw new Error('Failed to convert PDF to images');
+        }
+        
+        console.log(`✅ Converted ${imagePages.length} page(s) to images`);
+        
+        // Convert all pages to base64 and create an array of image content
+        const imageContents = imagePages.map((page, index) => {
+          console.log(`   📄 Including page ${page.pageNumber}: ${page.imagePath}`);
+          const imageBuffer = fs.readFileSync(page.imagePath);
+          const base64Image = imageBuffer.toString('base64');
+          return {
+            type: 'image_url',
+            image_url: { url: `data:image/png;base64,${base64Image}` }
+          };
+        });
+        
+        // Store as array to be added to content later
+        imageContent = imageContents;
+      } else {
+        // Regular image file - use directly
+        const fileBuffer = fs.readFileSync(absolutePath);
+        const base64File = fileBuffer.toString('base64');
+        const mimeType = absolutePath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+        imageContent = {
+          type: 'image_url',
+          image_url: { url: `data:${mimeType};base64,${base64File}` }
+        };
+      }
+    }
+    
+    // Call API
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        ...(useOpenRouter && {
+          'HTTP-Referer': 'https://superrjump.com',
+          'X-Title': 'SuperrJump Grading System'
+        })
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              // Spread imageContent if it's an array (multiple pages), otherwise add it directly
+              ...(Array.isArray(imageContent) ? imageContent : [imageContent])
+            ]
+          }
+        ],
+        max_tokens: 750,
+        temperature: 0.2
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    const responseText = result.choices[0]?.message?.content || '';
+    
+    // Log comprehensive response details
+    console.log('='.repeat(80));
+    console.log('🤖 AI RESPONSE RECEIVED');
+    console.log('='.repeat(80));
+    console.log(`📊 Response length: ${responseText.length} characters`);
+    console.log(`🎯 Finish reason: ${result.choices[0]?.finish_reason || 'unknown'}`);
+    console.log(`📈 Tokens used: prompt=${result.usage?.prompt_tokens || 'N/A'}, completion=${result.usage?.completion_tokens || 'N/A'}, total=${result.usage?.total_tokens || 'N/A'}`);
+    
+    // Always print the full response for debugging
+    console.log('='.repeat(80));
+    console.log('📝 FULL AI RESPONSE:');
+    console.log('='.repeat(80));
+    console.log(responseText);
+    console.log('='.repeat(80));
+    
+    // Warn if response was truncated
+    if (result.choices[0]?.finish_reason === 'length') {
+      console.log('⚠️  WARNING: Response was truncated due to max_tokens limit!');
+      console.log('⚠️  Consider increasing max_tokens for complete responses.');
+      console.log('='.repeat(80));
+    }
+    
+    return responseText;
+    
+  } catch (error) {
+    console.error('❌ Vision parsing failed:', error.message);
+    throw error;
+  }
+}
+
 module.exports = {
-  extractQuestionsFromImages
+  extractQuestionsFromImages,
+  parseWithVision
 };

@@ -1,0 +1,2100 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verify Grades - SuperrJump</title>
+<link rel="icon" type="image/png" href="logo.png"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#2A6EBB",
+                    "background-light": "#FFFFFF",
+                    "background-dark": "#111821",
+                    "accent-yellow": "#FFC857",
+                    "accent-green": "#A2D7D2",
+                    "text-dark": "#333333",
+                    "text-light": "#F8FAFC",
+                    "border-light": "#e7ecf3",
+                    "border-dark": "#374151"
+                },
+                fontFamily: {
+                    "display": ["Lexend", "sans-serif"]
+                }
+            }
+        }
+    }
+</script>
+<style>
+    body {
+        font-family: 'Lexend', sans-serif;
+    }
+    .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+    
+    /* Hide number input spinners */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+    
+    /* Split screen layout */
+    .split-container {
+        display: grid;
+        grid-template-columns: 60px 300px 1fr 1fr;
+        height: calc(100vh - 64px);
+        overflow: hidden;
+        transition: grid-template-columns 0.3s ease;
+    }
+    
+    .split-container.sidebar-hidden {
+        grid-template-columns: 60px 0px 1fr 1fr;
+    }
+    
+    .question-numbers-column {
+        background: #f1f5f9;
+        border-right: 2px solid #e7ecf3;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .dark .question-numbers-column {
+        background: #0f172a;
+        border-right-color: #1e293b;
+    }
+    
+    .hamburger-button {
+        width: 100%;
+        padding: 1.25rem 0 1rem 0;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-bottom: 2px solid #e7ecf3;
+        transition: background-color 0.2s ease;
+    }
+    
+    .hamburger-button:hover {
+        background: #e2e8f0;
+    }
+    
+    .question-numbers-list {
+        padding: 1rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: center;
+        flex: 1;
+        transition: opacity 0.3s ease, visibility 0.3s ease, padding 0.3s ease;
+    }
+    
+    /* Hide number badges when sidebar is open */
+    .split-container:not(.sidebar-hidden) .question-numbers-list {
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    /* Show number badges when sidebar is closed */
+    .split-container.sidebar-hidden .question-numbers-list {
+        opacity: 1;
+        visibility: visible;
+        padding-top: 1rem;
+    }
+    
+    /* Add top padding only when sidebar is open for alignment */
+    .split-container:not(.sidebar-hidden) .question-numbers-list {
+        padding-top: 4.5rem;
+    }
+    
+    .question-number-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        position: relative;
+    }
+    
+    .question-number-badge:hover {
+        transform: scale(1.1);
+    }
+    
+    .question-number-badge.active {
+        border-color: #2A6EBB;
+        box-shadow: 0 0 0 3px rgba(42, 110, 187, 0.1);
+    }
+    
+    .question-number-badge.verified {
+        background: #22c55e;
+        color: white;
+    }
+    
+    .question-number-badge.verified::after {
+        content: '✓';
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        background: #16a34a;
+        color: white;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #f1f5f9;
+    }
+    
+    .dark .question-number-badge.verified::after {
+        border-color: #0f172a;
+    }
+    
+    .question-number-badge:not(.verified) {
+        background: #e2e8f0;
+        color: #475569;
+    }
+    
+    .dark .question-number-badge:not(.verified) {
+        background: #334155;
+        color: #cbd5e1;
+    }
+    
+    .questions-sidebar {
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-right: 2px solid #e7ecf3;
+        background: #f8fafc;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .split-container.sidebar-hidden .questions-sidebar {
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .dark .questions-sidebar {
+        background: #1e293b;
+        border-right-color: #374151;
+    }
+    
+    .question-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+    
+    .question-nav-item:hover {
+        background: white;
+        border-color: #e5e7eb;
+    }
+    
+    .dark .question-nav-item:hover {
+        background: #334155;
+        border-color: #4b5563;
+    }
+    
+    .question-nav-item.active {
+        background: white;
+        border-color: #2A6EBB;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .question-nav-item.active {
+        background: #334155;
+        border-color: #2A6EBB;
+    }
+    
+    .question-nav-item.verified {
+        background: #d1fae5;
+        border-color: #10b981;
+    }
+    
+    .dark .question-nav-item.verified {
+        background: #064e3b;
+        border-color: #10b981;
+    }
+    
+    .question-nav-item.verified.active {
+        background: #a7f3d0;
+        border-color: #059669;
+    }
+    
+    .dark .question-nav-item.verified.active {
+        background: #065f46;
+        border-color: #059669;
+    }
+    
+    .left-panel {
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-right: 2px solid #e7ecf3;
+        padding: 2rem 2rem 6rem 2rem;
+        position: relative;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .right-panel {
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+        height: 100%;
+        max-height: calc(100vh - 64px);
+    }
+    
+    .pdf-controls {
+        background: white;
+        padding: 1rem;
+        border-bottom: 2px solid #e7ecf3;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+    
+    .pdf-viewer {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1e293b;
+    }
+    
+    .pdf-viewer.zoomed {
+        overflow: auto;
+    }
+    
+    .navigation-buttons {
+        position: fixed;
+        bottom: 0;
+        left: 360px;
+        right: 50%;
+        background: white;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        padding-left: 0;
+        padding-right: 0;
+        z-index: 20;
+        transition: left 0.3s ease;
+    }
+    
+    .split-container.sidebar-hidden .navigation-buttons {
+        left: 60px;
+    }
+    
+    .navigation-buttons-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 100%;
+        gap: 0;
+        padding-left: 2rem;
+        padding-right: 0.5rem;
+    }
+    
+    .dark .navigation-buttons {
+        background: #1e293b;
+        border-top-color: #374151;
+    }
+</style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-dark dark:text-text-light">
+
+<!-- Header -->
+<header class="sticky top-0 z-30 border-b border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
+    <div class="w-full px-6 py-4">
+        <div class="flex items-center gap-4">
+            <!-- Back Button -->
+            <button onclick="goBack()" class="flex items-center gap-2 text-primary hover:text-blue-700 transition-colors flex-shrink-0">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="font-medium">Back</span>
+            </button>
+            
+            <!-- Assessment Info Card -->
+            <div id="headerCard" class="flex-1 bg-gradient-to-r from-amber-100 to-white dark:from-amber-900/30 dark:to-gray-800/30 rounded-xl px-5 py-3 border-l-4 border-amber-500">
+                <h2 class="text-lg font-bold text-text-dark dark:text-text-light mb-1" id="assessmentTitle">Assessment Title</h2>
+                <div class="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">tag</span>
+                        <span id="assessmentId">#100</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">school</span>
+                        <span id="assessmentClass">Class</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">book</span>
+                        <span id="assessmentSubject">Subject</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Student Info Card -->
+            <div id="studentInfoCard" class="bg-gradient-to-r from-blue-100 to-white dark:from-blue-900/30 dark:to-gray-800/30 rounded-xl px-5 py-3 border-l-4 border-blue-500 flex-shrink-0" style="display: none;">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">person</span>
+                    <h3 class="text-base font-bold text-text-dark dark:text-text-light" id="headerStudentName">Student Name</h3>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">badge</span>
+                        <span id="headerStudentId">ID</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">school</span>
+                        <span id="headerStudentClass">Class</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Marks Display -->
+            <div id="marksDisplay" class="text-right flex-shrink-0">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Final Marks</p>
+                <p class="text-2xl font-bold text-primary">
+                    <span id="totalMarksObtained">0</span> / <span id="totalMarksPossible">0</span>
+                </p>
+            </div>
+            
+            <!-- Approve & Finalize Button -->
+            <button onclick="approveAndFinalize()" id="approveButton" class="flex items-center gap-2 px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold transition-colors flex-shrink-0 opacity-50 cursor-not-allowed" disabled>
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>Approve & Finalize</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Assessment Questions Modal -->
+<div id="questionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 p-6 border-b-4 border-primary flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-primary">quiz</span>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Assessment questions</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Reference while verifying student answers</p>
+                </div>
+            </div>
+            <button onclick="toggleQuestionsModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-2xl text-gray-600 dark:text-gray-400">close</span>
+            </button>
+        </div>
+        
+        <!-- Questions List -->
+        <div class="flex-1 overflow-y-auto p-6" id="assessmentQuestionsList">
+            <div class="text-center text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
+                <p>Loading questions...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Split Screen Container -->
+<div class="split-container sidebar-hidden" id="splitContainer">
+    <!-- Question Numbers Column (Always Visible) -->
+    <div class="question-numbers-column">
+        <div class="hamburger-button" onclick="toggleQuestionsSidebar()" title="Toggle questions panel">
+            <span class="material-symbols-outlined text-2xl text-gray-600 dark:text-gray-400">menu</span>
+        </div>
+        <div class="question-numbers-list" id="questionNumbers">
+            <!-- Question number badges will be generated here -->
+        </div>
+    </div>
+    
+    <!-- Questions Sidebar (Toggleable) -->
+    <div class="questions-sidebar">
+        <h3 class="text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-4">Questions</h3>
+        <div id="questionsSidebar">
+            <!-- Question navigation items will be generated here -->
+        </div>
+    </div>
+    
+    <!-- Middle Panel - Current Question/Phase Content -->
+    <div class="left-panel">
+        <div id="mainContent">
+            <!-- Content will be dynamically loaded here based on current phase -->
+        </div>
+    </div>
+    
+    <!-- Fixed Navigation Buttons -->
+    <div class="navigation-buttons" id="navigationButtons">
+        <div class="navigation-buttons-inner">
+            <button onclick="handleSecondaryAction()" id="secondaryBtn" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Previous
+            </button>
+            <button onclick="handlePrimaryAction()" id="primaryBtn" class="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
+                Next
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Right Panel - PDF Viewer -->
+    <div class="right-panel">
+        <!-- PDF Controls -->
+        <div class="pdf-controls">
+            <button onclick="previousPage()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Previous Page">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <span class="text-sm font-medium px-3">
+                Page <span id="pageNum">1</span> of <span id="pageCount">1</span>
+            </span>
+            <button onclick="nextPage()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Next Page">
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+            <div class="flex-1 flex items-center justify-center px-4 min-w-0">
+                <span class="material-symbols-outlined text-gray-600 text-lg mr-2 flex-shrink-0">picture_as_pdf</span>
+                <span id="pdfFileName" class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate" title="">
+                    Answer Sheet
+                </span>
+            </div>
+            <button onclick="zoomOut()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Zoom Out">
+                <span class="material-symbols-outlined">zoom_out</span>
+            </button>
+            <span class="text-sm font-medium px-2" id="zoomLevel">100%</span>
+            <button onclick="zoomIn()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Zoom In">
+                <span class="material-symbols-outlined">zoom_in</span>
+            </button>
+        </div>
+        
+        <!-- PDF Viewer -->
+        <div class="pdf-viewer" id="pdfViewerContainer">
+            <div class="text-center text-white" id="pdfPlaceholder">
+                <span class="material-symbols-outlined text-6xl mb-4 block">description</span>
+                <p class="text-lg font-medium mb-2">Answer Sheet</p>
+                <p class="text-sm opacity-70">PDF will appear here</p>
+            </div>
+            <canvas id="pdfCanvas" style="display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.5);"></canvas>
+        </div>
+    </div>
+</div>
+
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 p-6 border-b-4 border-amber-400">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-amber-600 dark:text-amber-400">warning</span>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white" id="modalTitle">Confirm Action</h3>
+            </div>
+        </div>
+        <div class="p-6">
+            <p class="text-gray-700 dark:text-gray-300 text-base leading-relaxed mb-6" id="modalMessage">Are you sure?</p>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeConfirmModal(false)" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors">
+                    Cancel
+                </button>
+                <button onclick="closeConfirmModal(true)" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve & Finalize Modal -->
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-6 border-b-4 border-green-500">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400">check_circle</span>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Approve & Finalize Submission</h3>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6 space-y-4">
+            <!-- Assessment Info -->
+            <div class="bg-gradient-to-r from-purple-50/50 to-pink-50/30 dark:from-purple-900/10 dark:to-pink-900/10 rounded-lg p-5 border-l-[6px] border-purple-600 dark:border-purple-500 shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-xl text-purple-600 dark:text-purple-400">description</span>
+                    <span class="font-semibold text-purple-600 dark:text-purple-400 text-sm uppercase tracking-wide">Assessment</span>
+                </div>
+                <div>
+                    <p class="font-bold text-gray-900 dark:text-white text-xl mb-2" id="approveAssessmentTitle">-</p>
+                    <div class="flex gap-4 text-sm">
+                        <div class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                            <span class="material-symbols-outlined text-base">school</span>
+                            <span class="font-medium" id="approveAssessmentClass">-</span>
+                        </div>
+                        <span class="text-gray-400">•</span>
+                        <div class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                            <span class="material-symbols-outlined text-base">menu_book</span>
+                            <span class="font-medium" id="approveAssessmentSubject">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Student Info -->
+            <div class="bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-lg p-5 border-l-[6px] border-blue-600 dark:border-blue-500 shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-xl text-blue-600 dark:text-blue-400">person</span>
+                    <span class="font-semibold text-blue-600 dark:text-blue-400 text-sm uppercase tracking-wide">Student</span>
+                </div>
+                <div>
+                    <p class="font-bold text-gray-900 dark:text-white text-xl mb-2" id="approveStudentName">-</p>
+                    <div class="flex items-center gap-4 text-sm">
+                        <div class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium">
+                            <span class="material-symbols-outlined text-base">badge</span>
+                            <span id="approveStudentId">-</span>
+                        </div>
+                        <span class="text-gray-400">•</span>
+                        <div class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium">
+                            <span class="material-symbols-outlined text-base">school</span>
+                            <span id="approveStudentClass">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div class="bg-gradient-to-r from-green-50/50 to-emerald-50/30 dark:from-green-900/10 dark:to-emerald-900/10 rounded-lg p-5 border-l-[6px] border-green-600 dark:border-green-500 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-gray-700 dark:text-gray-300 font-semibold text-base">Final Score</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-4xl font-bold text-blue-600 dark:text-blue-400" id="approveMarksObtained">0</span>
+                        <span class="text-2xl text-gray-400 dark:text-gray-500">/</span>
+                        <span class="text-2xl font-semibold text-gray-600 dark:text-gray-400" id="approveTotalMarks">0</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-700 dark:text-gray-300 font-semibold text-base">Percentage</span>
+                    <span class="text-3xl font-bold text-green-600 dark:text-green-400" id="approvePercentage">0%</span>
+                </div>
+            </div>
+            
+            <!-- Warning Message -->
+            <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded">
+                <p class="text-sm text-amber-800 dark:text-amber-200">
+                    ⚠️ This action will lock the grades and mark the submission as approved. This cannot be undone.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-50 dark:bg-slate-700/30 px-6 py-4 flex gap-3 justify-end border-t border-gray-200 dark:border-slate-700">
+            <button onclick="closeApproveModal(false)" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors">
+                Cancel
+            </button>
+            <button onclick="closeApproveModal(true)" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>Approve & Finalize</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// Helper function to format numbers - removes decimal if it's .00
+function formatNumber(num) {
+    if (num === null || num === undefined) return '0';
+    const rounded = Math.round(num * 100) / 100; // Round to 2 decimal places
+    // Remove trailing zeros by converting to float
+    return rounded % 1 === 0 ? rounded.toString() : parseFloat(rounded.toFixed(2)).toString();
+}
+
+// Check authentication
+const user = JSON.parse(sessionStorage.getItem('user'));
+if (!user) {
+    window.location.href = '/login';
+}
+
+// Get submission ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const submissionId = urlParams.get('submissionId') || urlParams.get('id');
+const assessmentId = urlParams.get('assessmentId') || urlParams.get('assessment');
+
+let submission = null;
+let extractedInfo = null;
+let matches = [];
+let selectedStudentId = null;
+let grades = [];
+let currentQuestionIndex = 0;
+let pdfDoc = null;
+let pageNum = 1;
+let scale = 1.5;
+
+// Current phase: 'student_selection', 'question_verification', 'final_approval'
+let currentPhase = 'question_verification'; // Start directly in question verification
+let isStudentSelectionMode = false; // Track if we're in student selection step
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    if (!submissionId) {
+        alert('No submission ID provided');
+        window.location.href = '/assessments.html';
+        return;
+    }
+    loadSubmissionData();
+});
+
+// Toggle questions modal
+function toggleQuestionsModal() {
+    const modal = document.getElementById('questionsModal');
+    if (modal.style.display === 'none' || !modal.style.display) {
+        modal.style.display = 'flex';
+        loadAssessmentQuestions();
+    } else {
+        modal.style.display = 'none';
+    }
+}
+
+// Load assessment questions
+async function loadAssessmentQuestions() {
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/assessments/${assessmentId}/questions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.questions) {
+            displayAssessmentQuestions(data.questions);
+        } else {
+            document.getElementById('assessmentQuestionsList').innerHTML = `
+                <div class="text-center text-gray-500 dark:text-gray-400">
+                    <span class="material-symbols-outlined text-4xl mb-2 block">error</span>
+                    <p>Failed to load questions</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading assessment questions:', error);
+        document.getElementById('assessmentQuestionsList').innerHTML = `
+            <div class="text-center text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 block">error</span>
+                <p>Error loading questions</p>
+            </div>
+        `;
+    }
+}
+
+// Display assessment questions
+function displayAssessmentQuestions(questions) {
+    const container = document.getElementById('assessmentQuestionsList');
+    
+    if (!questions || questions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 block">quiz</span>
+                <p>No questions found for this assessment</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = questions.map(q => `
+        <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+            <div class="flex items-start gap-3 mb-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm flex-shrink-0">
+                    ${q.question_number}
+                </span>
+                <div class="flex-1">
+                    <h4 class="text-base font-semibold text-text-dark dark:text-text-light mb-2">Question ${q.question_number}</h4>
+                    <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-slate-700 rounded-lg p-3 mb-2">
+                        ${q.question_text}
+                    </div>
+                    <div class="flex items-center gap-4 text-sm">
+                        <span class="font-semibold text-primary">${formatNumber(q.max_marks)} marks</span>
+                        ${q.topics && q.topics.length > 0 ? `
+                            <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                <span class="material-symbols-outlined text-sm">school</span>
+                                <span>${q.topics.map(t => t.topic).join(', ')}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load submission data
+async function loadSubmissionData() {
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/submissions/${submissionId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            submission = data.submission;
+            grades = data.grades || [];
+            
+            // Update header with assessment details
+            document.getElementById('assessmentTitle').textContent = submission.assessment_title || 'Assessment';
+            document.getElementById('assessmentId').textContent = `#${submission.assessment_id || ''}`;
+            document.getElementById('assessmentClass').textContent = submission.class || 'Class';
+            document.getElementById('assessmentSubject').textContent = submission.subject || 'Subject';
+            
+            // Parse extracted info
+            if (submission.extracted_student_info) {
+                const info = JSON.parse(submission.extracted_student_info);
+                extractedInfo = info;
+                matches = info.matches || [];
+            }
+            
+            // Calculate and display total marks
+            updateMarksDisplay();
+            
+            initializeUI();
+            loadPDF(submission.answer_sheet_link);
+        } else {
+            throw new Error(data.message || 'Failed to load submission');
+        }
+    } catch (error) {
+        console.error('Error loading submission:', error);
+        alert('Failed to load submission data: ' + error.message);
+        window.location.href = '/assessments.html';
+    }
+}
+
+// Initialize UI
+async function initializeUI() {
+    // Always show question verification with student selection as Step 0
+    selectedStudentId = submission.student_id;
+    
+    // If no student is assigned, start in student selection mode
+    if (!submission.student_id) {
+        isStudentSelectionMode = true;
+        currentQuestionIndex = -1; // Use -1 to indicate student selection step
+    } else {
+        // Student is assigned, find first unverified question
+        const firstUnverifiedIndex = grades.findIndex(grade => !grade.verified);
+        
+        if (firstUnverifiedIndex !== -1) {
+            // Start at first unverified question
+            currentQuestionIndex = firstUnverifiedIndex;
+        } else {
+            // All questions verified, start at last question
+            currentQuestionIndex = grades.length > 0 ? grades.length - 1 : 0;
+        }
+    }
+    
+    // Load student data for header display (even if student is already assigned)
+    if (selectedStudentId) {
+        await loadStudentsForHeader();
+    }
+    
+    showQuestionVerification();
+}
+
+// Load students data for header display
+async function loadStudentsForHeader() {
+    try {
+        const token = sessionStorage.getItem('token');
+        const studentsResponse = await fetch('/api/students/search', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (studentsResponse.ok) {
+            const studentsData = await studentsResponse.json();
+            allStudentsData = studentsData.students || [];
+            
+            // Update header with loaded data
+            const selectedStudent = allStudentsData.find(s => s.id === selectedStudentId);
+            if (selectedStudent) {
+                updateStudentInfoHeader(selectedStudent);
+            } else {
+                // Fallback to submission data if student not found
+                updateStudentInfoHeader();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading students for header:', error);
+        // Fallback to submission data
+        updateStudentInfoHeader();
+    }
+}
+
+// Student Selection UI (shown as Step 0 in the main content area)
+function displayStudentSelection() {
+    const mainContent = document.getElementById('mainContent');
+    
+    // Show validation error if exists
+    const errorMessage = sessionStorage.getItem('studentSelectionError');
+    const errorHtml = errorMessage ? `
+        <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-600 dark:text-red-400">error</span>
+                <p class="text-sm font-medium text-red-800 dark:text-red-200">${errorMessage}</p>
+            </div>
+        </div>
+    ` : '';
+    
+    // Clear the error after displaying
+    if (errorMessage) {
+        sessionStorage.removeItem('studentSelectionError');
+    }
+    
+    const selectedStudentInfo = selectedStudentId && allStudentsData.length > 0
+        ? allStudentsData.find(s => s.id === selectedStudentId)
+        : null;
+    
+    mainContent.innerHTML = `
+        <!-- Student Selection Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 mb-6 border-l-4 border-primary">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="material-symbols-outlined text-4xl text-primary">person</span>
+                <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">Student Selection</h2>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300">Select the student for this submission. You can change this at any time.</p>
+        </div>
+        
+        ${errorHtml}
+        
+        <!-- Student Selection Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm mb-6">
+            <div class="space-y-4">
+                <!-- Student Dropdown -->
+                <div>
+                    <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">Select Student</label>
+                    <select id="studentIdDropdown" onchange="handleStudentDropdownChange()" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                
+                <!-- Student Details Form (shown for both existing and new students) -->
+                <div id="studentDetailsForm" style="display: none;" class="space-y-4">
+                    <!-- Student ID (only for new student) -->
+                    <div id="newStudentIdField" style="display: none;">
+                        <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">Student ID *</label>
+                        <input type="text" id="newStudentIdInput" placeholder="e.g., 2024-ADM-001" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary">
+                    </div>
+                    
+                    <!-- Student Name (only for new student) -->
+                    <div id="newStudentNameField" style="display: none;">
+                        <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">Student Name *</label>
+                        <input type="text" id="studentNameInput" placeholder="Full name" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary">
+                    </div>
+                    
+                    <!-- Class (for both) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">Class *</label>
+                        <input type="text" id="studentClassInput" placeholder="e.g., 10B" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary">
+                    </div>
+                    
+                    <!-- Roll Number (for both) -->
+                    <div>
+                        <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">Roll Number</label>
+                        <input type="text" id="studentRollInput" placeholder="Roll number (optional)" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary">
+                    </div>
+                    
+                    <!-- Save Button -->
+                    <button id="studentActionBtn" onclick="handleSaveStudent()" class="w-full px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined" id="actionBtnIcon" style="font-size: 24px; line-height: 1;">check_circle</span>
+                            <span class="inline-block" id="actionBtnText">Save Student</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        ${selectedStudentInfo ? `
+        <!-- Current Student Info -->
+        <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200 mb-1">Current Student</p>
+                    <p class="text-lg font-bold text-green-900 dark:text-green-100">${selectedStudentInfo.student_name}</p>
+                    <p class="text-sm text-green-700 dark:text-green-300">${selectedStudentInfo.student_identifier} • ${selectedStudentInfo.class}</p>
+                </div>
+                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400">check_circle</span>
+            </div>
+        </div>
+        ` : `
+        <!-- No Student Selected -->
+        <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-lg p-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">warning</span>
+                <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Please select a student to continue with verification</p>
+            </div>
+        </div>
+        `}
+    `;
+    
+    // Update sidebar to show we're on Step 0
+    renderQuestionsSidebar();
+    updateNavigationButtons();
+    
+    populateStudentDropdown();
+    setupFormListeners();
+}
+
+let allStudentsData = []; // Store full student data
+
+async function populateStudentDropdown() {
+    const dropdown = document.getElementById('studentIdDropdown');
+    if (!dropdown) {
+        console.error('Student dropdown element not found');
+        return;
+    }
+    
+    const extractedId = extractedInfo?.student_identifier || '';
+    
+    try {
+        const token = sessionStorage.getItem('token');
+        
+        // Fetch ALL students from organization
+        dropdown.innerHTML = '<option value="">Loading students...</option>';
+        const studentsResponse = await fetch('/api/students/search', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!studentsResponse.ok) {
+            throw new Error(`Failed to fetch students: ${studentsResponse.status}`);
+        }
+        
+        const studentsData = await studentsResponse.json();
+        allStudentsData = studentsData.students || [];
+        
+        if (allStudentsData.length === 0) {
+            dropdown.innerHTML = '<option value="">No students found</option><option value="CREATE_NEW">+ Create New Student</option>';
+            return;
+        }
+        
+        // Get assessment ID from submission data
+        const currentAssessmentId = submission?.assessment_id;
+        if (!currentAssessmentId) {
+            console.error('Assessment ID not found in submission data', submission);
+            // Still show all students if we can't filter by assessment
+            const options = '<option value="">-- Select a Student --</option>' +
+                allStudentsData.map(student => {
+                    const isMatch = matches.some(m => m.id === student.id);
+                    const matchStar = isMatch ? ' ⭐' : '';
+                    return `<option value="${student.id}">(${student.student_identifier}) - ${student.student_name}${matchStar}</option>`;
+                }).join('') +
+                '<option value="CREATE_NEW">+ Create New Student</option>';
+            dropdown.innerHTML = options;
+            return;
+        }
+        
+        // Fetch submissions for this assessment to exclude students with approved submissions
+        const submissionsResponse = await fetch(`/api/assessments/${currentAssessmentId}/submissions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!submissionsResponse.ok) {
+            throw new Error(`Failed to fetch submissions: ${submissionsResponse.status}`);
+        }
+        
+        const submissionsData = await submissionsResponse.json();
+        const approvedStudentIds = new Set(
+            (submissionsData.submissions || [])
+                .filter(s => s.status === 'Approved' && s.student_id && s.student_id !== submission.student_id)
+                .map(s => s.student_id)
+        );
+        
+        // Filter out students with approved submissions (except current student)
+        const availableStudents = allStudentsData.filter(student => !approvedStudentIds.has(student.id));
+        
+        // Build dropdown options
+        let options = '<option value="">-- Select a Student --</option>';
+        
+        // Add available students in format: (ID) - Name
+        availableStudents.forEach(student => {
+            const isMatch = matches.some(m => m.id === student.id);
+            const matchStar = isMatch ? ' ⭐' : '';
+            options += `<option value="${student.id}">(${student.student_identifier}) - ${student.student_name}${matchStar}</option>`;
+        });
+        
+        // Add "+ Create New Student" option at the end
+        options += '<option value="CREATE_NEW">+ Create New Student</option>';
+        
+        dropdown.innerHTML = options;
+        
+        // Pre-select current student if one is assigned
+        if (selectedStudentId) {
+            dropdown.value = selectedStudentId;
+            // Update header immediately with the selected student's data
+            const selectedStudent = allStudentsData.find(s => s.id === selectedStudentId);
+            if (selectedStudent) {
+                updateStudentInfoHeader(selectedStudent);
+            }
+        }
+        // Otherwise, if extracted ID matches an existing student, pre-select it
+        else if (extractedId) {
+            const matchingStudent = availableStudents.find(s => s.student_identifier === extractedId);
+            if (matchingStudent) {
+                dropdown.value = matchingStudent.id;
+                handleStudentDropdownChange();
+            }
+        }
+    } catch (error) {
+        console.error('Error in populateStudentDropdown:', error);
+        dropdown.innerHTML = '<option value="">Error loading students</option><option value="CREATE_NEW">+ Create New Student</option>';
+    }
+}
+
+function setupFormListeners() {
+    // Add input event listeners for validation
+    const newIdInput = document.getElementById('newStudentIdInput');
+    const nameInput = document.getElementById('studentNameInput');
+    const classInput = document.getElementById('studentClassInput');
+    
+    newIdInput.addEventListener('input', validateNewStudentForm);
+    nameInput.addEventListener('input', validateNewStudentForm);
+    classInput.addEventListener('input', validateNewStudentForm);
+}
+
+function validateNewStudentForm() {
+    const newIdInput = document.getElementById('newStudentIdInput');
+    const nameInput = document.getElementById('studentNameInput');
+    const classInput = document.getElementById('studentClassInput');
+    const actionBtn = document.getElementById('studentActionBtn');
+    
+    const hasId = newIdInput.value.trim().length > 0;
+    const hasName = nameInput.value.trim().length > 0;
+    const hasClass = classInput.value.trim().length > 0;
+    
+    if (hasId && hasName && hasClass) {
+        actionBtn.disabled = false;
+        actionBtn.className = 'w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors cursor-pointer';
+    } else {
+        actionBtn.disabled = true;
+        actionBtn.className = 'w-full px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold transition-colors cursor-not-allowed';
+    }
+}
+
+function handleStudentDropdownChange() {
+    const dropdown = document.getElementById('studentIdDropdown');
+    const studentDetailsForm = document.getElementById('studentDetailsForm');
+    const newStudentIdField = document.getElementById('newStudentIdField');
+    const newStudentNameField = document.getElementById('newStudentNameField');
+    const newStudentIdInput = document.getElementById('newStudentIdInput');
+    const studentNameInput = document.getElementById('studentNameInput');
+    const studentClassInput = document.getElementById('studentClassInput');
+    const studentRollInput = document.getElementById('studentRollInput');
+    const actionBtn = document.getElementById('studentActionBtn');
+    const actionBtnIcon = document.getElementById('actionBtnIcon');
+    const actionBtnText = document.getElementById('actionBtnText');
+    
+    if (dropdown.value === 'CREATE_NEW') {
+        // Show new student creation form
+        
+        // Show ID and Name fields for new student
+        newStudentIdField.style.display = 'block';
+        newStudentNameField.style.display = 'block';
+        
+        // Pre-fill with extracted data
+        newStudentIdInput.value = extractedInfo?.student_identifier || '';
+        studentNameInput.value = extractedInfo?.student_name || '';
+        studentClassInput.value = extractedInfo?.class || '';
+        studentRollInput.value = extractedInfo?.roll_number || '';
+        
+        // Set button for creating
+        actionBtn.disabled = true;
+        actionBtn.className = 'w-full px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold transition-colors cursor-not-allowed';
+        actionBtnIcon.textContent = 'add_circle';
+        actionBtnText.textContent = 'Create & Save Student';
+        
+        studentDetailsForm.style.display = 'block';
+        
+        // Validate form on load
+        validateNewStudentForm();
+    } else if (dropdown.value) {
+        // Existing student selected - immediately save
+        const newStudentId = parseInt(dropdown.value);
+        
+        // Find the selected student
+        const selectedStudent = allStudentsData.find(s => s.id === newStudentId);
+        if (selectedStudent) {
+            // Save immediately
+            saveStudentSelection(newStudentId, selectedStudent);
+        }
+        
+        // Hide form since we saved immediately
+        studentDetailsForm.style.display = 'none';
+    } else {
+        // No selection
+        studentDetailsForm.style.display = 'none';
+    }
+}
+
+// Update student info in header
+function updateStudentInfoHeader(studentData = null) {
+    const studentInfoCard = document.getElementById('studentInfoCard');
+    const headerStudentName = document.getElementById('headerStudentName');
+    const headerStudentId = document.getElementById('headerStudentId');
+    const headerStudentClass = document.getElementById('headerStudentClass');
+    
+    if (!studentInfoCard || !headerStudentName || !headerStudentId || !headerStudentClass) {
+        console.log('Header elements not found');
+        return;
+    }
+    
+    // Try to find student data from various sources
+    let student = studentData;
+    
+    // If not passed directly, try to find in allStudentsData
+    if (!student && selectedStudentId && allStudentsData.length > 0) {
+        student = allStudentsData.find(s => s.id === selectedStudentId);
+    }
+    
+    // Fallback to submission data
+    if (!student && submission && submission.student_id) {
+        student = {
+            student_name: submission.student_name,
+            student_identifier: submission.student_identifier,
+            class: submission.student_class || submission.class
+        };
+    }
+    
+    if (student && student.student_name) {
+        headerStudentName.textContent = student.student_name;
+        headerStudentId.textContent = student.student_identifier || 'N/A';
+        headerStudentClass.textContent = student.class || 'N/A';
+        studentInfoCard.style.display = 'block';
+    } else {
+        studentInfoCard.style.display = 'none';
+    }
+}
+
+// Save student selection immediately
+async function saveStudentSelection(studentId, studentData) {
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/submissions/${submissionId}/confirm-student`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ student_id: studentId })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            selectedStudentId = studentId;
+            submission = data.submission;
+            
+            // Clear any previous errors
+            sessionStorage.removeItem('studentSelectionError');
+            
+            // Update student info in header with the student data we have
+            updateStudentInfoHeader(studentData);
+            
+            // Update UI to show student is selected
+            if (isStudentSelectionMode) {
+                // Refresh the student selection display to show success
+                displayStudentSelection();
+            }
+            
+            // Update sidebar to show student is confirmed
+            renderQuestionsSidebar();
+            
+            // Update approve button state since student is now selected
+            updateApproveButtonState();
+        } else {
+            // Show error inline
+            sessionStorage.setItem('studentSelectionError', data.message || 'Failed to save student selection');
+            displayStudentSelection();
+        }
+    } catch (error) {
+        console.error('Error saving student selection:', error);
+        sessionStorage.setItem('studentSelectionError', 'Failed to save student selection');
+        displayStudentSelection();
+    }
+}
+
+// Handle saving new or existing student
+async function handleSaveStudent() {
+    const dropdown = document.getElementById('studentIdDropdown');
+    
+    if (dropdown.value === 'CREATE_NEW') {
+        await handleCreateNewStudent();
+    }
+}
+
+async function handleCreateNewStudent() {
+    const studentId = document.getElementById('newStudentIdInput').value.trim();
+    const studentName = document.getElementById('studentNameInput').value.trim();
+    const studentClass = document.getElementById('studentClassInput').value.trim();
+    const rollNumber = document.getElementById('studentRollInput').value.trim();
+
+    // Validate required fields (roll number is optional)
+    if (!studentId || !studentName || !studentClass) {
+        sessionStorage.setItem('studentSelectionError', 'Student ID, Name, and Class are required');
+        displayStudentSelection();
+        return;
+    }
+
+    try {
+        const token = sessionStorage.getItem('token');
+        
+        const createResponse = await fetch('/api/students', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                student_identifier: studentId,
+                student_name: studentName,
+                class: studentClass,
+                roll_number: rollNumber,
+                section: ''
+            })
+        });
+
+        const createData = await createResponse.json();
+        
+        if (createData.success) {
+            const newStudent = createData.student;
+            
+            // Add to local students data
+            allStudentsData.push(newStudent);
+            
+            // Save the new student selection immediately
+            await saveStudentSelection(newStudent.id, newStudent);
+        } else {
+            sessionStorage.setItem('studentSelectionError', createData.error || createData.message || 'Failed to create student');
+            displayStudentSelection();
+        }
+    } catch (error) {
+        console.error('Error creating student:', error);
+        sessionStorage.setItem('studentSelectionError', 'Failed to create student');
+        displayStudentSelection();
+    }
+}
+
+async function confirmStudent() {
+    if (!selectedStudentId) {
+        alert('Please select a student');
+        return;
+    }
+
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/submissions/${submissionId}/confirm-student`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ student_id: selectedStudentId })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            submission = data.submission;
+            showQuestionVerification();
+        } else {
+            alert('Failed to confirm student: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error confirming student:', error);
+        alert('Failed to confirm student');
+    }
+}
+
+// Phase 2: Question Verification (includes student selection as Step 0)
+function showQuestionVerification() {
+    currentPhase = 'question_verification';
+    
+    // Show sidebar and question numbers (includes Step 0)
+    renderQuestionsSidebar();
+    
+    // Display current step
+    if (currentQuestionIndex === -1) {
+        // Show student selection
+        displayStudentSelection();
+    } else {
+        // Show question
+        displayCurrentQuestion();
+    }
+    
+    updateNavigationButtons();
+    
+    // Update approve button state on load
+    updateApproveButtonState();
+}
+
+function renderQuestionsSidebar() {
+    const sidebar = document.getElementById('questionsSidebar');
+    const numbersColumn = document.getElementById('questionNumbers');
+    
+    sidebar.innerHTML = '';
+    numbersColumn.innerHTML = '';
+    
+    // Add Step 0: Student Selection to sidebar
+    const studentNavItem = document.createElement('div');
+    const isStudentStep = currentQuestionIndex === -1;
+    studentNavItem.className = `question-nav-item ${isStudentStep ? 'active' : ''} ${selectedStudentId ? 'verified' : ''}`;
+    studentNavItem.onclick = () => goToQuestion(-1);
+    
+    const studentStatusIcon = selectedStudentId
+        ? '<span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>'
+        : '<span class="material-symbols-outlined text-amber-600 text-xl">person</span>';
+    
+    studentNavItem.innerHTML = `
+        ${studentStatusIcon}
+        <div class="flex-1">
+            <p class="text-sm font-semibold text-text-dark dark:text-text-light">Step 0: Student</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">${selectedStudentId ? 'Selected' : 'Not selected'}</p>
+        </div>
+    `;
+    
+    sidebar.appendChild(studentNavItem);
+    
+    // Update approve button whenever sidebar is rendered
+    updateApproveButtonState();
+    
+    // Add student badge to numbers column
+    const studentBadge = document.createElement('div');
+    studentBadge.className = `question-number-badge ${isStudentStep ? 'active' : ''} ${selectedStudentId ? 'verified' : ''}`;
+    studentBadge.onclick = (e) => {
+        e.stopPropagation();
+        goToQuestion(-1);
+    };
+    studentBadge.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px;">person</span>';
+    
+    numbersColumn.appendChild(studentBadge);
+    
+    // Add separator
+    const separator = document.createElement('div');
+    separator.style.cssText = 'width: 100%; height: 2px; background: #e5e7eb; margin: 0.5rem 0;';
+    numbersColumn.appendChild(separator);
+    
+    // Add questions
+    grades.forEach((grade, index) => {
+        // Render sidebar item
+        const navItem = document.createElement('div');
+        navItem.className = `question-nav-item ${index === currentQuestionIndex ? 'active' : ''} ${grade.verified ? 'verified' : ''}`;
+        navItem.onclick = () => goToQuestion(index);
+        
+        const statusIcon = grade.verified
+            ? '<span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>'
+            : '<span class="material-symbols-outlined text-gray-400 text-xl">radio_button_unchecked</span>';
+        
+        navItem.innerHTML = `
+            ${statusIcon}
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-text-dark dark:text-text-light">Question ${grade.question_number}</p>
+                <p class="text-xs font-bold text-primary mt-1">${formatNumber(grade.marks_obtained || 0)} / ${formatNumber(grade.max_marks)}</p>
+            </div>
+        `;
+        
+        sidebar.appendChild(navItem);
+        
+        // Render number badge
+        const badge = document.createElement('div');
+        badge.className = `question-number-badge ${index === currentQuestionIndex ? 'active' : ''} ${grade.verified ? 'verified' : ''}`;
+        badge.onclick = (e) => {
+            e.stopPropagation();
+            goToQuestion(index);
+        };
+        badge.textContent = grade.question_number;
+        
+        numbersColumn.appendChild(badge);
+    });
+}
+
+function displayCurrentQuestion() {
+    // Handle student selection (Step 0)
+    if (currentQuestionIndex === -1) {
+        displayStudentSelection();
+        return;
+    }
+    
+    // If we've gone past the last question, stay on the last question
+    if (currentQuestionIndex >= grades.length) {
+        currentQuestionIndex = grades.length - 1;
+    }
+
+    const grade = grades[currentQuestionIndex];
+    
+    // Navigate to page if available
+    if (grade.page_number) {
+        goToPage(grade.page_number);
+    }
+    
+    const mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = `
+        <div class="question-card bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
+            <!-- Question Header with Marks -->
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 bg-primary text-white rounded-full font-bold text-lg">
+                        ${grade.question_number}
+                    </span>
+                    <h3 class="text-xl font-bold text-text-dark dark:text-text-light">Question ${grade.question_number}</h3>
+                </div>
+                <div class="ml-4 ${grade.verified ? 'bg-gradient-to-r from-green-100 to-white dark:from-green-900/30 dark:to-gray-800/30 border-l-4 border-green-500' : 'bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800/30 border-l-4 border-primary'} rounded-xl px-4 py-3">
+                    <p class="text-sm font-semibold ${grade.verified ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'} mb-2 text-center">Marks obtained</p>
+                    <div class="flex items-center justify-center gap-2">
+                        <input
+                            type="number"
+                            id="marksInput"
+                            min="0"
+                            max="${grade.max_marks}"
+                            step="0.5"
+                            value="${formatNumber(grade.marks_obtained || 0)}"
+                            oninput="validateMarksInput(${grade.max_marks}); markQuestionAsUnverified()"
+                            class="w-20 px-2 py-1.5 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-center font-bold text-xl focus:ring-2 focus:ring-primary focus:border-primary"
+                        />
+                        <span class="text-gray-600 dark:text-gray-400 text-center font-bold text-xl">/</span>
+                        <span class="text-text-dark dark:text-text-light text-center font-bold text-xl">${formatNumber(grade.max_marks)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Answer on Page Info -->
+            ${grade.page_number ? `
+            <div class="bg-gradient-to-r from-amber-100 to-white dark:from-amber-900/30 dark:to-gray-800/30 rounded-lg px-4 py-3 border-l-4 border-amber-400 mb-6">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">description</span>
+                    Answer on page ${grade.page_number}
+                </p>
+            </div>
+            ` : ''}
+            
+            <!-- Question Text -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                    Question
+                </label>
+                <div class="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-slate-700 text-text-dark dark:text-text-light text-base">
+                    ${grade.question_text}
+                </div>
+            </div>
+            
+            <!-- AI Explanation (Non-editable) -->
+            <div class="mb-6">
+                <div class="bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-xl p-6">
+                    <div class="flex items-start gap-2 mb-3">
+                        <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-xl">auto_awesome</span>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-text-dark dark:text-text-light mb-1">AI explanation</h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">
+                                AI-generated grading rationale
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+                        ${grade.ai_explanation || 'No explanation available'}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Teacher Feedback -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-600">rate_review</span>
+                    Add feedback
+                </label>
+                <textarea
+                    id="feedbackText"
+                    rows="4"
+                    class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
+                    placeholder="Add your feedback for the student..."
+                    oninput="markQuestionAsUnverified()"
+                >${grade.user_feedback || ''}</textarea>
+            </div>
+        </div>
+    `;
+    
+    renderQuestionsSidebar();
+    updateNavigationButtons();
+    
+    // Ensure approve button state is correct when displaying a question
+    updateApproveButtonState();
+}
+
+function goToQuestion(index) {
+    currentQuestionIndex = index;
+    
+    if (index === -1) {
+        // Going back to student selection
+        displayStudentSelection();
+    } else {
+        displayCurrentQuestion();
+    }
+}
+
+// Validate marks input in real-time
+function validateMarksInput(maxMarks) {
+    const input = document.getElementById('marksInput');
+    let value = parseFloat(input.value);
+    
+    // If empty or invalid, don't do anything yet
+    if (input.value === '' || isNaN(value)) {
+        return;
+    }
+    
+    // Clamp the value between 0 and maxMarks
+    if (value < 0) {
+        input.value = 0;
+    } else if (value > maxMarks) {
+        input.value = maxMarks;
+    }
+}
+
+// Mark current question as unverified when edited
+async function markQuestionAsUnverified() {
+    if (currentQuestionIndex >= 0 && currentQuestionIndex < grades.length) {
+        const grade = grades[currentQuestionIndex];
+        
+        // Only mark as unverified if it was previously verified
+        if (grade.verified) {
+            // Update locally first for immediate UI feedback
+            grade.verified = false;
+            
+            // Update the sidebar to reflect the change
+            renderQuestionsSidebar();
+            
+            // Update the approve button state
+            updateApproveButtonState();
+            
+            // Update navigation buttons to re-enable the verify button
+            updateNavigationButtons();
+            
+            // Persist to database
+            try {
+                const token = sessionStorage.getItem('token');
+                
+                // Get current values from the form (they may have been edited)
+                const marksInput = document.getElementById('marksInput');
+                const feedbackText = document.getElementById('feedbackText');
+                
+                const currentMarks = marksInput ? parseFloat(marksInput.value) : (grade.marks_obtained || 0);
+                const currentFeedback = feedbackText ? feedbackText.value : (grade.user_feedback || '');
+                
+                const response = await fetch(`/api/answers/${grade.id}/verify`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        marks_obtained: currentMarks,
+                        user_feedback: currentFeedback,  // Teacher's feedback
+                        verified: false
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Failed to unverify question in database:', data.message);
+                    // Revert local change if API call failed
+                    grade.verified = true;
+                    renderQuestionsSidebar();
+                    updateApproveButtonState();
+                }
+            } catch (error) {
+                console.error('Error unverifying question:', error);
+                // Revert local change if API call failed
+                grade.verified = true;
+                renderQuestionsSidebar();
+                updateApproveButtonState();
+            }
+        }
+    }
+}
+
+// Update the approve & finalize button state
+function updateApproveButtonState() {
+    const approveButton = document.getElementById('approveButton');
+    if (!approveButton) return;
+    
+    // Check if student is mapped
+    const hasStudent = selectedStudentId !== null && selectedStudentId !== undefined;
+    
+    // Check if all questions are verified
+    const allQuestionsVerified = grades && grades.length > 0 && grades.every(grade => grade.verified === true);
+    
+    // Enable button only if both conditions are met
+    const shouldEnable = hasStudent && allQuestionsVerified;
+    
+    if (shouldEnable) {
+        approveButton.disabled = false;
+        approveButton.className = 'flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex-shrink-0';
+    } else {
+        approveButton.disabled = true;
+        approveButton.className = 'flex items-center gap-2 px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold transition-colors flex-shrink-0 opacity-50 cursor-not-allowed';
+    }
+}
+
+async function verifyCurrentQuestion() {
+    const grade = grades[currentQuestionIndex];
+    
+    const marksObtained = parseFloat(document.getElementById('marksInput').value);
+    const teacherFeedback = document.getElementById('feedbackText').value;
+    
+    // Validate
+    if (isNaN(marksObtained) || marksObtained < 0 || marksObtained > grade.max_marks) {
+        alert(`Marks must be between 0 and ${formatNumber(grade.max_marks)}`);
+        return;
+    }
+
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/answers/${grade.id}/verify`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                marks_obtained: marksObtained,
+                user_feedback: teacherFeedback,  // Teacher's feedback
+                verified: true
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update local data
+            grades[currentQuestionIndex].marks_obtained = marksObtained;
+            grades[currentQuestionIndex].user_feedback = teacherFeedback;  // Store as user_feedback
+            grades[currentQuestionIndex].verified = true;
+            
+            // Update marks display in header
+            updateMarksDisplay();
+            
+            // Update approve button state
+            updateApproveButtonState();
+            
+            // Move to next question
+            currentQuestionIndex++;
+            displayCurrentQuestion();
+        } else {
+            alert('Failed to verify question: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error verifying question:', error);
+        alert('Failed to verify question');
+    }
+}
+
+// Final approval is now handled by the "Approve & Finalize" button in the header
+// No separate phase needed
+
+// Update marks display in header
+function updateMarksDisplay() {
+    const obtainedEl = document.getElementById('totalMarksObtained');
+    const possibleEl = document.getElementById('totalMarksPossible');
+    
+    // Check if elements exist
+    if (!obtainedEl || !possibleEl) {
+        return;
+    }
+    
+    if (!grades || grades.length === 0) {
+        obtainedEl.textContent = '0';
+        possibleEl.textContent = '0';
+        return;
+    }
+    
+    const totalObtained = grades.reduce((sum, grade) => {
+        return sum + (parseFloat(grade.marks_obtained) || 0);
+    }, 0);
+    
+    const totalPossible = grades.reduce((sum, grade) => {
+        return sum + (parseFloat(grade.max_marks) || 0);
+    }, 0);
+    
+    obtainedEl.textContent = formatNumber(totalObtained);
+    possibleEl.textContent = formatNumber(totalPossible);
+    
+    // Also update approve button state when marks change
+    updateApproveButtonState();
+}
+
+// Approve and finalize submission
+async function approveAndFinalize() {
+    console.log('🚀 approveAndFinalize called');
+    console.log('Selected student ID:', selectedStudentId);
+    console.log('Grades:', grades);
+    
+    // Check if student is selected
+    if (!selectedStudentId) {
+        alert('Please select a student before approving');
+        return;
+    }
+    
+    // Check if all questions are verified
+    const allQuestionsVerified = grades && grades.length > 0 && grades.every(grade => grade.verified === true);
+    console.log('All questions verified:', allQuestionsVerified);
+    
+    if (!allQuestionsVerified) {
+        alert('Please verify all questions before approving. All questions must be marked as verified.');
+        return;
+    }
+    
+    // Calculate total marks
+    const marksObtained = grades.reduce((sum, g) => sum + (parseFloat(g.marks_obtained) || 0), 0);
+    const totalMarks = grades.reduce((sum, g) => sum + (parseFloat(g.max_marks) || 0), 0);
+    const percentage = totalMarks > 0 ? ((marksObtained / totalMarks) * 100) : 0;
+    
+    console.log('📊 Calculated marks:', { marksObtained, totalMarks, percentage });
+    
+    // Get student info from availableStudents array or submission
+    let studentName = 'N/A';
+    let studentId = 'No ID';
+    let studentClass = 'N/A';
+    
+    console.log('👥 All students data:', allStudentsData);
+    console.log('📋 Submission data:', submission);
+    
+    // First try to get from allStudentsData
+    const selectedStudent = allStudentsData.find(s => s.id === selectedStudentId);
+    if (selectedStudent) {
+        studentName = selectedStudent.student_name;
+        studentId = selectedStudent.roll_number || selectedStudent.student_identifier || 'No ID';
+        studentClass = selectedStudent.class || 'N/A';
+        console.log('✅ Found student in allStudentsData:', selectedStudent);
+    }
+    // Fallback to submission data
+    else if (submission) {
+        studentName = submission.student_name || 'N/A';
+        studentId = submission.roll_number || submission.student_identifier || 'No ID';
+        studentClass = submission.student_class || submission.class || 'N/A';
+        console.log('✅ Using submission data for student');
+    }
+    
+    console.log('👤 Final student info:', { studentName, studentId, studentClass });
+    
+    // Show detailed approval modal
+    console.log('📝 Showing approval modal...');
+    const confirmed = await showApproveModal({
+        assessmentTitle: submission?.assessment_title || 'N/A',
+        assessmentClass: submission?.class || 'N/A',
+        assessmentSubject: submission?.subject || 'N/A',
+        studentName: studentName,
+        studentId: studentId,
+        studentClass: studentClass,
+        marksObtained: formatNumber(marksObtained),
+        totalMarks: formatNumber(totalMarks),
+        percentage: formatNumber(percentage)
+    });
+    
+    if (!confirmed) return;
+
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/submissions/${submissionId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'Approved' })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            // Navigate back without showing alert
+            goBack();
+        } else {
+            alert('Failed to approve submission: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error approving submission:', error);
+        alert('Failed to approve submission: ' + error.message);
+    }
+}
+
+async function finalApproval() {
+    // Redirect to new approve function
+    await approveAndFinalize();
+}
+
+// Navigation
+function handlePrimaryAction() {
+    if (currentPhase === 'question_verification') {
+        if (currentQuestionIndex === -1) {
+            // On student selection, move to first question if student is selected
+            if (selectedStudentId) {
+                currentQuestionIndex = 0;
+                isStudentSelectionMode = false;
+                displayCurrentQuestion();
+                renderQuestionsSidebar();
+                updateNavigationButtons();
+            }
+        } else {
+            // On question, verify and move to next
+            verifyCurrentQuestion();
+        }
+    } else if (currentPhase === 'final_approval') {
+        finalApproval();
+    }
+}
+
+function handleSecondaryAction() {
+    if (currentPhase === 'question_verification') {
+        if (currentQuestionIndex === 0) {
+            // From first question, go back to student selection
+            currentQuestionIndex = -1;
+            isStudentSelectionMode = true;
+            displayStudentSelection();
+            renderQuestionsSidebar();
+            updateNavigationButtons();
+        } else if (currentQuestionIndex > 0) {
+            // From any other question, go to previous question
+            currentQuestionIndex--;
+            displayCurrentQuestion();
+        }
+    }
+}
+
+function updateNavigationButtons() {
+    const primaryBtn = document.getElementById('primaryBtn');
+    const secondaryBtn = document.getElementById('secondaryBtn');
+    
+    if (currentPhase === 'question_verification') {
+        if (currentQuestionIndex === -1) {
+            // Student selection step
+            primaryBtn.innerHTML = `
+                Start verification
+                <span class="material-symbols-outlined">arrow_forward</span>
+            `;
+            primaryBtn.disabled = !selectedStudentId;
+            primaryBtn.className = selectedStudentId
+                ? 'px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2'
+                : 'px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold flex items-center gap-2 opacity-50 cursor-not-allowed';
+            secondaryBtn.style.display = 'none';
+        } else {
+            // Question verification steps
+            const isLastQuestion = currentQuestionIndex === grades.length - 1;
+            const currentGrade = grades[currentQuestionIndex];
+            const isAlreadyVerified = currentGrade && currentGrade.verified;
+            
+            primaryBtn.innerHTML = isLastQuestion
+                ? `Verify <span class="material-symbols-outlined">check</span>`
+                : `Verify, next <span class="material-symbols-outlined">arrow_forward</span>`;
+            
+            // Disable button if already verified
+            primaryBtn.disabled = isAlreadyVerified;
+            primaryBtn.className = isAlreadyVerified
+                ? 'px-4 py-3 bg-gray-400 text-white rounded-lg font-semibold flex items-center gap-2 opacity-50 cursor-not-allowed'
+                : 'px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2';
+            
+            secondaryBtn.style.display = 'flex';
+            secondaryBtn.disabled = false;
+            secondaryBtn.innerHTML = `
+                <span class="material-symbols-outlined">arrow_back</span>
+                Previous
+            `;
+            secondaryBtn.className = 'px-4 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors flex items-center gap-2';
+        }
+    }
+}
+
+function toggleQuestionsSidebar() {
+    const container = document.getElementById('splitContainer');
+    container.classList.toggle('sidebar-hidden');
+}
+
+// PDF Functions
+async function loadPDF(url) {
+    try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        document.getElementById('pageCount').textContent = pdfDoc.numPages;
+        
+        // Hide placeholder, show canvas
+        document.getElementById('pdfPlaceholder').style.display = 'none';
+        document.getElementById('pdfCanvas').style.display = 'block';
+        
+        renderPage(pageNum);
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+        alert('Failed to load PDF');
+    }
+}
+
+async function renderPage(num) {
+    try {
+        const page = await pdfDoc.getPage(num);
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({
+            canvasContext: ctx,
+            viewport: viewport
+        }).promise;
+
+        document.getElementById('pageNum').textContent = num;
+    } catch (error) {
+        console.error('Error rendering page:', error);
+    }
+}
+
+function goToPage(num) {
+    if (pdfDoc && num >= 1 && num <= pdfDoc.numPages) {
+        pageNum = num;
+        renderPage(pageNum);
+    }
+}
+
+function previousPage() {
+    if (pageNum <= 1) return;
+    pageNum--;
+    renderPage(pageNum);
+}
+
+function nextPage() {
+    if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+    pageNum++;
+    renderPage(pageNum);
+}
+
+function zoomIn() {
+    scale += 0.25;
+    document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
+    renderPage(pageNum);
+}
+
+function zoomOut() {
+    if (scale <= 0.5) return;
+    scale -= 0.25;
+    document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
+    renderPage(pageNum);
+}
+
+// Modal functions
+let modalResolve = null;
+
+function showConfirmModal(message, title = 'Confirm Action') {
+    return new Promise((resolve) => {
+        modalResolve = resolve;
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').textContent = message;
+        document.getElementById('confirmModal').style.display = 'flex';
+    });
+}
+
+function closeConfirmModal(confirmed) {
+    document.getElementById('confirmModal').style.display = 'none';
+    if (modalResolve) {
+        modalResolve(confirmed);
+        modalResolve = null;
+    }
+}
+
+let approveModalResolve = null;
+
+function showApproveModal(data) {
+    return new Promise((resolve) => {
+        approveModalResolve = resolve;
+        
+        // Populate assessment details
+        document.getElementById('approveAssessmentTitle').textContent = data.assessmentTitle;
+        document.getElementById('approveAssessmentClass').textContent = data.assessmentClass;
+        document.getElementById('approveAssessmentSubject').textContent = data.assessmentSubject;
+        
+        // Populate student details
+        document.getElementById('approveStudentName').textContent = data.studentName;
+        document.getElementById('approveStudentId').textContent = data.studentId;
+        document.getElementById('approveStudentClass').textContent = data.studentClass;
+        
+        // Populate results
+        document.getElementById('approveMarksObtained').textContent = data.marksObtained;
+        document.getElementById('approveTotalMarks').textContent = data.totalMarks;
+        document.getElementById('approvePercentage').textContent = data.percentage + '%';
+        
+        // Show modal
+        document.getElementById('approveModal').style.display = 'flex';
+    });
+}
+
+function closeApproveModal(confirmed) {
+    document.getElementById('approveModal').style.display = 'none';
+    if (approveModalResolve) {
+        approveModalResolve(confirmed);
+        approveModalResolve = null;
+    }
+}
+
+function goBack() {
+    // Check if there's a returnTo parameter in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('returnTo');
+    const studentId = urlParams.get('studentId');
+    
+    // If returnTo is specified, use it
+    if (returnTo === 'student-submissions' && studentId) {
+        window.location.href = `/student-submissions?studentId=${studentId}`;
+    } else if (returnTo) {
+        window.location.href = returnTo;
+    }
+    // Otherwise, default to assessment details page
+    else if (submission && submission.assessment_id) {
+        window.location.href = `/assessment-details.html?id=${submission.assessment_id}`;
+    } else if (assessmentId) {
+        window.location.href = `/assessment-details.html?id=${assessmentId}`;
+    } else {
+        window.location.href = '/assessments.html';
+    }
+}
+</script>
+</body>
+</html>

@@ -162,7 +162,7 @@ loginForm.addEventListener('submit', async (e) => {
             sessionStorage.setItem('fromLogin', 'true');
             
             // Replace current history entry to prevent back navigation to login
-            window.location.replace('/assessments.html');
+            window.location.replace('/dashboard.html');
         } else {
             // Show error message
             errorDiv.textContent = data.message || 'Login failed. Please try again.';

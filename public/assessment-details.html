@@ -9,6 +9,9 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
     tailwind.config = {
         darkMode: "class",
@@ -73,6 +76,11 @@
         animation: shimmer 2s linear infinite;
     }
 
+    /* Quote fade animation */
+    #processingQuote {
+        transition: opacity 0.3s ease-in-out;
+    }
+
     /* Status badges */
     .status-badge {
         display: inline-flex;
@@ -114,15 +122,32 @@
         color: #065F46;
     }
 
-    /* Legacy status classes for backward compatibility */
-    .status-pending {
+    /* Submission Status Classes */
+    .status-processing {
+        background-color: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .status-ready.for.verification,
+    .status-ready-for-verification {
         background-color: #FEF3C7;
         color: #92400E;
+    }
+
+    .status-verifying {
+        background-color: #E0E7FF;
+        color: #4338CA;
     }
 
     .status-approved {
         background-color: #D1FAE5;
         color: #065F46;
+    }
+
+    /* Legacy status classes for backward compatibility */
+    .status-pending {
+        background-color: #FEF3C7;
+        color: #92400E;
     }
 
     .status-in-progress {
@@ -133,6 +158,21 @@
     .status-pending-verification {
         background-color: #FEF3C7;
         color: #92400E;
+    }
+
+    .dark .status-processing {
+        background-color: #1E3A8A;
+        color: #DBEAFE;
+    }
+
+    .dark .status-ready-for-verification {
+        background-color: #78350F;
+        color: #FEF3C7;
+    }
+
+    .dark .status-verifying {
+        background-color: #312E81;
+        color: #E0E7FF;
     }
 
     .dark .status-pending {
@@ -219,26 +259,55 @@
 <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
 <span class="material-symbols-outlined text-2xl">menu</span>
 </button>
+<a href="/dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
 <div class="text-primary flex items-center" style="width: 28px; height: 28px;">
-<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
 </svg>
 </div>
 <h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+</a>
 </div>
 <div class="flex items-center gap-4">
-<span id="orgName" class="text-sm font-medium">Organization Name</span>
+    <span id="orgName" class="text-sm font-medium">Organization Name</span>
 </div>
 </div>
 </header>
+
+<!-- Assessment Questions Modal -->
+<div id="questionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 p-6 border-b-4 border-primary flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-primary">quiz</span>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Assessment questions</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Reference while verifying student answers</p>
+                </div>
+            </div>
+            <button onclick="toggleQuestionsModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-2xl text-gray-600 dark:text-gray-400">close</span>
+            </button>
+        </div>
+        
+        <!-- Questions List -->
+        <div class="flex-1 overflow-y-auto p-6" id="assessmentQuestionsList">
+            <div class="text-center text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
+                <p>Loading questions...</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <main class="flex flex-col items-center w-full flex-1">
 <div class="w-full max-w-7xl px-4 md:px-8 py-10">
 <!-- Back Button -->
 <div class="mb-6">
-<button onclick="window.location.href='/assessments.html'" class="inline-flex items-center gap-2 text-primary hover:text-blue-700 transition-colors">
+<button onclick="goBackToSource()" class="inline-flex items-center gap-2 text-primary hover:text-blue-700 transition-colors">
 <span class="material-symbols-outlined">arrow_back</span>
-<span class="font-medium">Back to Assessments</span>
+<span class="font-medium" id="backButtonText">Back to Assessments</span>
 </button>
 </div>
 
@@ -279,9 +348,9 @@
 <div class="flex-1">
 <h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Extracting Questions...</h3>
 <p class="text-base text-text-dark/70 dark:text-text-light/70 mb-4">Our AI is analyzing your question paper and extracting questions. This process continues in the background.</p>
-<button onclick="checkExtractionStatus()" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md">
-<span class="material-symbols-outlined">refresh</span>
-<span>Check Extraction Status</span>
+<button onclick="window.location.href='/assessments.html'" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md">
+<span class="material-symbols-outlined">arrow_back</span>
+<span>Back to Assessments</span>
 </button>
 </div>
 </div>
@@ -300,6 +369,107 @@
 <span class="material-symbols-outlined">fact_check</span>
 <span>Verify Questions Now</span>
 </button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Answer Sheet Processing Progress Section (Full Screen Centered) -->
+<div id="answerSheetProcessingSection" class="hidden fixed inset-0 bg-background-light dark:bg-background-dark z-40 overflow-y-auto">
+    <div class="min-h-screen flex items-center justify-center p-4 md:p-8">
+        <div class="max-w-2xl w-full">
+            <!-- Assessment Details Card with White Background -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl p-8 mb-6 shadow-lg">
+                <div class="flex items-start gap-4 mb-6">
+                    <span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
+                    <div class="flex-1">
+                        <h1 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Processing Answer Sheet...</h1>
+                        <p class="text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is extracting student information and grading the answers. This usually takes a few moments.</p>
+                    </div>
+                </div>
+                
+                <!-- Assessment Details -->
+                <div id="processingAssessmentDetails" class="bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 rounded-xl p-5 space-y-3 border-l-4 border-accent-yellow">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+            
+            <!-- Motivational Quote Card (Outside main card) -->
+            <div class="bg-white dark:bg-slate-700 rounded-xl p-6 border-l-4 border-primary shadow-md mb-6">
+                <p id="processingQuote" class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed"></p>
+            </div>
+            
+            <!-- Back Button Below Card -->
+            <div class="flex justify-center mt-6">
+                <div class="text-center">
+                    <button onclick="window.location.href='/assessments.html'" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span>Back to Assessments</span>
+                    </button>
+                    <p class="text-xs text-text-dark/60 dark:text-text-light/60 mt-2">Processing continues in background. Come back later to verify grades.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Grading Progress (shown only for In Progress assessments) -->
+<div id="gradingProgressSection" class="hidden mb-6">
+<!-- Main Card with Blue Background -->
+<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md">
+<div class="flex items-start gap-4 mb-6">
+<span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
+<div class="flex-1">
+<h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Grading Your Assessment</h3>
+<p class="text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is analyzing all student responses. This usually takes a few minutes. We'll notify you once grading is complete.</p>
+</div>
+</div>
+
+<!-- Inspirational Quote Card -->
+<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
+<p class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed" id="inspirationalQuote">The beautiful thing about learning is that no one can take it away from you.</p>
+</div>
+</div>
+</div>
+
+<!-- View Questions Section (shown after verification) -->
+<div id="viewQuestionsSection" class="hidden mb-6">
+<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-md border-l-4 border-primary overflow-hidden">
+<div class="px-6 py-4 flex items-center justify-between">
+<div>
+<h2 class="text-xl font-bold text-text-dark dark:text-text-light">Assessment Questions</h2>
+<p class="text-sm text-text-dark/70 dark:text-text-light/70 mt-1">View the verified questions for this assessment</p>
+</div>
+<div class="flex items-center gap-3">
+<button onclick="downloadQuestions()" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors text-sm">
+<span class="material-symbols-outlined text-lg">download</span>
+<span>Download Questions</span>
+</button>
+<button onclick="toggleQuestionsView()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm">
+<span class="material-symbols-outlined text-lg" id="questionsToggleIcon">visibility</span>
+<span id="questionsToggleText">View Questions</span>
+</button>
+</div>
+</div>
+
+<!-- Collapsible Questions Content -->
+<div id="questionsContent" class="hidden">
+<div class="p-6 bg-white/50 dark:bg-slate-900/50">
+<div class="mb-4 flex items-center justify-between">
+<div class="text-sm text-text-dark/70 dark:text-text-light/70">
+Total Questions: <span id="questionsCount" class="font-bold text-primary">0</span> |
+Total Marks: <span id="questionsTotalMarks" class="font-bold text-green-600 dark:text-green-400">0</span>
+</div>
+<button id="editQuestionsBtn" onclick="window.location.href='/verify-questions.html?id=' + assessmentId" class="inline-flex items-center gap-1 text-sm text-primary hover:text-blue-700 font-medium" style="display: none;">
+<span class="material-symbols-outlined text-base">edit</span>
+Edit Questions
+</button>
+</div>
+
+<!-- Questions List -->
+<div id="questionsList" class="space-y-3">
+<!-- Questions will be loaded here -->
+</div>
 </div>
 </div>
 </div>
@@ -325,25 +495,6 @@
 <p class="text-sm text-text-dark/70 dark:text-text-light/70">Click to upload or drag and drop PDF files here</p>
 <p class="text-xs text-text-dark/60 dark:text-text-light/60 mt-2">You can upload multiple answer sheets at once</p>
 </div>
-</div>
-</div>
-</div>
-
-<!-- AI Grading Progress (shown only for In Progress assessments) -->
-<div id="gradingProgressSection" class="hidden mb-6">
-<!-- Main Card with Blue Background -->
-<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md">
-<div class="flex items-start gap-4 mb-6">
-<span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
-<div class="flex-1">
-<h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Grading Your Assessment</h3>
-<p class="text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is analyzing all student responses. This usually takes a few minutes. We'll notify you once grading is complete.</p>
-</div>
-</div>
-
-<!-- Inspirational Quote Card -->
-<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
-<p class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed" id="inspirationalQuote">The beautiful thing about learning is that no one can take it away from you.</p>
 </div>
 </div>
 </div>
@@ -581,6 +732,9 @@ async function loadAssessmentDetails() {
                 // Fallback to extraction progress if question count not available
                 showExtractionProgress();
             }
+        } else if (assessmentData.status === 'Ready for Grading') {
+            // Questions verified and ready for answer sheet upload
+            showCompletedState();
         } else if (assessmentData.status === 'Processing Ans') {
             // AI is grading answers - show grading progress with loader
             showGradingProgress();
@@ -676,25 +830,228 @@ function showAnswerSheetUpload() {
     uploadSection.classList.remove('hidden');
 }
 
-// Show grading progress message
-function showGradingProgress() {
-    const progressSection = document.getElementById('gradingProgressSection');
-
-    // Show the progress section
-    progressSection.classList.remove('hidden');
-    
-    // Rotate inspirational quotes
-    rotateQuotes();
-    
-    // Simulate grading completion after some time
-    simulateGradingCompletion();
+// Show grading progress message (only if submissions are actively being processed)
+async function showGradingProgress() {
+    try {
+        // Check if there are any submissions being processed by AI
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/submissions`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const submissions = data.submissions || [];
+            
+            // Check if at least one submission is currently being processed by AI
+            const hasProcessing = submissions.some(s => s.status === 'Processing');
+            
+            if (hasProcessing) {
+                // Show "AI is Grading" section only when there are active processing submissions
+                const progressSection = document.getElementById('gradingProgressSection');
+                progressSection.classList.remove('hidden');
+                
+                // Rotate inspirational quotes
+                rotateQuotes();
+                
+                // Start polling to check when all grading is complete
+                pollGradingStatus();
+            } else {
+                // All submissions are done processing, show completed state with Assessment Questions
+                showCompletedState();
+            }
+        } else {
+            // If we can't fetch submissions, show completed state as fallback
+            showCompletedState();
+        }
+    } catch (error) {
+        console.error('Error checking grading status:', error);
+        // On error, show completed state as fallback
+        showCompletedState();
+    }
 }
 
 // Show completed state (assessment fully graded)
 function showCompletedState() {
-    // Just show the student results table which is already rendered
-    // No special section needed for completed assessments
+    // Show questions section first (at the top)
+    showQuestionsSection();
+    
+    // Show answer sheet upload section below questions (for uploading more answer sheets)
+    showAnswerSheetUpload();
+    
+    // Show the student results table which is already rendered
     console.log('Assessment is completed - showing student results');
+}
+
+// Show questions section
+function showQuestionsSection() {
+    const questionsSection = document.getElementById('viewQuestionsSection');
+    questionsSection.classList.remove('hidden');
+    
+    // Load questions data
+    loadQuestionsForView();
+}
+
+// Download original question paper PDF
+async function downloadQuestions() {
+    try {
+        if (!assessmentData?.question_paper_link) {
+            return;
+        }
+        
+        // Fetch the original PDF
+        const response = await fetch(assessmentData.question_paper_link);
+        if (!response.ok) {
+            throw new Error('Failed to fetch PDF');
+        }
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${assessmentData.title || 'Assessment'}_Questions.pdf`;
+        link.click();
+        
+        // Cleanup
+        URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('Error downloading PDF:', error);
+    }
+}
+
+// Toggle questions view
+function toggleQuestionsView() {
+    const content = document.getElementById('questionsContent');
+    const toggleText = document.getElementById('questionsToggleText');
+    const toggleIcon = document.getElementById('questionsToggleIcon');
+    
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        toggleText.textContent = 'Hide Questions';
+        toggleIcon.textContent = 'visibility_off';
+    } else {
+        content.classList.add('hidden');
+        toggleText.textContent = 'View Questions';
+        toggleIcon.textContent = 'visibility';
+    }
+}
+
+// Load questions for view
+async function loadQuestionsForView() {
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/questions`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load questions');
+        }
+        
+        const data = await response.json();
+        const questions = data.questions || [];
+        
+        // Helper function to format numbers (remove unnecessary decimals)
+        const formatNumber = (num) => {
+            const parsed = parseFloat(num);
+            if (isNaN(parsed)) return '0';
+            return parsed % 1 === 0 ? Math.floor(parsed) : parsed;
+        };
+        
+        // Update counts
+        document.getElementById('questionsCount').textContent = questions.length;
+        const totalMarks = questions.reduce((sum, q) => sum + parseFloat(q.max_marks || 0), 0);
+        document.getElementById('questionsTotalMarks').textContent = formatNumber(totalMarks);
+        
+        // Show Edit Questions button only for Admin users
+        const editQuestionsBtn = document.getElementById('editQuestionsBtn');
+        console.log('User role:', user?.role);
+        console.log('Edit button element:', editQuestionsBtn);
+        if (user && user.role === 'Admin') {
+            console.log('✅ Admin user - showing Edit Questions button');
+            editQuestionsBtn.style.display = 'inline-flex';
+        } else {
+            console.log('❌ Non-admin user - hiding Edit Questions button');
+        }
+        
+        // Render questions list
+        const questionsList = document.getElementById('questionsList');
+        questionsList.innerHTML = '';
+        
+        if (questions.length === 0) {
+            questionsList.innerHTML = '<p class="text-center text-gray-500 py-4">No questions found</p>';
+            return;
+        }
+        
+        questions.forEach((q, index) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'bg-white dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow';
+            
+            const isOptional = q.is_optional || false;
+            const optionalBadge = isOptional ? `
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs font-semibold rounded-full">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">alt_route</span>
+                    OR
+                </span>
+            ` : '';
+            
+            questionCard.innerHTML = `
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="inline-flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm">
+                                ${q.question_number}
+                            </span>
+                            <span class="text-sm font-semibold text-text-dark dark:text-text-light">
+                                Question ${q.question_number}
+                            </span>
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                ${q.question_identifier || ''}
+                            </span>
+                            ${optionalBadge}
+                        </div>
+                        <p class="text-sm text-text-dark dark:text-text-light leading-relaxed line-clamp-2">
+                            ${q.question_text || 'No question text'}
+                        </p>
+                        ${q.topics && q.topics.length > 0 ? `
+                            <div class="flex flex-wrap gap-1 mt-2">
+                                ${q.topics.slice(0, 3).map(t => `
+                                    <span class="inline-flex items-center px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">
+                                        ${t.topic} ${t.weight ? t.weight + '%' : ''}
+                                    </span>
+                                `).join('')}
+                                ${q.topics.length > 3 ? `<span class="text-xs text-gray-500">+${q.topics.length - 3} more</span>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="inline-flex items-center px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-bold rounded-lg">
+                            ${formatNumber(q.max_marks)} marks
+                        </span>
+                        ${q.verified ? `
+                            <span class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
+                                Verified
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            questionsList.appendChild(questionCard);
+        });
+        
+    } catch (error) {
+        console.error('Error loading questions:', error);
+        document.getElementById('questionsList').innerHTML = '<p class="text-center text-red-500 py-4">Error loading questions</p>';
+    }
 }
 
 // Simulate grading completion
@@ -731,27 +1088,138 @@ function simulateGradingCompletion() {
     }, completionTime);
 }
 
-// Show completion notification
-function showCompletionNotification() {
-    // Create notification element
+// Show success notification
+function showSuccessNotification(message) {
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-bounce';
+    notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3';
     notification.innerHTML = `
         <span class="material-symbols-outlined">check_circle</span>
         <div>
-            <p class="font-semibold">Grading Complete!</p>
-            <p class="text-sm">Your assessment has been graded successfully.</p>
+            <p class="font-semibold">${message}</p>
         </div>
     `;
     
     document.body.appendChild(notification);
     
-    // Remove notification after 5 seconds
     setTimeout(() => {
         notification.style.transition = 'opacity 0.3s ease';
         notification.style.opacity = '0';
         setTimeout(() => notification.remove(), 300);
-    }, 5000);
+    }, 3000);
+}
+
+// Show error notification
+function showErrorNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3';
+    notification.innerHTML = `
+        <span class="material-symbols-outlined">error</span>
+        <div>
+            <p class="font-semibold">${message}</p>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.3s ease';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Show completion notification
+function showCompletionNotification() {
+    showSuccessNotification('Grading Complete! Your assessment has been graded successfully.');
+}
+
+// Toggle questions modal
+function toggleQuestionsModal() {
+    const modal = document.getElementById('questionsModal');
+    if (modal.style.display === 'none' || !modal.style.display) {
+        modal.style.display = 'flex';
+        loadAssessmentQuestionsModal();
+    } else {
+        modal.style.display = 'none';
+    }
+}
+
+// Load assessment questions for modal
+async function loadAssessmentQuestionsModal() {
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/questions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.questions) {
+            displayModalQuestions(data.questions);
+        } else {
+            document.getElementById('assessmentQuestionsList').innerHTML = `
+                <div class="text-center text-gray-500 dark:text-gray-400">
+                    <span class="material-symbols-outlined text-4xl mb-2 block">error</span>
+                    <p>Failed to load questions</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading assessment questions:', error);
+        document.getElementById('assessmentQuestionsList').innerHTML = `
+            <div class="text-center text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 block">error</span>
+                <p>Error loading questions</p>
+            </div>
+        `;
+    }
+}
+
+// Display questions in modal
+function displayModalQuestions(questions) {
+    const container = document.getElementById('assessmentQuestionsList');
+    
+    // Helper function to format numbers
+    const formatNumber = (num) => {
+        const parsed = parseFloat(num);
+        if (isNaN(parsed)) return '0';
+        return parsed % 1 === 0 ? Math.floor(parsed) : parsed;
+    };
+    
+    if (!questions || questions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-gray-500 dark:text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 block">quiz</span>
+                <p>No questions found for this assessment</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = questions.map(q => `
+        <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+            <div class="flex items-start gap-3 mb-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm flex-shrink-0">
+                    ${q.question_number}
+                </span>
+                <div class="flex-1">
+                    <h4 class="text-base font-semibold text-text-dark dark:text-text-light mb-2">Question ${q.question_number}</h4>
+                    <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-slate-700 rounded-lg p-3 mb-2">
+                        ${q.question_text}
+                    </div>
+                    <div class="flex items-center gap-4 text-sm">
+                        <span class="font-semibold text-primary">${formatNumber(q.max_marks)} marks</span>
+                        ${q.topics && q.topics.length > 0 ? `
+                            <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                <span class="material-symbols-outlined text-sm">school</span>
+                                <span>${q.topics.map(t => t.topic).join(', ')}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
 // Navigate to verification page
@@ -759,40 +1227,220 @@ function goToVerification() {
     window.location.href = `/verify-questions.html?id=${assessmentId}`;
 }
 
-// Handle answer sheet upload
-function handleAnswerSheetUpload(input) {
+// Handle answer sheet upload - direct upload without modal
+async function handleAnswerSheetUpload(input) {
     if (input.files && input.files.length > 0) {
-        const fileCount = input.files.length;
-        const fileNames = Array.from(input.files).map(f => f.name).join(', ');
+        const file = input.files[0]; // Single file upload
         
-        // Show success message
-        const uploadArea = document.getElementById('answerSheetArea');
-        uploadArea.innerHTML = `
-            <div class="text-center">
-                <span class="material-symbols-outlined text-5xl text-green-600 mb-2">check_circle</span>
-                <p class="text-lg font-semibold text-text-dark dark:text-text-light mb-1">
-                    ${fileCount} Answer Sheet${fileCount > 1 ? 's' : ''} Uploaded Successfully
-                </p>
-                <p class="text-sm text-text-dark/70 dark:text-text-light/70 mb-3">${fileNames}</p>
-                <button onclick="startGrading()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md">
-                    Start AI Grading
-                </button>
-            </div>
-        `;
+        try {
+            // Create form data
+            const formData = new FormData();
+            formData.append('answer_sheet', file);
+            
+            const token = sessionStorage.getItem('token');
+            
+            // Upload to new endpoint
+            const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/submissions/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to upload answer sheet');
+            }
+            
+            // Show full-page processing view
+            showAnswerSheetProcessing();
+            
+            // Start polling for completion
+            pollAnswerSheetProcessing();
+            
+        } catch (error) {
+            console.error('Error uploading answer sheet:', error);
+            showErrorNotification('Failed to upload answer sheet: ' + error.message);
+        }
+        
+        // Reset input
+        input.value = '';
     }
 }
 
-// Start grading process
-function startGrading() {
-    // Update status to "In Progress"
-    const statusBadge = document.getElementById('assessmentStatus');
-    statusBadge.textContent = 'In Progress';
-    statusBadge.className = 'status-badge status-in-progress';
+// Show answer sheet processing view (full screen centered)
+function showAnswerSheetProcessing() {
+    // Populate assessment details in processing screen
+    const detailsDiv = document.getElementById('processingAssessmentDetails');
     
-    // Hide upload section, show grading progress
-    document.getElementById('answerSheetUploadSection').classList.add('hidden');
-    showGradingProgress();
+    if (assessmentData && detailsDiv) {
+        detailsDiv.innerHTML = `
+            <div class="flex items-center gap-2 text-sm mb-2">
+                <span class="material-symbols-outlined text-primary">tag</span>
+                <span class="font-semibold text-text-dark dark:text-text-light">Assessment Number:</span>
+                <span class="text-text-dark/70 dark:text-text-light/70">#${assessmentData.id}</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm mb-2">
+                <span class="material-symbols-outlined text-primary">title</span>
+                <span class="font-semibold text-text-dark dark:text-text-light">Title:</span>
+                <span class="text-text-dark/70 dark:text-text-light/70">${assessmentData.title}</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm mb-2">
+                <span class="material-symbols-outlined text-primary">school</span>
+                <span class="font-semibold text-text-dark dark:text-text-light">Class:</span>
+                <span class="text-text-dark/70 dark:text-text-light/70">${assessmentData.class}</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-primary">book</span>
+                <span class="font-semibold text-text-dark dark:text-text-light">Subject:</span>
+                <span class="text-text-dark/70 dark:text-text-light/70">${assessmentData.subject}</span>
+            </div>
+        `;
+    }
+    
+    // Show processing section (full screen overlay)
+    document.getElementById('answerSheetProcessingSection').classList.remove('hidden');
+    
+    // Rotate quotes
+    rotateProcessingQuotes();
 }
+
+// Hide processing view and show results
+function hideAnswerSheetProcessing() {
+    // Hide full-screen processing overlay
+    document.getElementById('answerSheetProcessingSection').classList.add('hidden');
+}
+
+// Poll for answer sheet processing completion
+let answerSheetPollInterval = null;
+
+async function pollAnswerSheetProcessing() {
+    // Clear any existing interval
+    if (answerSheetPollInterval) {
+        clearInterval(answerSheetPollInterval);
+    }
+    
+    // Poll every 2 seconds
+    answerSheetPollInterval = setInterval(async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/submissions`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const submissions = data.submissions || [];
+                
+                // Check if any submission is still processing
+                const hasProcessing = submissions.some(s => s.status === 'Processing');
+                
+                if (!hasProcessing) {
+                    // All done! Stop polling and show results
+                    clearInterval(answerSheetPollInterval);
+                    answerSheetPollInterval = null;
+                    
+                    hideAnswerSheetProcessing();
+                    await generateStudentResults();
+                }
+            }
+        } catch (error) {
+            console.error('Error polling answer sheet status:', error);
+        }
+    }, 2000);
+}
+
+// Rotate processing quotes
+function rotateProcessingQuotes() {
+    const motivationalQuotes = [
+        "AI is analyzing the answer sheet and grading responses...",
+        "Extracting student information from the answer sheet...",
+        "Comparing answers with the marking scheme...",
+        "Calculating marks for each question...",
+        "Almost done! Finalizing the grading results..."
+    ];
+    const quoteElement = document.getElementById('processingQuote');
+    
+    if (!quoteElement) return;
+    
+    let currentIndex = 0;
+    
+    // Show first quote
+    quoteElement.textContent = motivationalQuotes[currentIndex];
+    
+    // Rotate quotes every 5 seconds
+    const quoteInterval = setInterval(() => {
+        // Check if section is still visible
+        if (document.getElementById('answerSheetProcessingSection').classList.contains('hidden')) {
+            clearInterval(quoteInterval);
+            return;
+        }
+        
+        currentIndex = (currentIndex + 1) % motivationalQuotes.length;
+        quoteElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            quoteElement.textContent = motivationalQuotes[currentIndex];
+            quoteElement.style.opacity = '1';
+        }, 300);
+    }, 5000);
+    
+    // Add transition to quote element
+    quoteElement.style.transition = 'opacity 0.3s ease';
+}
+
+// Poll for grading status
+let gradingPollInterval = null;
+
+async function pollGradingStatus() {
+    // Clear any existing interval
+    if (gradingPollInterval) {
+        clearInterval(gradingPollInterval);
+    }
+    
+    // Poll every 5 seconds
+    gradingPollInterval = setInterval(async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/submissions`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const submissions = data.submissions || [];
+                
+                // Check if any submission is still processing
+                const hasProcessing = submissions.some(s => s.status === 'Processing');
+                
+                if (!hasProcessing) {
+                    // All done! Stop polling and reload page
+                    clearInterval(gradingPollInterval);
+                    gradingPollInterval = null;
+                    window.location.reload();
+                }
+            }
+        } catch (error) {
+            console.error('Error polling grading status:', error);
+        }
+    }, 5000);
+}
+
+// Stop polling when page is unloaded
+window.addEventListener('beforeunload', () => {
+    if (answerSheetPollInterval) {
+        clearInterval(answerSheetPollInterval);
+    }
+    if (gradingPollInterval) {
+        clearInterval(gradingPollInterval);
+    }
+});
 
 // Rotate inspirational quotes
 function rotateQuotes() {
@@ -822,6 +1470,9 @@ function rotateQuotes() {
     }, 6000);
 }
 
+// Track if we're currently polling
+let submissionPollInterval = null;
+
 // Generate student results from API
 async function generateStudentResults() {
     const tbody = document.getElementById('studentsTableBody');
@@ -847,7 +1498,30 @@ async function generateStudentResults() {
         tbody.innerHTML = '';
         
         if (submissions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No student submissions found</td></tr>';
+            // Show elegant empty state placeholder
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-16">
+                        <div class="flex flex-col items-center justify-center text-center">
+                            <div class="mb-4">
+                                <span class="material-symbols-outlined text-gray-400 dark:text-gray-500" style="font-size: 80px;">
+                                    upload_file
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                No Student Answers Uploaded Yet
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
+                                Upload answer sheets to get AI-powered grading and see results here
+                            </p>
+                            <button onclick="document.getElementById('answerSheetInput')?.click()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
+                                <span class="material-symbols-outlined">cloud_upload</span>
+                                Upload Answer Sheets
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
             document.getElementById('totalStudents').textContent = '0';
             return;
         }
@@ -855,35 +1529,77 @@ async function generateStudentResults() {
         // Get total marks for the assessment
         const totalMarks = parseFloat(assessmentData.total_marks || 100);
         
+        // Check if any submissions are in Processing status
+        let hasProcessingSubmissions = false;
+        
         submissions.forEach(submission => {
             const row = document.createElement('tr');
             row.className = 'student-row hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors';
-            row.setAttribute('data-student-id', submission.student_id);
-            row.setAttribute('data-student-name', submission.student_name.toLowerCase());
-            row.setAttribute('data-status', submission.submission_status);
+            row.setAttribute('data-student-id', submission.student_id || 'N/A');
+            row.setAttribute('data-student-name', (submission.student_name || '').toLowerCase());
+            row.setAttribute('data-status', submission.status);
+            
+            // Track processing submissions for polling
+            if (submission.status === 'Processing') {
+                hasProcessingSubmissions = true;
+            }
             
             // Format marks to remove trailing zeros
-            const marksObtained = parseFloat(submission.total_marks_obtained);
-            const formattedMarks = marksObtained % 1 === 0 ? Math.floor(marksObtained) : marksObtained;
+            const marksObtained = parseFloat(submission.total_marks_obtained || 0);
+            const formattedMarks = marksObtained % 1 === 0 ? Math.floor(marksObtained) : marksObtained.toFixed(1);
             const formattedTotal = totalMarks % 1 === 0 ? Math.floor(totalMarks) : totalMarks;
+            
+            // Determine status class
+            let statusClass = 'status-processing';
+            const status = submission.status;
+            if (status === 'Processing') {
+                statusClass = 'status-processing';
+            } else if (status === 'Ready for Verification') {
+                statusClass = 'status-ready-for-verification';
+            } else if (status === 'Verifying') {
+                statusClass = 'status-verifying';
+            } else if (status === 'Approved') {
+                statusClass = 'status-approved';
+            }
+            
+            // Determine action button
+            let actionButton = '';
+            if (status === 'Ready for Verification') {
+                actionButton = `
+                    <button onclick="verifyGrades(${submission.id})" class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-primary hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors" title="Verify Grades">
+                        <span class="material-symbols-outlined text-base">fact_check</span>
+                        Verify
+                    </button>
+                `;
+            } else if (status === 'Verifying' || status === 'Approved') {
+                actionButton = `
+                    <button onclick="viewStudentDetails(${submission.id})" class="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors" title="View Details">
+                        <span class="material-symbols-outlined text-primary">visibility</span>
+                    </button>
+                `;
+            } else if (status === 'Processing') {
+                actionButton = `
+                    <div class="flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary animate-spin">autorenew</span>
+                    </div>
+                `;
+            }
             
             row.innerHTML = `
                 <td class="px-6 py-4 border-r border-gray-200 dark:border-slate-600">
-                    <div class="text-sm font-semibold text-text-dark dark:text-text-light">${submission.student_id}</div>
+                    <div class="text-sm font-semibold text-text-dark dark:text-text-light">${submission.student_identifier || 'N/A'}</div>
                 </td>
                 <td class="px-6 py-4 border-r border-gray-200 dark:border-slate-600">
-                    <div class="text-sm font-medium text-text-dark dark:text-text-light">${submission.student_name}</div>
+                    <div class="text-sm font-medium text-text-dark dark:text-text-light">${submission.student_name || 'Unknown'}</div>
                 </td>
                 <td class="px-6 py-4 border-r border-gray-200 dark:border-slate-600">
                     <div class="text-sm font-semibold text-text-dark dark:text-text-light">${formattedMarks}/${formattedTotal}</div>
                 </td>
                 <td class="px-6 py-4 border-r border-gray-200 dark:border-slate-600">
-                    <span class="status-badge status-${submission.submission_status.toLowerCase()}">${submission.submission_status}</span>
+                    <span class="status-badge ${statusClass}">${status}</span>
                 </td>
                 <td class="px-6 py-4 text-center">
-                    <button onclick="viewStudentDetails('${submission.student_id}')" class="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors" title="View Details">
-                        <span class="material-symbols-outlined text-primary">visibility</span>
-                    </button>
+                    ${actionButton}
                 </td>
             `;
             
@@ -891,16 +1607,58 @@ async function generateStudentResults() {
         });
         
         document.getElementById('totalStudents').textContent = submissions.length;
+        
+        // Start or stop polling based on processing submissions
+        if (hasProcessingSubmissions) {
+            startSubmissionPolling();
+        } else {
+            stopSubmissionPolling();
+        }
+        
     } catch (error) {
         console.error('Error loading student submissions:', error);
         tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error loading student submissions</td></tr>';
     }
 }
 
-function viewStudentDetails(studentId) {
-    // Navigate to the student review page
-    window.location.href = `/student-review.html?studentId=${studentId}&assessmentId=${assessmentId}`;
+// Start polling for submission status updates
+function startSubmissionPolling() {
+    // Don't start if already polling
+    if (submissionPollInterval) {
+        return;
+    }
+    
+    console.log('🔄 Starting submission status polling...');
+    
+    // Poll every 3 seconds
+    submissionPollInterval = setInterval(async () => {
+        await generateStudentResults();
+    }, 3000);
 }
+
+// Stop polling
+function stopSubmissionPolling() {
+    if (submissionPollInterval) {
+        console.log('⏹️ Stopping submission status polling');
+        clearInterval(submissionPollInterval);
+        submissionPollInterval = null;
+    }
+}
+
+// Navigate to verify grades page
+function verifyGrades(submissionId) {
+    window.location.href = `/verify-grades.html?submissionId=${submissionId}`;
+}
+
+// View student details (for verifying/approved submissions)
+function viewStudentDetails(submissionId) {
+    window.location.href = `/verify-grades.html?submissionId=${submissionId}`;
+}
+
+// Stop polling when page is unloaded
+window.addEventListener('beforeunload', () => {
+    stopSubmissionPolling();
+});
 
 // Filter functionality
 function applyFilters() {
@@ -959,9 +1717,40 @@ function clearFilters() {
     document.getElementById('totalStudents').textContent = rows.length;
 }
 
+// Go back to source page (handles multiple entry points)
+function goBackToSource() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('returnTo');
+    
+    if (returnTo === 'dashboard') {
+        window.location.href = '/dashboard';
+    } else {
+        // Default to assessments page
+        window.location.href = '/assessments';
+    }
+}
+
+// Update back button text based on source
+function updateBackButtonText() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('returnTo');
+    const backButtonText = document.getElementById('backButtonText');
+    
+    if (backButtonText) {
+        if (returnTo === 'dashboard') {
+            backButtonText.textContent = 'Back to Dashboard';
+        } else {
+            backButtonText.textContent = 'Back to Assessments';
+        }
+    }
+}
+
 // Initialize page
 loadAssessmentDetails();
 generateStudentResults();
+updateBackButtonText();
 </script>
+
+
 </body>
 </html>

@@ -23,10 +23,14 @@ exports.getUserAssessments = async (req, res) => {
         a.subject,
         a.status,
         a.created_at,
-        u.name as created_by_name
+        u.name as created_by_name,
+        COUNT(DISTINCT CASE WHEN s.status != 'Failed' THEN s.id END) as total_submissions,
+        COUNT(DISTINCT CASE WHEN s.status = 'Approved' THEN s.id END) as graded_count
       FROM assessments a
       LEFT JOIN users u ON a.created_by = u.id
+      LEFT JOIN student_submissions s ON a.id = s.assessment_id
       WHERE a.created_by = $1
+      GROUP BY a.id, u.name
       ORDER BY a.created_at DESC
     `;
 
@@ -116,20 +120,26 @@ exports.getAssessmentSubmissions = async (req, res) => {
     }
 
     // Fetch all student submissions for this assessment
+    // Calculate total_marks_obtained from answers table (not stored in student_submissions)
     const submissionsQuery = `
-      SELECT 
-        id,
-        student_id,
-        student_name,
-        submission_status,
-        total_marks_obtained,
-        submitted_at,
-        graded_at,
-        approved_by,
-        approved_at
-      FROM student_submissions
-      WHERE assessment_id = $1
-      ORDER BY student_name
+      SELECT
+        ss.id,
+        ss.student_id,
+        s.student_name,
+        s.student_identifier,
+        ss.status,
+        COALESCE(
+          (SELECT SUM(a.marks_obtained)
+           FROM answers a
+           WHERE a.submission_id = ss.id),
+          0
+        ) as total_marks_obtained,
+        ss.created_at,
+        ss.updated_at
+      FROM student_submissions ss
+      LEFT JOIN students s ON ss.student_id = s.id
+      WHERE ss.assessment_id = $1
+      ORDER BY s.student_name NULLS LAST
     `;
 
     const result = await pool.query(submissionsQuery, [id]);
@@ -181,18 +191,25 @@ exports.getStudentSubmission = async (req, res) => {
     const assessment = assessmentResult.rows[0];
 
     // Get student submission
+    // Calculate total_marks_obtained from answers table (not stored in student_submissions)
     const submissionQuery = `
       SELECT
-        id,
-        student_id,
-        student_name,
-        submission_status,
-        total_marks_obtained,
-        answer_sheet_pdf_link,
-        submitted_at,
-        graded_at
-      FROM student_submissions
-      WHERE assessment_id = $1 AND student_id = $2
+        ss.id,
+        ss.student_id,
+        s.student_name,
+        ss.status,
+        COALESCE(
+          (SELECT SUM(a.marks_obtained)
+           FROM answers a
+           WHERE a.submission_id = ss.id),
+          0
+        ) as total_marks_obtained,
+ss.answer_sheet_link,
+ss.created_at,
+ss.updated_at
+FROM student_submissions ss
+      LEFT JOIN students s ON ss.student_id = s.id
+      WHERE ss.assessment_id = $1 AND ss.student_id = $2
     `;
     const submissionResult = await pool.query(submissionQuery, [assessmentId, studentId]);
 
@@ -335,9 +352,9 @@ exports.approveSubmission = async (req, res) => {
     const updateQuery = `
       UPDATE student_submissions
       SET
-        submission_status = 'Approved',
-        approved_by = $1,
-        approved_at = NOW()
+        status = 'Approved',
+        updated_by = $1,
+        updated_at = NOW()
       WHERE assessment_id = $2 AND student_id = $3
       RETURNING *
     `;
@@ -450,14 +467,14 @@ async function processQuestionExtraction(assessmentId, assessment) {
     const pdfSource = assessment.localFilePath || assessment.question_paper_link;
     console.log(`📄 Extracting questions with images from: ${pdfSource}`);
 
-    const questions = await aiService.extractQuestionsWithImages(
+    // Extract questions using AI (text extraction only, no image cropping)
+    const questions = await aiService.extractQuestionsFromPDF(
       pdfSource,
       {
         title: assessment.title,
         class: assessment.class,
         subject: assessment.subject
-      },
-      assessmentId // Pass assessment ID for image storage
+      }
     );
     
     // STEP 3: Save extracted questions to database (with transaction)
@@ -465,19 +482,46 @@ async function processQuestionExtraction(assessmentId, assessment) {
     try {
       await client.query('BEGIN');
       
+      // Get the current max question_number for this assessment
+      const maxNumberResult = await client.query(
+        'SELECT COALESCE(MAX(question_number), 0) as max_num FROM questions WHERE assessment_id = $1',
+        [assessmentId]
+      );
+      let nextQuestionNumber = maxNumberResult.rows[0].max_num + 1;
+      
       // Save extracted questions to database (now with image URLs)
+      let savedCount = 0;
+      let skippedCount = 0;
+      
       for (const question of questions) {
+        // Validate required fields - skip incomplete questions
+        if (!question.question_text || question.question_text.trim() === '') {
+          console.log(`⚠️  Skipping question ${question.question_identifier || 'unknown'} - missing question text`);
+          skippedCount++;
+          continue;
+        }
+        
         await client.query(
-          `INSERT INTO questions (assessment_id, question_number, question_text, max_marks, question_image_url, verified)
-           VALUES ($1, $2, $3, $4, $5, false)`,
+          `INSERT INTO questions (assessment_id, question_number, question_identifier, question_text, max_marks, y_start, y_end, page_number, topics, verified)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)`,
           [
             assessmentId,
-            question.question_number,
-            question.question_text,
-            question.max_marks,
-            question.question_image_url || null // Image URL (may be null if extraction failed)
+            nextQuestionNumber++, // Auto-generated sequential number (1, 2, 3...)
+            question.question_identifier || null, // AI-extracted identifier (e.g., "i", "ii", "1a", "Q1")
+            question.question_text, // Full question text from AI
+            question.marks || 0, // Marks from AI response
+            question.y_start || null, // Y coordinate where question starts
+            question.y_end || null, // Y coordinate where question ends
+            question.page || 1, // Page number in PDF
+            JSON.stringify(question.topics || []) // Topics with weightage as JSONB
           ]
         );
+        savedCount++;
+      }
+      
+      console.log(`✅ Saved ${savedCount} questions to database`);
+      if (skippedCount > 0) {
+        console.log(`⚠️  Skipped ${skippedCount} incomplete questions`);
       }
       
       await client.query('COMMIT');
@@ -539,9 +583,13 @@ exports.getAssessmentQuestions = async (req, res) => {
       SELECT
         id,
         question_number,
+        question_identifier,
         question_text,
         max_marks,
-        question_image_url,
+        y_start,
+        y_end,
+        page_number,
+        topics,
         verified,
         created_at
       FROM questions
@@ -552,7 +600,7 @@ exports.getAssessmentQuestions = async (req, res) => {
 
     // Calculate total marks
     const totalMarks = questionsResult.rows.reduce(
-      (sum, q) => sum + (parseFloat(q.max_marks) || 0), 
+      (sum, q) => sum + (parseFloat(q.max_marks) || 0),
       0
     );
 
@@ -577,7 +625,7 @@ exports.getAssessmentQuestions = async (req, res) => {
 exports.updateQuestion = async (req, res) => {
   try {
     const { assessmentId, questionId } = req.params;
-    const { question_text, max_marks } = req.body;
+    const { question_text, max_marks, verified } = req.body;
     const userId = req.user.id;
 
     // Verify assessment belongs to user and is not approved yet
@@ -595,22 +643,27 @@ exports.updateQuestion = async (req, res) => {
     }
 
     const assessment = assessmentResult.rows[0];
-    if (assessment.status !== 'Ques Pending Approval' && assessment.status !== 'Processing Ques') {
+    // Allow editing for: Ques Pending Approval, Processing Ques, Ready for Grading
+    // Prevent editing for: In Progress, Completed (when grading has started or finished)
+    if (assessment.status !== 'Ques Pending Approval' &&
+        assessment.status !== 'Processing Ques' &&
+        assessment.status !== 'Ready for Grading') {
       return res.status(400).json({
         success: false,
-        message: 'Questions cannot be edited after approval'
+        message: 'Questions cannot be edited after grading has started'
       });
     }
 
-    // Update question
+    // Update question (including verified status if provided)
     const updateQuery = `
       UPDATE questions
       SET question_text = COALESCE($1, question_text),
-          max_marks = COALESCE($2, max_marks)
-      WHERE id = $3 AND assessment_id = $4
+          max_marks = COALESCE($2, max_marks),
+          verified = COALESCE($3, verified)
+      WHERE id = $4 AND assessment_id = $5
       RETURNING *
     `;
-    const result = await pool.query(updateQuery, [question_text, max_marks, questionId, assessmentId]);
+    const result = await pool.query(updateQuery, [question_text, max_marks, verified, questionId, assessmentId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -985,19 +1038,29 @@ async function processLocalPDF(assessmentId, tempFilePath, metadata) {
     const permanentPath = path.join(permanentDir, permanentFilename);
 
     // Move file from temp to permanent location
-    fs.renameSync(tempFilePath, permanentPath);
-    console.log(`✅ PDF saved to: ${permanentPath}`);
+    try {
+      fs.renameSync(tempFilePath, permanentPath);
+      console.log(`✅ PDF saved to: ${permanentPath}`);
+      
+      // Verify file exists at new location
+      if (!fs.existsSync(permanentPath)) {
+        throw new Error(`File not found after move: ${permanentPath}`);
+      }
+      
+      // Create local URL for the file
+      const localUrl = `/uploads/assessments/${permanentFilename}`;
+      
+      // Update assessment with PDF link
+      await pool.query(
+        'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
+        [localUrl, assessmentId]
+      );
 
-    // Create local URL for the file
-    const localUrl = `/uploads/assessments/${permanentFilename}`;
-    
-    // Update assessment with PDF link
-    await pool.query(
-      'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
-      [localUrl, assessmentId]
-    );
-
-    console.log(`✅ Assessment ${assessmentId} updated with local link: ${localUrl}`);
+      console.log(`✅ Assessment ${assessmentId} updated with local link: ${localUrl}`);
+    } catch (moveError) {
+      console.error(`❌ Failed to move/save PDF file:`, moveError);
+      throw new Error(`PDF file operation failed: ${moveError.message}`);
+    }
 
     // Now trigger AI extraction with local file path
     const assessment = await pool.query(
@@ -1015,12 +1078,28 @@ async function processLocalPDF(assessmentId, tempFilePath, metadata) {
     }
 
   } catch (error) {
-    console.error(`Error processing PDF for assessment ${assessmentId}:`, error);
-    // Update status to indicate failure
-    await pool.query(
-      'UPDATE assessments SET status = $1 WHERE id = $2',
-      ['Upload Failed', assessmentId]
-    );
+    console.error(`❌ Error processing PDF for assessment ${assessmentId}:`, error);
+    
+    // Clean up temp file if it still exists
+    try {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+        console.log(`🗑️ Cleaned up temp file: ${tempFilePath}`);
+      }
+    } catch (cleanupErr) {
+      console.warn('Warning: Could not cleanup temp file:', cleanupErr.message);
+    }
+    
+    // Update status to indicate failure with error details
+    try {
+      await pool.query(
+        'UPDATE assessments SET status = $1 WHERE id = $2',
+        ['Upload Failed', assessmentId]
+      );
+      console.log(`⚠️ Assessment ${assessmentId} status updated to 'Upload Failed'`);
+    } catch (dbErr) {
+      console.error('Failed to update assessment status:', dbErr);
+    }
   }
 }
 
@@ -1297,6 +1376,79 @@ exports.getAssessmentStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'An error occurred while fetching assessment statistics',
+      error: error.message
+    });
+  }
+};
+
+// Get question image (cropped from PDF)
+exports.getQuestionImage = async (req, res) => {
+  try {
+    const { assessmentId, questionId } = req.params;
+    console.log(`\n🖼️  Image request: assessment=${assessmentId}, question=${questionId}`);
+    console.log(`   User from token: ${JSON.stringify(req.user)}`);
+    
+    const userId = req.user.id;
+
+    // Get question details with assessment info
+    const query = `
+      SELECT q.y_start, q.y_end, q.page_number, a.question_paper_link, a.created_by
+      FROM questions q
+      JOIN assessments a ON q.assessment_id = a.id
+      WHERE q.id = $1 AND q.assessment_id = $2
+    `;
+    const result = await pool.query(query, [questionId, assessmentId]);
+
+    if (result.rows.length === 0) {
+      console.log(`   ❌ Question not found`);
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    const question = result.rows[0];
+    console.log(`   Question data: created_by=${question.created_by} (${typeof question.created_by}), userId=${userId} (${typeof userId})`);
+
+    // Verify user has access to this assessment
+    if (parseInt(question.created_by) !== parseInt(userId)) {
+      console.log(`   ❌ Access DENIED: ${parseInt(question.created_by)} !== ${parseInt(userId)}`);
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+    
+    console.log(`   ✅ Access granted`);
+
+    // Get the full page image
+    const { getPdfPageImage } = require('../services/pdfPageService');
+    const imageBuffer = await getPdfPageImage(
+      question.question_paper_link,
+      question.page_number || 1
+    );
+
+    // Send image
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.send(imageBuffer);
+
+  } catch (error) {
+    console.error('Get question image error:', error);
+    
+    // Check if it's a file not found error
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        message: 'PDF file not found. The question paper may have been deleted or is missing.',
+        error: error.message,
+        hint: 'Please re-upload the question paper or contact support.'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while generating question image',
       error: error.message
     });
   }

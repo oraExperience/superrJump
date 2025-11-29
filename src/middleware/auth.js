@@ -11,7 +11,14 @@ exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+    if (req.path.includes('/image')) {
+      console.log(`🔐 Auth check for image: ${req.path}`);
+      console.log(`   Authorization header: ${authHeader ? 'Present' : 'Missing'}`);
+      console.log(`   Token: ${token ? token.substring(0, 20) + '...' : 'None'}`);
+    }
+
     if (!token) {
+      console.log(`   ❌ No token provided`);
       return res.status(401).json({
         success: false,
         message: 'Access token is required'
@@ -21,10 +28,17 @@ exports.authenticateToken = (req, res, next) => {
     // Verify token
     jwt.verify(token, JWT_SECRET, (err, user) => {
       if (err) {
+        if (req.path.includes('/image')) {
+          console.log(`   ❌ Token verification failed: ${err.message}`);
+        }
         return res.status(403).json({
           success: false,
           message: 'Invalid or expired token'
         });
+      }
+
+      if (req.path.includes('/image')) {
+        console.log(`   ✅ Token valid, user: ${JSON.stringify(user)}`);
       }
 
       // Add user info to request object
@@ -47,7 +61,8 @@ exports.generateToken = (user) => {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
+      organisation: user.organisation
     },
     JWT_SECRET,
     { expiresIn: '24h' } // Token expires in 24 hours

@@ -50,7 +50,8 @@ exports.login = async (req, res) => {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
+      organisation: user.organisation
     });
 
     // Return user data (excluding password fields) and token

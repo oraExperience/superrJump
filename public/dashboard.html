@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Dashboard - SuperrJump</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2A6EBB",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#111821",
+                        "accent-yellow": "#FFC857",
+                        "accent-green": "#A2D7D2",
+                        "text-dark": "#333333",
+                        "text-light": "#F8FAFC",
+                        "border-light": "#e7ecf3",
+                        "border-dark": "#374151"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-item {
+            transition: all 0.2s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateX(4px);
+            background: rgba(42, 110, 187, 0.05);
+        }
+    </style>
+</head>
+
+<body class="font-display bg-white dark:bg-background-dark text-text-dark dark:text-text-light min-h-screen">
+    <div class="relative flex min-h-screen w-full flex-col">
+        <!-- Sidebar Menu -->
+        <div id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-border-light dark:border-border-dark transform -translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="flex flex-col h-full">
+                <!-- Sidebar Header -->
+                <div
+                    class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+                    <div class="flex items-center gap-2">
+                        <div class="text-primary size-6">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-lg font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+                    </div>
+                    <button onclick="toggleSidebar()"
+                        class="text-text-dark dark:text-text-light hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <!-- Sidebar Menu Items -->
+                <nav class="flex-1 px-4 py-6 space-y-2">
+                    <a href="/dashboard.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/assessments.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+                        <span class="material-symbols-outlined">assignment</span>
+                        <span>Assessments</span>
+                    </a>
+                    <a href="/students.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+                        <span class="material-symbols-outlined">school</span>
+                        <span>Students</span>
+                    </a>
+                    <a href="/profile.html"
+                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>Profile</span>
+                    </a>
+                </nav>
+
+                <!-- Sidebar Footer -->
+                <div class="mt-auto px-4 py-4 border-t border-border-light dark:border-border-dark">
+                    <button onclick="logout()"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
+                        <span class="material-symbols-outlined">logout</span>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Backdrop -->
+        <div id="sidebarBackdrop" class="hidden fixed inset-0 bg-black/50 z-40" onclick="toggleSidebar()"></div>
+
+        <!-- TopNavBar -->
+        <header
+            class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+            <div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
+                <div class="flex items-center gap-3 text-text-dark dark:text-text-light">
+                    <button onclick="toggleSidebar()"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-2xl">menu</span>
+                    </button>
+                    <a href="/dashboard.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                        <div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="orgName" class="text-sm font-medium">Organization Name</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 px-4 py-6 md:px-8 min-h-screen">
+            <div class="max-w-7xl mx-auto space-y-6">
+                <!-- Welcome Header -->
+                <div class="mb-8 bg-gradient-to-r from-primary to-blue-600 dark:from-primary dark:to-blue-800 rounded-xl p-8 shadow-lg">
+                    <h1 class="text-3xl font-bold text-white mb-2">
+                        Welcome back, <span id="userName">User</span>! 👋
+                    </h1>
+                    <p class="text-white/90">Here's what's happening with your assessments today.</p>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Total Students -->
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 cursor-pointer"
+                        onclick="window.location.href='/students.html'">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Total Students</p>
+                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="totalStudents">-</p>
+                            </div>
+                            <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary text-3xl">school</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Assessments -->
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 cursor-pointer"
+                        onclick="window.location.href='/assessments.html'">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Total Assessments</p>
+                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="totalAssessments">-</p>
+                            </div>
+                            <div class="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-3xl">assignment</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Reviews -->
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 cursor-pointer"
+                        onclick="window.location.href='/assessments.html?filter=pending'">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Pending Reviews</p>
+                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="pendingReviews">-</p>
+                            </div>
+                            <div class="w-14 h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-3xl">pending_actions</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Classes -->
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 cursor-pointer"
+                        onclick="window.location.href='/students.html'">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Active Classes</p>
+                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="activeClasses">-</p>
+                            </div>
+                            <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-3xl">class</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                    <h2 class="text-2xl font-bold text-text-dark dark:text-text-light mb-6">Quick Actions</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="window.location.href='/create-assessment.html'"
+                            class="flex items-center justify-center gap-3 px-6 py-4 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all">
+                            <span class="material-symbols-outlined">add</span>
+                            <span>Create Assessment</span>
+                        </button>
+                        <button onclick="window.location.href='/students.html'"
+                            class="flex items-center justify-center gap-3 px-6 py-4 bg-accent-yellow hover:bg-yellow-500 text-text-dark rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all">
+                            <span class="material-symbols-outlined">person_add</span>
+                            <span>Add Student</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Charts and Activity Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Assessment Status Chart -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 hover:shadow-xl transition-shadow min-h-[600px]">
+                        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-slate-600">
+                            <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary dark:text-blue-400 text-2xl">pie_chart</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">Assessment Status</h2>
+                        </div>
+                        
+                        <!-- Custom Legend on Top Left -->
+                        <div id="chartLegend" class="mb-4 grid grid-cols-2 gap-2"></div>
+                        
+                        <div class="h-80 flex items-center justify-center p-6">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                        <div id="noDataMessage" class="hidden text-center text-text-dark/70 dark:text-text-light/70">
+                            <span class="material-symbols-outlined text-6xl text-gray-300">pie_chart</span>
+                            <p class="mt-2">No assessments yet</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 hover:shadow-xl transition-shadow min-h-[600px]">
+                        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-slate-600">
+                            <div class="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-2xl">history</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">Recent Activity</h2>
+                        </div>
+                        <div class="space-y-3 max-h-[450px] overflow-y-auto custom-scrollbar" id="recentActivity">
+                            <!-- Activity items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students by Class -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 hover:shadow-xl transition-shadow">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-slate-600">
+                        <div class="w-14 h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-2xl">school</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">Students by Class</h2>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="studentsByClass">
+                        <!-- Class cards will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Recent Assessments -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark overflow-hidden">
+                    <div class="px-6 py-5 border-b border-border-light dark:border-border-dark flex items-center justify-between bg-gray-50 dark:bg-slate-700/30">
+                        <div class="flex items-center gap-3">
+                            <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary dark:text-blue-400 text-2xl">assignment</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-text-dark dark:text-text-light">Recent Assessments</h2>
+                        </div>
+                        <a href="/assessments.html"
+                            class="text-sm font-medium text-primary hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Class</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Subject</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="recentAssessmentsTable">
+                                <!-- Assessments will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="flex justify-center w-full mt-10 border-t border-border-light dark:border-border-dark">
+            <div class="w-full max-w-7xl px-4 py-8 md:px-8">
+                <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+                    <div class="flex items-center gap-3">
+                        <div class="text-primary size-6">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-lg font-bold">SuperrJump</h2>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Check Auth
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        const token = sessionStorage.getItem('token');
+        if (!user || !token) window.location.href = '/login';
+
+        // Display user info
+        const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
+        const userName = user.name || 'User';
+        document.getElementById('orgName').textContent = orgName;
+        document.getElementById('userName').textContent = userName;
+
+        let statusChart = null;
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            try {
+                const [statsResponse, activityResponse] = await Promise.all([
+                    fetch('/api/dashboard/stats', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('/api/dashboard/recent-activity', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
+                const statsData = await statsResponse.json();
+                const activityData = await activityResponse.json();
+
+                if (statsData.success) {
+                    updateStatistics(statsData.stats);
+                    updateCharts(statsData.stats);
+                    updateStudentsByClass(statsData.stats.studentsByClass);
+                }
+
+                if (activityData.success) {
+                    updateRecentActivity(activityData.activities);
+                    updateRecentAssessments(activityData.recentAssessments);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        function updateStatistics(stats) {
+            document.getElementById('totalStudents').textContent = stats.totalStudents || 0;
+            document.getElementById('totalAssessments').textContent = stats.totalAssessments || 0;
+            document.getElementById('pendingReviews').textContent = stats.pendingReviews || 0;
+            document.getElementById('activeClasses').textContent = stats.activeClasses || 0;
+        }
+
+        function updateCharts(stats) {
+            const ctx = document.getElementById('statusChart');
+            
+            if (stats.assessmentsByStatus && Object.keys(stats.assessmentsByStatus).length > 0) {
+                // Filter out "Upload Failed" and "Extraction Failed" statuses
+                const filteredStatuses = Object.entries(stats.assessmentsByStatus)
+                    .filter(([status, count]) => status !== 'Upload Failed' && status !== 'Extraction Failed');
+                
+                const statuses = filteredStatuses.map(([status, count]) => status);
+                const counts = filteredStatuses.map(([status, count]) => count);
+                
+                if (statusChart) {
+                    statusChart.destroy();
+                }
+
+                const colors = [
+                    '#2A6EBB', // Primary blue
+                    '#FFC857', // Yellow
+                    '#A2D7D2', // Green
+                    '#FF6B6B', // Red
+                    '#4ECDC4', // Teal
+                    '#95E1D3'  // Light green
+                ];
+                
+                statusChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statuses,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: colors.slice(0, statuses.length),
+                            borderWidth: 4,
+                            borderColor: '#fff',
+                            hoverBorderWidth: 6,
+                            hoverBorderColor: '#fff',
+                            // 3D effect with offset
+                            offset: 10,
+                            spacing: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '65%', // Bigger donut hole for 3D effect
+                        plugins: {
+                            legend: {
+                                display: false // Hide default legend
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: {
+                                    size: 14,
+                                    family: 'Lexend'
+                                },
+                                bodyFont: {
+                                    size: 13,
+                                    family: 'Lexend'
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((context.parsed / total) * 100);
+                                        return ` ${context.label}: ${context.parsed} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        // Add shadow for 3D effect
+                        elements: {
+                            arc: {
+                                borderRadius: 4,
+                                shadowOffsetX: 0,
+                                shadowOffsetY: 4,
+                                shadowBlur: 8,
+                                shadowColor: 'rgba(0, 0, 0, 0.15)'
+                            }
+                        }
+                    }
+                });
+                
+                // Create custom legend in top left
+                const legendContainer = document.getElementById('chartLegend');
+                legendContainer.innerHTML = statuses.map((status, index) => `
+                    <div class="flex items-center gap-2 text-xs">
+                        <div class="w-3 h-3 rounded-sm flex-shrink-0" style="background-color: ${colors[index]}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                        <span class="text-text-dark/70 dark:text-text-light/70 truncate">${status}</span>
+                    </div>
+                `).join('');
+                
+                document.getElementById('noDataMessage').classList.add('hidden');
+                ctx.parentElement.classList.remove('hidden');
+            } else {
+                if (statusChart) {
+                    statusChart.destroy();
+                }
+                ctx.parentElement.classList.add('hidden');
+                document.getElementById('noDataMessage').classList.remove('hidden');
+            }
+        }
+
+        function updateRecentActivity(activities) {
+            const container = document.getElementById('recentActivity');
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-text-dark/70 dark:text-text-light/70 py-8">
+                        <span class="material-symbols-outlined text-4xl text-gray-300">history</span>
+                        <p class="mt-2">No recent activity</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = activities.map(activity => {
+                const icon = activity.type === 'assessment' ? 'assignment' : 'person_add';
+                const iconColor = activity.type === 'assessment' ? 'text-blue-600' : 'text-green-600';
+                
+                return `
+                    <div class="activity-item flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors">
+                        <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined ${iconColor} text-lg">${icon}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-text-dark dark:text-text-light">${activity.title}</p>
+                            <p class="text-xs text-text-dark/70 dark:text-text-light/70">${activity.timestamp}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStudentsByClass(studentsByClass) {
+            const container = document.getElementById('studentsByClass');
+            
+            if (!studentsByClass || Object.keys(studentsByClass).length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center text-text-dark/70 dark:text-text-light/70 py-8">
+                        <span class="material-symbols-outlined text-4xl text-gray-300">group</span>
+                        <p class="mt-2">No class data available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = Object.entries(studentsByClass).map(([className, count]) => `
+                <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 text-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    onclick="window.location.href='/students.html?class=${encodeURIComponent(className)}'">
+                    <p class="text-2xl font-bold text-primary">${count}</p>
+                    <p class="text-sm text-text-dark/70 dark:text-text-light/70 mt-1">${className}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateRecentAssessments(assessments) {
+            const tbody = document.getElementById('recentAssessmentsTable');
+            
+            if (!assessments || assessments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-text-dark/70 dark:text-text-light/70">
+                            <span class="material-symbols-outlined text-4xl text-gray-300">assignment</span>
+                            <p class="mt-2">No assessments yet</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = assessments.map(assessment => {
+                const date = new Date(assessment.created_at);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+                if (assessment.status === 'Completed') {
+                    statusClass = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+                } else if (assessment.status.includes('Pending')) {
+                    statusClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+                }
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                        onclick="window.location.href='/assessment-details.html?id=${assessment.id}&returnTo=dashboard'">
+                        <td class="px-6 py-4 text-sm font-medium text-text-dark dark:text-text-light">${assessment.title}</td>
+                        <td class="px-6 py-4 text-sm text-text-dark/70 dark:text-text-light/70">${assessment.class}</td>
+                        <td class="px-6 py-4 text-sm text-text-dark/70 dark:text-text-light/70">${assessment.subject}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                                ${assessment.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-text-dark/70 dark:text-text-light/70">${dateStr}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function logout() {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+
+        // Initial Load
+        loadDashboardData();
+
+        // Stats only refresh when page is manually refreshed
+        // Removed auto-refresh interval to prevent unnecessary API calls
+    </script>
+</body>
+
+</html>

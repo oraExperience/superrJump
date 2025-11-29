@@ -22,6 +22,14 @@ const assessmentRoutes = require('./routes/assessmentRoutes');
 console.log('assessmentRoutes loaded');
 const mappingRoutes = require('./routes/mappingRoutes');
 console.log('mappingRoutes loaded');
+const submissionRoutes = require('./routes/submissions');
+console.log('submissionRoutes loaded');
+const studentRoutes = require('./routes/students');
+console.log('studentRoutes loaded');
+const answerRoutes = require('./routes/answers');
+console.log('answerRoutes loaded');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+console.log('dashboardRoutes loaded');
 
 console.log('Creating Express app...');
 const app = express();
@@ -66,6 +74,10 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/mappings', mappingRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/answers', answerRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api', submissionRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -97,8 +109,20 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/login.html'));
 });
 
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
 app.get('/assessments', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/assessments.html'));
+});
+
+app.get('/students', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/students.html'));
+});
+
+app.get('/student-submissions', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/student-submissions.html'));
 });
 
 app.get('/assessment-details', (req, res) => {
@@ -114,11 +138,15 @@ app.get('/student-review', (req, res) => {
 });
 
 app.get('/verify-questions', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/verify-questions.html'));
+    res.sendFile(path.join(__dirname, '../public/verify-questions.html'));
+});
+
+app.get('/verify-grades', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/verify-grades.html'));
 });
 
 app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/profile.html'));
+    res.sendFile(path.join(__dirname, '../public/profile.html'));
 });
 
 // 404 Handler for API routes

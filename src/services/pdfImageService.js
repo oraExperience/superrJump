@@ -32,19 +32,21 @@ async function convertPDFToImages(pdfPath) {
     });
 
     const pageImages = [];
+    let pageIndex = 1; // PDF pages are 1-indexed
     
     for await (const page of document) {
       // Get image metadata using sharp
       const metadata = await sharp(page.buffer).metadata();
       
       pageImages.push({
-        page: page.page,
+        page: pageIndex,
         buffer: page.buffer,
         width: metadata.width,
         height: metadata.height
       });
       
-      console.log(`   ✓ Page ${page.page} converted (${metadata.width}x${metadata.height})`);
+      console.log(`   ✓ Page ${pageIndex} converted (${metadata.width}x${metadata.height})`);
+      pageIndex++;
     }
 
     console.log(`✅ Converted ${pageImages.length} pages to images`);
@@ -111,12 +113,18 @@ async function extractQuestionRegionsWithAI(pdfPath, assessmentId, questionsWith
     const questionsWithImages = [];
     
     for (const question of questionsWithBBoxes) {
+      // Skip questions without required text (shouldn't happen but defensive check)
+      if (!question.question_text || question.question_text.trim() === '') {
+        console.warn(`   ⚠️  Question ${question.question_number || 'unknown'}: Missing question text - skipping`);
+        continue;
+      }
+      
       try {
         const pageIndex = (question.page_number || 1) - 1;
         
         // Validate page exists
         if (pageIndex < 0 || pageIndex >= pageImages.length) {
-          console.warn(`   ⚠️  Question ${question.question_number}: Invalid page ${question.page_number}`);
+          console.warn(`   ⚠️  Question ${question.question_number}: Invalid page ${question.page_number} - keeping without image`);
           questionsWithImages.push(question);
           continue;
         }
@@ -125,7 +133,7 @@ async function extractQuestionRegionsWithAI(pdfPath, assessmentId, questionsWith
         
         // Validate bounding box
         if (!question.bbox || !question.bbox.x1 || !question.bbox.y1 || !question.bbox.x2 || !question.bbox.y2) {
-          console.warn(`   ⚠️  Question ${question.question_number}: Missing bounding box`);
+          console.warn(`   ⚠️  Question ${question.question_number}: Missing bounding box - keeping without image`);
           questionsWithImages.push(question);
           continue;
         }
@@ -165,10 +173,10 @@ async function extractQuestionRegionsWithAI(pdfPath, assessmentId, questionsWith
         const filename = `question_${question.question_number}.png`;
         const imageUrl = await saveImage(croppedImage, assessmentId, filename);
 
-        // Add image URL to question
+        // Add image info to question
         questionsWithImages.push({
           ...question,
-          question_image_url: imageUrl
+          cropped_image_saved: true
         });
 
         console.log(`   ✓ Q${question.question_number}: Cropped (${cropWidth}x${cropHeight}) → ${imageUrl}`);
@@ -179,7 +187,7 @@ async function extractQuestionRegionsWithAI(pdfPath, assessmentId, questionsWith
       }
     }
 
-    console.log(`\n✅ Successfully cropped ${questionsWithImages.filter(q => q.question_image_url).length}/${questionsWithBBoxes.length} questions\n`);
+    console.log(`\n✅ Successfully cropped ${questionsWithImages.filter(q => q.cropped_image_saved).length}/${questionsWithBBoxes.length} questions\n`);
     
     return questionsWithImages;
 

@@ -298,11 +298,15 @@
     
     .pdf-viewer {
         flex: 1;
-        overflow: auto;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
         background: #1e293b;
+    }
+    
+    .pdf-viewer.zoomed {
+        overflow: auto;
     }
     
     .navigation-buttons {
@@ -446,13 +450,25 @@
             <button onclick="nextPage()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Next Page">
                 <span class="material-symbols-outlined">arrow_forward</span>
             </button>
-            <div class="flex-1"></div>
+            <div class="flex-1 flex items-center justify-center px-4 min-w-0">
+                <span class="material-symbols-outlined text-gray-600 text-lg mr-2 flex-shrink-0">picture_as_pdf</span>
+                <span id="pdfFileName" class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate" title="">
+                    Loading...
+                </span>
+            </div>
             <button onclick="zoomOut()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Zoom Out">
                 <span class="material-symbols-outlined">zoom_out</span>
             </button>
             <span class="text-sm font-medium px-2" id="zoomLevel">100%</span>
             <button onclick="zoomIn()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Zoom In">
                 <span class="material-symbols-outlined">zoom_in</span>
+            </button>
+            <div class="w-px h-6 bg-gray-300 mx-2"></div>
+            <button onclick="rotateLeft()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Rotate Left">
+                <span class="material-symbols-outlined">rotate_left</span>
+            </button>
+            <button onclick="rotateRight()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Rotate Right">
+                <span class="material-symbols-outlined">rotate_right</span>
             </button>
         </div>
         
@@ -464,6 +480,62 @@
                 <p class="text-sm opacity-70">PDF will appear here</p>
             </div>
             <iframe id="pdfFrame" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <!-- Header with icon -->
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 p-6 border-b-4 border-amber-400">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-amber-600 dark:text-amber-400">warning</span>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white" id="modalTitle">Confirm Action</h3>
+            </div>
+        </div>
+        
+        <!-- Message -->
+        <div class="p-6">
+            <p class="text-gray-700 dark:text-gray-300 text-base leading-relaxed mb-6" id="modalMessage">Are you sure?</p>
+            
+            <!-- Actions -->
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeConfirmModal(false)" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                    Cancel
+                </button>
+                <button onclick="closeConfirmModal(true)" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">check_circle</span>
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert/Success Modal -->
+<div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <!-- Header with icon -->
+        <div id="alertModalHeader" class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-6 border-b-4 border-green-500">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400" id="alertModalIcon">check_circle</span>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white" id="alertModalTitle">Success</h3>
+            </div>
+        </div>
+        
+        <!-- Message -->
+        <div class="p-6">
+            <p class="text-gray-700 dark:text-gray-300 text-base leading-relaxed mb-6" id="alertModalMessage">Operation completed successfully!</p>
+            
+            <!-- Action -->
+            <div class="flex justify-end">
+                <button onclick="closeAlertModal()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">check</span>
+                    OK
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -489,6 +561,24 @@ let assessmentData = null;
 
 // Questions (will be loaded from API)
 let questions = [];
+
+// Track if user is navigating intentionally (to prevent warning on finalize)
+let isIntentionalNavigation = false;
+
+// Warn user about unsaved changes when leaving page
+window.addEventListener('beforeunload', (e) => {
+    // Skip warning if navigating intentionally (e.g., after finalizing)
+    if (isIntentionalNavigation) {
+        return;
+    }
+    
+    // Always show warning if there are questions (changes not saved until Approve & Finalize)
+    if (questions.length > 0) {
+        // Show browser warning
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+    }
+});
 
 // Load assessment data from API
 async function loadAssessmentData() {
@@ -531,8 +621,10 @@ async function loadAssessmentData() {
         
     } catch (error) {
         console.error('Error loading assessment:', error);
-        alert('Failed to load assessment data');
-        window.location.href = '/assessments.html';
+        showAlert('Failed to load assessment data. Redirecting...', 'Error', 'error');
+        setTimeout(() => {
+            window.location.href = '/assessments.html';
+        }, 2000);
     }
 }
 
@@ -592,15 +684,78 @@ async function loadQuestionsFromAPI() {
                 question: q.question_text,
                 maxMarks: parseFloat(q.max_marks) || 0,
                 verified: q.verified || false,
-                question_image_url: q.question_image_url || null, // Image URL for display
+                pageNumber: q.page_number || 1, // Page number in PDF
+                question_image_blob: null, // Will be populated when rendering
+                topics: q.topics || [], // Topics with weightage from AI
                 dbId: q.id  // Store database ID for updates
             }));
+            
+            // Load images with authentication
+            await loadQuestionImages();
         }
     } catch (error) {
         console.error('Error loading questions:', error);
         // Keep empty questions array if load fails
         questions = [];
     }
+}
+
+// Load question images with authentication (optimized: one call per unique page)
+async function loadQuestionImages() {
+    const token = sessionStorage.getItem('token');
+    
+    // Group questions by page number to avoid duplicate fetches
+    const pageCache = new Map(); // pageNumber -> blob URL
+    const uniquePages = [...new Set(questions.map(q => q.pageNumber))];
+    
+    console.log(`📄 Loading ${uniquePages.length} unique page(s) for ${questions.length} questions`);
+    
+    // Fetch each unique page once
+    for (let pageNum of uniquePages) {
+        if (!pageNum) continue;
+        
+        try {
+            // Use first question on this page to get the image
+            const questionOnPage = questions.find(q => q.pageNumber === pageNum);
+            const imageUrl = `/api/assessments/${assessmentId}/questions/${questionOnPage.id}/image`;
+            
+            const response = await fetch(imageUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                pageCache.set(pageNum, blobUrl);
+                console.log(`✅ Loaded page ${pageNum}`);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error(`❌ Failed to load page ${pageNum}:`, response.status, errorData);
+                
+                // Show user-friendly error for missing PDF
+                if (response.status === 404) {
+                    showAlert(
+                        errorData.message || 'PDF file not found. The question paper may have been deleted or is missing.',
+                        'PDF Missing',
+                        'error'
+                    );
+                }
+            }
+        } catch (error) {
+            console.error(`❌ Error loading page ${pageNum}:`, error);
+        }
+    }
+    
+    // Assign blob URLs to all questions based on their page number
+    for (let question of questions) {
+        if (question.pageNumber && pageCache.has(question.pageNumber)) {
+            question.question_image_blob = pageCache.get(question.pageNumber);
+        }
+    }
+    
+    console.log(`✅ Assigned images to ${questions.filter(q => q.question_image_blob).length} questions`);
 }
 
 function initializePage() {
@@ -611,7 +766,53 @@ function initializePage() {
     document.getElementById('assessmentClass').textContent = assessmentData.class;
     document.getElementById('totalQuestions').textContent = questions.length;
     
+    // Set PDF filename in header
+    const pdfNameElement = document.getElementById('pdfFileName');
+    if (assessmentData.questionPaperPdfLink) {
+        try {
+            const urlParts = assessmentData.questionPaperPdfLink.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            const decodedFilename = decodeURIComponent(filename);
+            pdfNameElement.textContent = decodedFilename;
+            pdfNameElement.title = decodedFilename; // Show full name on hover
+            console.log('📄 PDF Filename set:', decodedFilename);
+        } catch (error) {
+            console.error('Error extracting PDF filename:', error);
+            pdfNameElement.textContent = 'Question Paper';
+            pdfNameElement.title = 'Question Paper PDF';
+        }
+    } else {
+        pdfNameElement.textContent = 'No PDF Available';
+        pdfNameElement.title = 'No PDF uploaded';
+        console.warn('⚠️ No PDF link available');
+    }
+    
+    // Smart question selection:
+    // 1. If all verified → show last question
+    // 2. If some verified → show first unverified question
+    // 3. If none verified → show first question (default)
+    const allVerified = questions.every(q => q.verified);
+    const someVerified = questions.some(q => q.verified);
+    
+    if (allVerified && questions.length > 0) {
+        // All verified: Show last question
+        currentQuestionIndex = questions.length - 1;
+        console.log('✅ All questions verified. Opening last question.');
+    } else if (someVerified) {
+        // Some verified: Find first unverified
+        const firstUnverifiedIndex = questions.findIndex(q => !q.verified);
+        if (firstUnverifiedIndex >= 0) {
+            currentQuestionIndex = firstUnverifiedIndex;
+            console.log(`📝 Opening first unverified question: ${firstUnverifiedIndex + 1}`);
+        }
+    } else {
+        // None verified: Start from first (default is already 0)
+        currentQuestionIndex = 0;
+        console.log('📝 Starting from first question.');
+    }
+    
     calculateTotalMarks();
+    updateTotalPages();
     renderQuestionsSidebar();
     renderCurrentQuestion();
     updateNavigationButtons();
@@ -639,10 +840,7 @@ function renderQuestionsSidebar() {
             ${statusIcon}
             <div class="flex-1">
                 <p class="text-sm font-semibold text-text-dark dark:text-text-light">Question ${q.questionNumber}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${q.question}</p>
-            </div>
-            <div class="text-right">
-                <p class="text-xs font-bold text-primary">${formatNumber(q.maxMarks)} marks</p>
+                <p class="text-xs font-bold text-primary mt-1">${formatNumber(q.maxMarks)} marks</p>
             </div>
         `;
         
@@ -661,10 +859,53 @@ function renderQuestionsSidebar() {
     });
 }
 
+// Display PDF page in viewer
+async function displayPdfPage() {
+    const q = questions[currentQuestionIndex];
+    const pdfFrame = document.getElementById('pdfFrame');
+    const pdfPlaceholder = document.getElementById('pdfPlaceholder');
+    const pdfContainer = document.getElementById('pdfViewerContainer');
+    
+    if (q.question_image_blob) {
+        // Hide placeholder, show image
+        pdfPlaceholder.style.display = 'none';
+        
+        // Create or update image element
+        let img = pdfContainer.querySelector('#pdfPageImage');
+        if (!img) {
+            img = document.createElement('img');
+            img.id = 'pdfPageImage';
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; background: white; transition: transform 0.2s ease;';
+            pdfContainer.appendChild(img);
+        }
+        
+        img.src = q.question_image_blob;
+        img.style.display = 'block';
+        pdfFrame.style.display = 'none';
+        
+        // Reset rotation and zoom when switching pages
+        rotationDegrees = 0;
+        zoomPercent = 100;
+        document.getElementById('zoomLevel').textContent = '100%';
+        
+        // Apply current zoom level and rotation
+        applyZoom();
+    } else {
+        // Show placeholder if no image
+        pdfPlaceholder.style.display = 'flex';
+        pdfFrame.style.display = 'none';
+        const img = pdfContainer.querySelector('#pdfPageImage');
+        if (img) img.style.display = 'none';
+    }
+}
+
 // Render current question
 function renderCurrentQuestion() {
     const container = document.getElementById('currentQuestionContainer');
     const q = questions[currentQuestionIndex];
+    
+    // Display PDF page in right panel
+    displayPdfPage();
     
     container.innerHTML = `
         <div class="question-card bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
@@ -692,37 +933,10 @@ function renderCurrentQuestion() {
             </div>
         </div>
         
-        <!-- Question Image (if available) -->
-        ${q.question_image_url ? `
-        <div class="mb-6">
-            <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">
-                <span class="material-symbols-outlined text-sm">image</span>
-                Question Image
-            </label>
-            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-x-auto">
-                <img
-                    src="${q.question_image_url}"
-                    alt="Question ${q.questionNumber}"
-                    class="max-w-full h-auto"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                    loading="lazy"
-                />
-                <div style="display: none;" class="text-red-500 text-sm">
-                    <span class="material-symbols-outlined text-sm">error</span>
-                    Image not available. Using text below.
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span class="material-symbols-outlined text-xs">check_circle</span>
-                This image shows the question exactly as it appears in the PDF with perfect formatting
-            </p>
-        </div>
-        ` : ''}
-        
         <!-- Question Text (for search/metadata) -->
         <div class="mb-6">
             <label class="block text-sm font-semibold text-text-dark dark:text-text-light mb-2">
-                Question Text (Metadata for search)
+                Question (extracted by AI)
             </label>
             <textarea
                 id="question_${q.id}"
@@ -732,22 +946,38 @@ function renderCurrentQuestion() {
             >${q.question}</textarea>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span class="material-symbols-outlined text-xs">info</span>
-                ${q.question_image_url ? 'Extracted text for search purposes. The image above shows the actual question.' : 'Edit the question text extracted by AI if needed'}
+                ${q.question_image_blob ? 'Extracted text for search purposes. See the PDF page on the right panel.' : 'Edit the question text extracted by AI if needed'}
             </p>
         </div>
         
-        <!-- AI Extraction Info -->
-        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-            <div class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+        <!-- Topics Covered -->
+        <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+            <div class="flex items-start gap-2 mb-3">
+                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-xl">school</span>
                 <div class="flex-1">
-                    <p class="text-sm font-semibold text-text-dark dark:text-text-light mb-2">AI Extraction Status</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">
-                        This question was automatically extracted from the question paper. 
-                        Please verify the question text and marks are correct before proceeding.
+                    <p class="text-sm font-semibold text-text-dark dark:text-text-light mb-1">Topics Covered (AI Analysis)</p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">
+                        AI-identified topics with their coverage weightage
                     </p>
                 </div>
             </div>
+            ${q.topics && q.topics.length > 0 ? `
+                <div class="flex flex-wrap gap-2">
+                    ${q.topics.map(t => `
+                        <div class="inline-flex items-center gap-2 bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full border border-purple-300 dark:border-purple-600 shadow-sm">
+                            <span class="text-sm font-medium text-gray-800 dark:text-gray-200">${t.topic}</span>
+                            <span class="inline-flex items-center justify-center min-w-[40px] px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full">
+                                ${t.weight}%
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : `
+                <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
+                    <span class="material-symbols-outlined text-base">info</span>
+                    <span>No topics identified yet. This will be added during extraction.</span>
+                </div>
+            `}
         </div>
         
     </div>
@@ -786,8 +1016,7 @@ async function updateMarks(questionId) {
     
     question.maxMarks = marks;
     
-    // Save to backend
-    await saveQuestionToAPI(question);
+    // Don't save to backend yet - will save when user clicks Verify button
     
     // Recalculate total marks
     calculateTotalMarks();
@@ -804,7 +1033,7 @@ async function updateMarks(questionId) {
     renderQuestionsSidebar();
 }
 
-// Update question text
+// Update question text (only updates local state, doesn't save)
 async function updateQuestionText(questionId) {
     const question = questions.find(q => q.id === questionId);
     if (!question) return;
@@ -817,10 +1046,8 @@ async function updateQuestionText(questionId) {
     
     question.question = newText;
     
-    // Save to backend
-    await saveQuestionToAPI(question);
-    
     // Reset verified status if text changed after verification
+    // (don't save yet - will save when user clicks Verify button)
     if (question.verified) {
         question.verified = false;
         renderQuestionsSidebar();
@@ -842,7 +1069,8 @@ async function saveQuestionToAPI(question) {
             },
             body: JSON.stringify({
                 question_text: question.question,
-                max_marks: question.maxMarks
+                max_marks: question.maxMarks,
+                verified: question.verified  // Include verified status in update
             })
         });
 
@@ -851,11 +1079,11 @@ async function saveQuestionToAPI(question) {
         }
 
         const data = await response.json();
-        console.log('Question saved successfully');
+        console.log(`Question saved successfully (verified: ${question.verified})`);
         
     } catch (error) {
         console.error('Error saving question:', error);
-        alert('Failed to save changes. Please try again.');
+        showAlert('Failed to save changes. Please try again.', 'Error', 'error');
     }
 }
 
@@ -899,6 +1127,7 @@ function updateGradeBoxStyling(questionId) {
 // Navigation functions
 function goToQuestion(index) {
     currentQuestionIndex = index;
+    updateCurrentPageDisplay();
     renderQuestionsSidebar();
     renderCurrentQuestion();
     updateNavigationButtons();
@@ -911,31 +1140,11 @@ function previousQuestion() {
 }
 
 async function nextQuestion() {
-    // Mark current question as verified
+    // Mark current question as verified locally (changes not saved yet)
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion) {
         currentQuestion.verified = true;
-        
-        // Save verified status to database
-        try {
-            const token = sessionStorage.getItem('token');
-            const response = await fetch(`/api/assessments/${assessmentId}/questions/${currentQuestion.dbId}/verify`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to verify question');
-            }
-            
-            console.log(`✅ Question ${currentQuestion.questionNumber} marked as verified`);
-        } catch (error) {
-            console.error('Error verifying question:', error);
-            // Still update UI even if API fails
-        }
+        console.log(`✓ Question ${currentQuestion.questionNumber} marked as verified locally (not saved to database yet)`);
     }
     
     renderQuestionsSidebar();
@@ -1012,17 +1221,72 @@ async function approveAndFinalize() {
     // Validate all questions have marks
     const invalidQuestions = questions.filter(q => !q.maxMarks || q.maxMarks <= 0);
     if (invalidQuestions.length > 0) {
-        alert(`Please assign valid marks to all questions. ${invalidQuestions.length} question(s) need marks.`);
+        showAlert(`Please assign valid marks to all questions. ${invalidQuestions.length} question(s) need marks.`, 'Validation Error', 'warning');
+        return;
+    }
+    
+    // Check if all questions are verified
+    const unverifiedQuestions = questions.filter(q => !q.verified);
+    if (unverifiedQuestions.length > 0) {
+        showAlert(
+            `Please verify all questions before finalizing. ${unverifiedQuestions.length} question(s) still need verification.`,
+            'Verification Required',
+            'warning'
+        );
         return;
     }
 
-    if (!confirm(`Are you sure you want to approve all ${questions.length} questions? This will lock the questions and move to the next phase.`)) {
+    const confirmed = await showConfirmModal(
+        `Ready to finalize? This will save all your changes and approve ${questions.length} questions.`,
+        'Save & Approve Questions'
+    );
+    
+    if (!confirmed) {
         return;
     }
 
     try {
         const token = sessionStorage.getItem('token');
-        const response = await fetch(`/api/assessments/${assessmentId}/approve-questions`, {
+        
+        // Step 1: Save all question changes to database
+        console.log('💾 Saving all question changes...');
+        let savedCount = 0;
+        for (const question of questions) {
+            try {
+                const response = await fetch(`/api/assessments/${assessmentId}/questions/${question.dbId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question_text: question.question,
+                        max_marks: question.maxMarks,
+                        verified: question.verified
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to save question ${question.questionNumber}`);
+                }
+                savedCount++;
+                console.log(`✅ Saved question ${question.questionNumber}`);
+            } catch (error) {
+                console.error(`Error saving question ${question.questionNumber}:`, error);
+                showAlert(
+                    `Failed to save question ${question.questionNumber}. Please try again.`,
+                    'Save Error',
+                    'error'
+                );
+                return;
+            }
+        }
+        
+        console.log(`✅ Successfully saved ${savedCount} questions`);
+        
+        // Step 2: Approve the assessment
+        console.log('✓ Approving assessment...');
+        const approveResponse = await fetch(`/api/assessments/${assessmentId}/approve-questions`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1030,43 +1294,141 @@ async function approveAndFinalize() {
             }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
+        if (!approveResponse.ok) {
+            const error = await approveResponse.json();
             throw new Error(error.message || 'Failed to approve questions');
         }
 
-        const data = await response.json();
+        const data = await approveResponse.json();
         
         if (data.success) {
-            alert('Questions approved successfully! Assessment is now ready for grading.');
-            // Redirect back to assessment details
+            console.log('✅ Assessment approved successfully');
+            // Redirect immediately without showing success popup
+            isIntentionalNavigation = true; // Prevent beforeunload warning
             window.location.href = `/assessment-details.html?id=${assessmentId}`;
         }
     } catch (error) {
-        console.error('Error approving questions:', error);
-        alert(`Failed to approve questions: ${error.message}`);
+        console.error('Error in approval process:', error);
+        showAlert(
+            `Failed to complete approval: ${error.message}. Your changes may not have been saved.`,
+            'Approval Error',
+            'error'
+        );
+    }
+}
+
+// Custom confirm modal
+let modalResolve = null;
+
+function showConfirmModal(message, title = 'Confirm Action') {
+    return new Promise((resolve) => {
+        modalResolve = resolve;
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').textContent = message;
+        const modal = document.getElementById('confirmModal');
+        modal.style.display = 'flex';
+    });
+}
+
+function closeConfirmModal(confirmed) {
+    const modal = document.getElementById('confirmModal');
+    modal.style.display = 'none';
+    if (modalResolve) {
+        modalResolve(confirmed);
+        modalResolve = null;
+    }
+}
+
+// Custom alert modal (for success/error messages)
+function showAlert(message, title = 'Success', type = 'success') {
+    const modal = document.getElementById('alertModal');
+    const header = document.getElementById('alertModalHeader');
+    const icon = document.getElementById('alertModalIcon');
+    
+    document.getElementById('alertModalTitle').textContent = title;
+    document.getElementById('alertModalMessage').textContent = message;
+    
+    // Style based on type
+    if (type === 'success') {
+        header.className = 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-6 border-b-4 border-green-500';
+        icon.className = 'material-symbols-outlined text-4xl text-green-600 dark:text-green-400';
+        icon.textContent = 'check_circle';
+    } else if (type === 'error') {
+        header.className = 'bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/30 dark:to-rose-900/30 p-6 border-b-4 border-red-500';
+        icon.className = 'material-symbols-outlined text-4xl text-red-600 dark:text-red-400';
+        icon.textContent = 'error';
+    } else if (type === 'warning') {
+        header.className = 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/30 p-6 border-b-4 border-amber-500';
+        icon.className = 'material-symbols-outlined text-4xl text-amber-600 dark:text-amber-400';
+        icon.textContent = 'warning';
     }
     
-    // Navigate to assessment details
-    window.location.href = `/assessment-details.html?id=${assessmentId}`;
+    modal.style.display = 'flex';
+}
+
+function closeAlertModal() {
+    const modal = document.getElementById('alertModal');
+    modal.style.display = 'none';
 }
 
 // Go back
-function goBack() {
-    if (confirm('Are you sure? Any unverified changes will be lost.')) {
+async function goBack() {
+    console.log('goBack called, questions:', questions.length);
+    
+    // Always show warning if there are any questions (changes not saved until Approve & Finalize)
+    if (questions.length > 0) {
+        const confirmed = await showConfirmModal(
+            'Your changes have not been saved yet. All edits will be lost unless you click "Approve & Finalize" first.\n\nAre you sure you want to leave without saving?',
+            'Unsaved Changes'
+        );
+        if (confirmed) {
+            // Set flag BEFORE navigation to prevent browser dialog
+            isIntentionalNavigation = true;
+            // Use setTimeout to ensure flag is set before navigation
+            setTimeout(() => {
+                window.location.href = `/assessment-details.html?id=${assessmentId}`;
+            }, 0);
+        }
+    } else {
+        // No questions, navigate directly
+        isIntentionalNavigation = true;
         window.location.href = `/assessment-details.html?id=${assessmentId}`;
     }
 }
 
-// PDF controls (mock functions)
+// PDF controls
 let currentPageNum = 1;
-let totalPagesNum = 5;
+let totalPagesNum = 1;
 let zoomPercent = 100;
+let rotationDegrees = 0;
+
+function updateTotalPages() {
+    // Calculate total pages from questions data
+    if (questions.length > 0) {
+        const maxPage = Math.max(...questions.map(q => q.pageNumber || 1));
+        totalPagesNum = maxPage;
+    }
+    document.getElementById('totalPages').textContent = totalPagesNum;
+}
+
+function updateCurrentPageDisplay() {
+    // Update the current page based on the question being viewed
+    const q = questions[currentQuestionIndex];
+    if (q && q.pageNumber) {
+        currentPageNum = q.pageNumber;
+    }
+    document.getElementById('currentPage').textContent = currentPageNum;
+}
 
 function previousPage() {
     if (currentPageNum > 1) {
         currentPageNum--;
         document.getElementById('currentPage').textContent = currentPageNum;
+        // Find question with this page number and navigate to it
+        const questionIndex = questions.findIndex(q => q.pageNumber === currentPageNum);
+        if (questionIndex >= 0) {
+            goToQuestion(questionIndex);
+        }
     }
 }
 
@@ -1074,21 +1436,55 @@ function nextPage() {
     if (currentPageNum < totalPagesNum) {
         currentPageNum++;
         document.getElementById('currentPage').textContent = currentPageNum;
+        // Find question with this page number and navigate to it
+        const questionIndex = questions.findIndex(q => q.pageNumber === currentPageNum);
+        if (questionIndex >= 0) {
+            goToQuestion(questionIndex);
+        }
     }
 }
 
 function zoomIn() {
     zoomPercent = Math.min(200, zoomPercent + 10);
-    document.getElementById('zoomLevel').textContent = `${zoomPercent}%`;
+    applyZoom();
 }
 
 function zoomOut() {
     zoomPercent = Math.max(50, zoomPercent - 10);
+    applyZoom();
+}
+
+function applyZoom() {
     document.getElementById('zoomLevel').textContent = `${zoomPercent}%`;
+    const img = document.getElementById('pdfPageImage');
+    const pdfContainer = document.getElementById('pdfViewerContainer');
+    
+    if (img) {
+        img.style.transform = `scale(${zoomPercent / 100}) rotate(${rotationDegrees}deg)`;
+        img.style.transformOrigin = 'center center';
+    }
+    
+    // Enable scrolling only when zoomed in (>100%) or rotated
+    if (pdfContainer) {
+        if (zoomPercent > 100 || (rotationDegrees % 180 !== 0)) {
+            pdfContainer.classList.add('zoomed');
+        } else {
+            pdfContainer.classList.remove('zoomed');
+        }
+    }
+}
+
+function rotateLeft() {
+    rotationDegrees = (rotationDegrees - 90) % 360;
+    applyZoom();
+}
+
+function rotateRight() {
+    rotationDegrees = (rotationDegrees + 90) % 360;
+    applyZoom();
 }
 
 // Initialize page by loading data from API
-document.getElementById('totalPages').textContent = totalPagesNum;
 loadAssessmentData();
 </script>
 </body>

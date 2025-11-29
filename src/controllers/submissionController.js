@@ -11,7 +11,7 @@ const pool = new Pool({
 });
 
 /**
- * Upload answer sheet and create temporary submission
+ * Upload answer sheet - Automatically detects single or multiple students
  * Opens verify-grades page where user confirms student, then grading starts
  */
 exports.uploadAnswerSheetNew = async (req, res) => {
@@ -45,7 +45,6 @@ exports.uploadAnswerSheetNew = async (req, res) => {
         const assessment = assessmentResult.rows[0];
 
         // Check if assessment is in correct status
-        // Allow uploads for: Ready for Grading, Processing Ans, Ans Pending Approval, Completed
         const allowedStatuses = ['Ready for Grading', 'Processing Ans', 'Ans Pending Approval', 'Completed'];
         if (!allowedStatuses.includes(assessment.status)) {
             return res.status(400).json({
@@ -56,7 +55,7 @@ exports.uploadAnswerSheetNew = async (req, res) => {
 
         console.log(`📤 Saving answer sheet locally...`);
 
-        // Save PDF locally (like question papers)
+        // Save PDF locally
         const answerSheetLink = await fileStorage.saveAnswerSheet(
             req.file.buffer,
             assessmentId,
@@ -64,93 +63,181 @@ exports.uploadAnswerSheetNew = async (req, res) => {
         );
 
         console.log(`✅ Answer sheet saved at: ${answerSheetLink}`);
-
-        // Create temporary submission record with status "Extracting"
-        const submissionResult = await pool.query(
-            `INSERT INTO student_submissions (
-                assessment_id, answer_sheet_link, status
-            ) VALUES ($1, $2, 'Extracting')
-            RETURNING id`,
-            [assessmentId, answerSheetLink]
+        
+        // ALWAYS use multi-student detection (works for both single and multiple students)
+        console.log('🔍 Detecting students in PDF (handles single or multiple)...');
+        const multiStudentExtractionService = require('../services/multiStudentExtractionService');
+        
+        const analysisResult = await multiStudentExtractionService.analyzeMultiStudentPDF(
+            answerSheetLink,
+            {
+                title: assessment.title,
+                class: assessment.class,
+                subject: assessment.subject
+            }
         );
 
-        const submissionId = submissionResult.rows[0].id;
+        const detectedStudents = analysisResult.students;
+        console.log(`✅ Detected ${detectedStudents.length} student(s) in PDF`);
 
-        // Extract student information using AI (async, don't wait)
-        const assessmentContext = {
-            assessmentTitle: assessment.title,
-            className: assessment.class,
-            subject: assessment.subject
-        };
+        // Handle based on number of students detected
+        if (detectedStudents.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No students detected in the PDF. Please ensure the answer sheet has student information at the top.'
+            });
+        }
 
-        // Start BOTH extraction and grading in background
-        Promise.all([
-            // Task 1: Extract student info
-            studentExtractionService.extractStudentInfo(answerSheetLink, assessmentContext)
-                .then(async (extractedInfo) => {
-                    // Find matching students (excluding those with approved submissions for this assessment)
+        if (detectedStudents.length === 1) {
+            // SINGLE STUDENT - Use existing flow
+            console.log('👤 Single student detected - using standard flow');
+            const student = detectedStudents[0];
+
+            // Create temporary submission record
+            const submissionResult = await pool.query(
+                `INSERT INTO student_submissions (
+                    assessment_id, answer_sheet_link, status
+                ) VALUES ($1, $2, 'Extracting')
+                RETURNING id`,
+                [assessmentId, answerSheetLink]
+            );
+
+            const submissionId = submissionResult.rows[0].id;
+
+            // Start extraction and grading in background
+            Promise.all([
+                // Update with detected student info
+                (async () => {
                     const matchingSuggestion = await studentMatchingService.suggestStudentAction(
-                        extractedInfo,
+                        {
+                            student_name: student.student_name,
+                            student_identifier: student.student_identifier,
+                            roll_number: student.roll_number,
+                            class: student.class,
+                            subject: student.subject
+                        },
                         organisation,
                         assessmentId
                     );
                     
-                    // Update submission with extracted info
                     await pool.query(
                         `UPDATE student_submissions
                          SET extracted_student_info = $1
                          WHERE id = $2`,
-                        [JSON.stringify({ ...extractedInfo, ...matchingSuggestion }), submissionId]
+                        [JSON.stringify({ ...student, ...matchingSuggestion }), submissionId]
                     );
-
-                    console.log(`✅ Student extraction completed for submission ${submissionId}`);
+                    console.log(`✅ Student info updated for submission ${submissionId}`);
                     return true;
-                }),
-            
-            // Task 2: Grade answers
-            answerGradingService.gradeAnswerSheet(submissionId, assessmentId, answerSheetLink)
-                .then(result => {
-                    console.log(`✅ AI grading completed for submission ${submissionId}:`, result);
-                    return true;
-                })
-        ])
-        .then(async ([extractionDone, gradingDone]) => {
-            // Both tasks completed successfully
-            await pool.query(
-                `UPDATE student_submissions
-                 SET status = 'Ready for Verification'
-                 WHERE id = $1`,
-                [submissionId]
-            );
-            console.log(`✅ Submission ${submissionId} ready for verification`);
-        })
-        .catch(error => {
-            console.error(`❌ Processing failed for submission ${submissionId}:`, error);
-            pool.query(
-                `UPDATE student_submissions SET status = 'Failed' WHERE id = $1`,
-                [submissionId]
-            );
-        });
+                })(),
+                
+                // Grade answers
+                answerGradingService.gradeAnswerSheet(submissionId, assessmentId, answerSheetLink)
+                    .then(result => {
+                        console.log(`✅ AI grading completed for submission ${submissionId}`);
+                        return true;
+                    })
+            ])
+            .then(async () => {
+                await pool.query(
+                    `UPDATE student_submissions SET status = 'Ready for Verification' WHERE id = $1`,
+                    [submissionId]
+                );
+                console.log(`✅ Submission ${submissionId} ready for verification`);
+            })
+            .catch(error => {
+                console.error(`❌ Processing failed for submission ${submissionId}:`, error);
+                pool.query(`UPDATE student_submissions SET status = 'Failed' WHERE id = $1`, [submissionId]);
+            });
 
-        // Update assessment status to "Processing Ans" when answer sheet uploaded
-        // This happens for: Ready for Grading, Ans Pending Approval, or Completed
-        if (assessment.status === 'Ready for Grading' ||
-            assessment.status === 'Ans Pending Approval' ||
-            assessment.status === 'Completed') {
-            await pool.query(
-                `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-                [assessmentId]
-            );
-            console.log(`✅ Assessment ${assessmentId} status updated from "${assessment.status}" to "Processing Ans"`);
+            // Update assessment status
+            if (assessment.status === 'Ready for Grading' || assessment.status === 'Ans Pending Approval' || assessment.status === 'Completed') {
+                await pool.query(
+                    `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+                    [assessmentId]
+                );
+                console.log(`✅ Assessment ${assessmentId} status updated to "Processing Ans"`);
+            }
+
+            // Return for single student
+            return res.status(201).json({
+                success: true,
+                message: 'Answer sheet uploaded. Redirecting to verification...',
+                submissionId,
+                assessmentId,
+                redirectUrl: `/verify-grades?id=${submissionId}&assessment=${assessmentId}`
+            });
         }
 
-        // Return immediately with submission ID - user goes to verify-grades page
-        res.status(201).json({
+        // MULTIPLE STUDENTS - Auto-create all submissions
+        console.log(`👥 Multiple students detected (${detectedStudents.length}) - creating submissions automatically`);
+        
+        const createdSubmissions = [];
+        
+        for (const student of detectedStudents) {
+            try {
+                // Match or create student
+                const matchResult = await studentMatchingService.suggestStudentAction(
+                    {
+                        student_name: student.student_name,
+                        student_identifier: student.student_identifier,
+                        roll_number: student.roll_number
+                    },
+                    organisation,
+                    assessmentId
+                );
+
+                let studentId = null;
+                if (matchResult.action === 'select' && matchResult.matches.length > 0) {
+                    studentId = matchResult.matches[0].id;
+                    console.log(`✓ Matched ${student.student_name} to existing student ID: ${studentId}`);
+                } else {
+                    console.log(`⚠️ No matching student found for ${student.student_name} - creating submission with NULL student_id (teacher can assign later)`);
+                }
+
+                // Create submission (student_id can be null)
+                const submission = await pool.query(
+                    `INSERT INTO student_submissions (
+                        assessment_id, student_id, answer_sheet_link,
+                        extracted_student_info, page_numbers, status, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, 'Pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    RETURNING id`,
+                    [
+                        assessmentId,
+                        studentId, // Can be null
+                        answerSheetLink,
+                        JSON.stringify({ ...student, ...matchResult }), // Store detected info
+                        JSON.stringify(student.page_numbers) // Store page numbers as JSONB
+                    ]
+                );
+
+                const submissionId = submission.rows[0].id;
+                createdSubmissions.push({
+                    submissionId,
+                    student_name: student.student_name,
+                    pages: student.page_numbers.join(', ')
+                });
+
+                // Start grading
+                answerGradingService.gradeAnswerSheet(submissionId, assessmentId, answerSheetLink)
+                    .catch(err => console.error(`❌ Grading failed for submission ${submissionId}:`, err));
+
+            } catch (err) {
+                console.error(`❌ Error creating submission for ${student.student_name}:`, err);
+            }
+        }
+
+        // Update assessment status
+        await pool.query(
+            `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [assessmentId]
+        );
+
+        return res.status(201).json({
             success: true,
-            message: 'Answer sheet uploaded. Redirecting to verification...',
-            submissionId,
-            assessmentId,
-            redirectUrl: `/verify-grades?id=${submissionId}&assessment=${assessmentId}`
+            message: `Created ${createdSubmissions.length} submission(s) from multi-student PDF`,
+            studentsDetected: detectedStudents.length,
+            submissionsCreated: createdSubmissions,
+            assessmentId
         });
 
     } catch (error) {
@@ -470,6 +557,8 @@ exports.getSubmissionDetails = async (req, res) => {
                 ss.student_id,
                 st.student_name,
                 ss.answer_sheet_link,
+                ss.page_numbers,
+                ss.extracted_student_info,
                 ss.status,
                 COALESCE(
                   (SELECT SUM(ans.marks_obtained)
@@ -675,5 +764,272 @@ exports.deleteSubmission = async (req, res) => {
         });
     }
 };
+
+/**
+ * Upload multi-student combined PDF and analyze
+ * Phase 1: Analyze PDF and detect students
+ * Returns detected students for confirmation
+ */
+exports.uploadMultiStudentPDF = async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+        const userId = req.user.id;
+        const organisation = req.user.organisation;
+
+        console.log('📚 Multi-student PDF upload started');
+
+        // Check if file was uploaded
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Combined answer sheet PDF is required'
+            });
+        }
+
+        // Verify assessment exists and get details
+        const assessmentResult = await pool.query(
+            `SELECT id, title, class, subject, status FROM assessments
+             WHERE id = $1 AND created_by = $2`,
+            [assessmentId, userId]
+        );
+
+        if (assessmentResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Assessment not found or access denied'
+            });
+        }
+
+        const assessment = assessmentResult.rows[0];
+
+        // Check if assessment is in correct status
+        const allowedStatuses = ['Ready for Grading', 'Processing Ans', 'Ans Pending Approval', 'Completed'];
+        if (!allowedStatuses.includes(assessment.status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Assessment must be in 'Ready for Grading' status. Current status: ${assessment.status}`
+            });
+        }
+
+        console.log('📤 Uploading combined PDF to storage...');
+
+        // Upload PDF to storage
+        const pdfUrl = await fileStorage.uploadFile(
+            req.file.buffer,
+            `answer-sheets/${assessmentId}/multi-student-${Date.now()}.pdf`,
+            'application/pdf'
+        );
+
+        console.log(`✅ PDF uploaded: ${pdfUrl}`);
+        console.log('🔍 Starting AI analysis to detect students...');
+
+        // Import the multi-student extraction service
+        const multiStudentExtractionService = require('../services/multiStudentExtractionService');
+
+        // Analyze PDF to detect students
+        const analysisResult = await multiStudentExtractionService.analyzeMultiStudentPDF(
+            pdfUrl,
+            {
+                title: assessment.title,
+                class: assessment.class,
+                subject: assessment.subject
+            }
+        );
+
+        // Validate the analysis results
+        const validation = multiStudentExtractionService.validateStudentGroupings(
+            analysisResult.students,
+            {
+                minPagesPerStudent: 1,
+                maxPagesPerStudent: 20,
+                minConfidence: 0.5
+            }
+        );
+
+        console.log(`✅ Analysis complete: ${analysisResult.studentsDetected} students detected`);
+
+        // Return analysis results for user confirmation
+        res.status(200).json({
+            success: true,
+            message: `Detected ${analysisResult.studentsDetected} student(s) in the PDF`,
+            data: {
+                pdfUrl,
+                totalPages: analysisResult.totalPages,
+                studentsDetected: analysisResult.studentsDetected,
+                students: validation.students.map((student, index) => ({
+                    index,
+                    student_name: student.student_name,
+                    student_identifier: student.student_identifier,
+                    roll_number: student.roll_number,
+                    page_start: student.page_start,
+                    page_end: student.page_end,
+                    total_pages: student.total_pages,
+                    confidence: Math.round(student.avg_confidence * 100)
+                })),
+                warnings: validation.warnings,
+                isValid: validation.isValid
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Multi-student PDF upload error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to analyze multi-student PDF',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Create submissions from multi-student PDF analysis
+ * Phase 2: User confirms detected students, create individual submissions
+ */
+exports.createMultiStudentSubmissions = async (req, res) => {
+    try {
+        const { assessmentId } = req.params;
+        const { pdfUrl, students } = req.body;
+        const userId = req.user.id;
+        const organisation = req.user.organisation;
+
+        console.log(`📝 Creating ${students.length} submissions from multi-student PDF`);
+
+        // Verify assessment exists
+        const assessmentResult = await pool.query(
+            `SELECT id, title FROM assessments WHERE id = $1 AND created_by = $2`,
+            [assessmentId, userId]
+        );
+
+        if (assessmentResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Assessment not found or access denied'
+            });
+        }
+
+        const createdSubmissions = [];
+        const errors = [];
+
+        // Create submission for each student
+        for (const studentData of students) {
+            try {
+                console.log(`👤 Processing student: ${studentData.student_name} (Pages ${studentData.page_start}-${studentData.page_end})`);
+
+                // Try to match existing student or create new one
+                const studentMatchingService = require('../services/studentMatchingService');
+                
+                const matchResult = await studentMatchingService.suggestStudentAction({
+                    student_name: studentData.student_name,
+                    student_identifier: studentData.student_identifier,
+                    roll_number: studentData.roll_number
+                }, organisation);
+
+                let studentId;
+
+                if (matchResult.action === 'select' && matchResult.matches.length > 0) {
+                    // Use existing student (first match)
+                    studentId = matchResult.matches[0].id;
+                    console.log(`✓ Matched to existing student ID: ${studentId}`);
+                } else {
+                    // Create new student
+                    const newStudentResult = await pool.query(
+                        `INSERT INTO students (
+                            student_identifier, student_name, organisation, 
+                            roll_number, created_at, updated_at
+                        ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        RETURNING id`,
+                        [
+                            studentData.student_identifier || `TEMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                            studentData.student_name,
+                            organisation,
+                            studentData.roll_number
+                        ]
+                    );
+                    studentId = newStudentResult.rows[0].id;
+                    console.log(`✓ Created new student ID: ${studentId}`);
+                }
+
+                // Create submission with page range
+                const submissionResult = await pool.query(
+                    `INSERT INTO student_submissions (
+                        assessment_id, student_id, answer_sheet_link, 
+                        source_pdf_link, page_start, page_end,
+                        is_multi_student_upload, status,
+                        created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    RETURNING id`,
+                    [
+                        assessmentId,
+                        studentId,
+                        pdfUrl, // Same PDF for all
+                        pdfUrl, // Source PDF
+                        studentData.page_start,
+                        studentData.page_end,
+                        true, // is_multi_student_upload
+                        'Pending' // Will be graded automatically
+                    ]
+                );
+
+                const submissionId = submissionResult.rows[0].id;
+
+                console.log(`✅ Created submission ${submissionId} for student ${studentData.student_name}`);
+
+                // Start AI grading asynchronously
+                const answerGradingService = require('../services/answerGradingService');
+                answerGradingService.gradeAnswerSheet(submissionId, assessmentId, pdfUrl)
+                    .then(result => {
+                        console.log(`✅ Grading completed for submission ${submissionId}`);
+                    })
+                    .catch(error => {
+                        console.error(`❌ Grading failed for submission ${submissionId}:`, error);
+                    });
+
+                createdSubmissions.push({
+                    submissionId,
+                    studentId,
+                    student_name: studentData.student_name,
+                    pages: `${studentData.page_start}-${studentData.page_end}`
+                });
+
+            } catch (studentError) {
+                console.error(`❌ Error processing student ${studentData.student_name}:`, studentError);
+                errors.push({
+                    student_name: studentData.student_name,
+                    error: studentError.message
+                });
+            }
+        }
+
+        // Update assessment status if needed
+        if (createdSubmissions.length > 0) {
+            await pool.query(
+                `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $1 AND status = 'Ready for Grading'`,
+                [assessmentId]
+            );
+        }
+
+        res.status(201).json({
+            success: true,
+            message: `Created ${createdSubmissions.length} submission(s) successfully`,
+            data: {
+                created: createdSubmissions,
+                errors: errors.length > 0 ? errors : undefined,
+                totalCreated: createdSubmissions.length,
+                totalErrors: errors.length
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Create multi-student submissions error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create submissions',
+            error: error.message
+        });
+    }
+};
+
+
 
 module.exports = exports;

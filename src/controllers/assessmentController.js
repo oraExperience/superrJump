@@ -99,7 +99,7 @@ exports.getAssessmentById = async (req, res) => {
   }
 };
 
-// Get student submissions for an assessment
+// Get student submissions for an assessment (sorted by created_at DESC)
 exports.getAssessmentSubmissions = async (req, res) => {
   try {
     const { id } = req.params;
@@ -139,7 +139,7 @@ exports.getAssessmentSubmissions = async (req, res) => {
       FROM student_submissions ss
       LEFT JOIN students s ON ss.student_id = s.id
       WHERE ss.assessment_id = $1
-      ORDER BY s.student_name NULLS LAST
+      ORDER BY ss.created_at DESC
     `;
 
     const result = await pool.query(submissionsQuery, [id]);

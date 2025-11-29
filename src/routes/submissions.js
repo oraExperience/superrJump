@@ -36,6 +36,20 @@ router.post(
     submissionController.confirmStudentAndStartGrading
 );
 
+// Multi-student PDF upload routes
+router.post(
+    '/assessments/:assessmentId/submissions/upload-multi',
+    authenticateToken,
+    upload.single('answer_sheet'),
+    submissionController.uploadMultiStudentPDF
+);
+
+router.post(
+    '/assessments/:assessmentId/submissions/create-multi',
+    authenticateToken,
+    submissionController.createMultiStudentSubmissions
+);
+
 // LEGACY: Old upload flow for backward compatibility
 router.post(
     '/assessments/:assessmentId/submissions',

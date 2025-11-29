@@ -637,6 +637,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
 // Helper function to format numbers - removes decimal if it's .00
 function formatNumber(num) {
@@ -783,9 +784,11 @@ async function loadSubmissionData() {
             document.getElementById('assessmentClass').textContent = submission.class || 'Class';
             document.getElementById('assessmentSubject').textContent = submission.subject || 'Subject';
             
-            // Parse extracted info
+            // Parse extracted info (already parsed if JSONB, might be string if TEXT)
             if (submission.extracted_student_info) {
-                const info = JSON.parse(submission.extracted_student_info);
+                const info = typeof submission.extracted_student_info === 'string'
+                    ? JSON.parse(submission.extracted_student_info)
+                    : submission.extracted_student_info;
                 extractedInfo = info;
                 matches = info.matches || [];
             }
@@ -794,7 +797,17 @@ async function loadSubmissionData() {
             updateMarksDisplay();
             
             initializeUI();
-            loadPDF(submission.answer_sheet_link);
+            
+            // Check if we need to extract specific pages (multi-student PDF)
+            // page_numbers is already an array from JSONB column
+            const pageNumbers = submission.page_numbers;
+            if (pageNumbers && Array.isArray(pageNumbers) && pageNumbers.length > 0) {
+                console.log('📄 Multi-student PDF detected. Extracting pages:', pageNumbers);
+                loadPDFWithPageExtraction(submission.answer_sheet_link, pageNumbers);
+            } else {
+                console.log('📄 Single-student PDF. Loading full PDF.');
+                loadPDF(submission.answer_sheet_link);
+            }
         } else {
             throw new Error(data.message || 'Failed to load submission');
         }
@@ -1949,6 +1962,44 @@ function toggleQuestionsSidebar() {
 }
 
 // PDF Functions
+async function loadPDFWithPageExtraction(url, pageNumbers) {
+    try {
+        console.log('🔧 Extracting pages from PDF:', pageNumbers);
+        
+        // Fetch the original PDF
+        const response = await fetch(url);
+        const pdfBytes = await response.arrayBuffer();
+        
+        // Load with pdf-lib
+        const { PDFDocument } = PDFLib;
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        
+        // Create a new PDF with only the specified pages
+        const newPdf = await PDFDocument.create();
+        
+        // Copy each specified page (pageNumbers are 1-indexed, pdf-lib is 0-indexed)
+        for (const pageNum of pageNumbers) {
+            const [copiedPage] = await newPdf.copyPages(pdfDoc, [pageNum - 1]);
+            newPdf.addPage(copiedPage);
+        }
+        
+        // Save the new PDF
+        const newPdfBytes = await newPdf.save();
+        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+        const extractedUrl = URL.createObjectURL(blob);
+        
+        console.log('✅ PDF extracted successfully. Loading extracted PDF...');
+        
+        // Load the extracted PDF
+        loadPDF(extractedUrl);
+        
+    } catch (error) {
+        console.error('❌ Error extracting PDF pages:', error);
+        alert('Failed to extract PDF pages. Loading full PDF instead.');
+        loadPDF(url);
+    }
+}
+
 async function loadPDF(url) {
     try {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';

@@ -28,7 +28,7 @@ async function convertPDFToImages(pdfPath) {
     
     const pdfToImg = await getPdfToImg();
     const document = await pdfToImg(pdfPath, {
-      scale: 3.0  // 3.0 scale = 300 DPI (100 DPI * 3.0)
+      scale: 1.5  // Reduced from 3.0 to 1.5 for better API compatibility (still 150 DPI, readable quality)
     });
 
     const pageImages = [];

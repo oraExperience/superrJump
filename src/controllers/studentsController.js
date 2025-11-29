@@ -1,5 +1,6 @@
 
 const pool = require('../config/database');
+const xlsx = require('xlsx');
 
 // Helper functions for validation
 function isValidEmail(email) {
@@ -383,8 +384,6 @@ async function getAllStudents(req, res) {
         res.status(500).json({ error: 'Failed to fetch students' });
     }
 }
-
-const xlsx = require('xlsx');
 
 async function bulkUploadStudents(req, res) {
     try {

@@ -108,6 +108,7 @@ CRITICAL RULES:
 - LOOK at the image to see actual question positions
 - If sub-parts have SEPARATE marks → Extract EACH as separate question
 - If sub-parts share ONE mark → Extract as ONE question
+- **OR QUESTIONS**: If you see "OR" between two question options, include BOTH in question_text separated by " OR "
 - question_number must be sequential (1, 2, 3, 4...)
 - y_start_ratio MUST be < y_end_ratio
 - Return ONLY valid JSON array, NO markdown blocks
@@ -146,6 +147,19 @@ Should be ONE entry:
   "question_text": "Answer all parts: (i) Define... (ii) Explain...",
   "max_marks": 10,
   "position": {"y_start_ratio": 0.20, "y_end_ratio": 0.40, "height_lines": 5}
+}
+
+EXAMPLE 3 - OR Questions (INCLUDE BOTH OPTIONS):
+Q. 8. Find ∫(e^x log a + e^a log x + e^a log a)dx [5]
+      OR
+      Find ∫(sec²x)/(3+tan x) dx [5]
+
+Should be ONE entry with BOTH questions:
+{
+  "question_number": 8,
+  "question_text": "Find ∫(e^x log a + e^a log x + e^a log a)dx OR Find ∫(sec²x)/(3+tan x) dx",
+  "max_marks": 5,
+  "position": {"y_start_ratio": 0.60, "y_end_ratio": 0.75, "height_lines": 4}
 }
 
 Context:

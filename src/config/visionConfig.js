@@ -17,7 +17,7 @@ module.exports = {
       // 'meta-llama/llama-3.2-90b-vision' - Open source, $0.50/$0.80 per 1M tokens
       
       model: 'anthropic/claude-3.5-sonnet',  // Current model
-      maxTokens: 400,  // Response limit (adjust based on credits)
+      maxTokens: 1000,  // Response limit (adjust based on credits)
       priority: 1  // Try first
     },
     openai: {

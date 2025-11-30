@@ -952,8 +952,13 @@ function showCompletedState() {
     // Show questions section first (at the top)
     showQuestionsSection();
     
-    // Show answer sheet upload section below questions (for uploading more answer sheets)
-    showAnswerSheetUpload();
+    // Only show answer sheet upload section if questions are approved
+    // Status must be 'Ready for Grading', 'Ans Pending Approval', or 'Completed'
+    if (assessmentData.status === 'Ready for Grading' ||
+        assessmentData.status === 'Ans Pending Approval' ||
+        assessmentData.status === 'Completed') {
+        showAnswerSheetUpload();
+    }
     
     // Show the student results table which is already rendered
     console.log('Assessment is completed - showing student results');
@@ -1595,12 +1600,23 @@ async function generateStudentResults() {
                                 No Student Answers Uploaded Yet
                             </h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
-                                Upload answer sheets to get AI-powered grading and see results here
+                                ${assessmentData.status === 'Ques Pending Approval'
+                                    ? 'Please verify and approve questions before uploading answer sheets'
+                                    : 'Upload answer sheets to get AI-powered grading and see results here'}
                             </p>
-                            <button onclick="document.getElementById('answerSheetInput')?.click()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
-                                <span class="material-symbols-outlined">cloud_upload</span>
-                                Upload Answer Sheets
-                            </button>
+                            ${(assessmentData.status === 'Ready for Grading' ||
+                               assessmentData.status === 'Ans Pending Approval' ||
+                               assessmentData.status === 'Completed') ? `
+                                <button onclick="document.getElementById('answerSheetInput')?.click()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
+                                    <span class="material-symbols-outlined">cloud_upload</span>
+                                    Upload Answer Sheets
+                                </button>
+                            ` : `
+                                <button onclick="goToVerification()" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
+                                    <span class="material-symbols-outlined">fact_check</span>
+                                    Verify Questions First
+                                </button>
+                            `}
                         </div>
                     </td>
                 </tr>
@@ -1829,9 +1845,13 @@ function updateBackButtonText() {
 }
 
 // Initialize page
-loadAssessmentDetails();
-generateStudentResults();
-updateBackButtonText();
+async function initializePage() {
+    await loadAssessmentDetails(); // Wait for assessment data first
+    await generateStudentResults(); // Then generate results with proper status check
+    updateBackButtonText();
+}
+
+initializePage();
 </script>
 
 

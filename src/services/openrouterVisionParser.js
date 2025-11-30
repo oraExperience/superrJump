@@ -155,6 +155,23 @@ MATHEMATICAL NOTATION GUIDE:
 MULTIPLE CHOICE - Include ALL options:
 Format: "Question text. Options: (a) option_a, (b) option_b, (c) option_c, (d) option_d"
 
+🚨 OR QUESTIONS - CRITICAL HANDLING 🚨
+
+When you see a question with "OR" offering two alternative options:
+- BOTH options should be included in the SAME question entry
+- Separate them with " OR " in the question_text
+- Use the marks from ONE of the options (they're typically the same)
+- The student will choose ONE option to answer
+
+EXAMPLE FROM IMAGE:
+If you see:
+"8. Find ∫(e^x log a + e^a log x + e^a log a)dx [5]
+     OR
+     Find ∫(sec²x)/(3+tan x) dx [5]"
+
+Extract as ONE question:
+["8", "Find integral of (e to the power x times log a plus e to the power a times log x plus e to the power a times log a) dx OR Find integral of (sec squared x) divided by (3 plus tan x) dx", 5, 1, [["Integration", 100]]]
+
 WHAT TO SKIP:
 - Instructions ("Attempt any 5", "Select and write")
 - Section headers ("SECTION – A", "Q. 1.")
@@ -177,23 +194,24 @@ EXAMPLE CONVERSIONS:
    Image: "Choose correct answer. Q1. 2+2 = ? (a) 3 (b) 4 (c) 5"
    Extract: "Choose the correct option: 2+2 = ? Options: (a) 3, (b) 4, (c) 5"
 
-Return JSON array ONLY (no markdown, no explanation):
+4. OR Questions:
+   Image: "8. Find ∫(e^x log a + e^a log x)dx [5] OR Find ∫(sec²x)/(3+tan x) dx [5]"
+   Extract: "Find integral of (e to the power x times log a plus e to the power a times log x) dx OR Find integral of (sec squared x) divided by (3 plus tan x) dx"
+
+Return as array of tuples (NOT objects) to save tokens:
 [
-  {
-    "question_identifier": "Q3(i)",
-    "question_text": "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.",
-    "marks": 1,
-    "page_number": 1,
-    "y_start": 500,
-    "y_end": 600
-  }
+  ["Q3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, 1, [["Fractions", 100]]],
+  ["Q3(ii)", "Write TRUE or FALSE: Sum of all sides of a shape is called its Area.", 1, 1, [["Geometry", 100]]],
+  ["Q6", "Write any three equivalent fractions for: (a) 2/5 (b) 3/7", 3, 1, [["Fractions", 80], ["Algebra", 20]]]
 ]
+
+Format: [question_identifier, question_text, marks, page_number, topics]
+- Topics format: [[topic_name, weight_percentage], [topic_name, weight_percentage]]
 
 IMPORTANT:
 - Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
-- y_start: Y pixel coordinate where the question starts on the page
-- y_end: Y pixel coordinate where the question ends on the page
-- Measure these carefully to capture the entire question including any diagrams or images`;
+- topics: Array of [topic_name, weight] tuples - identify curriculum topics covered
+- Return ONLY the array of tuples, no additional text or markdown`;
 
     // Build content array with prompt + all images
     const contentArray = [
@@ -273,22 +291,30 @@ IMPORTANT:
       throw new Error('AI response is not an array');
     }
     
-    // Return questions as-is from AI (no conversion needed)
-    const questions = questionsData.map(q => ({
-      question_identifier: q.question_identifier || 'unknown',
-      question_text: q.question_text || '',
-      marks: q.marks || undefined,
-      page: q.page_number || 1,
-      y_start: q.y_start || null,
-      y_end: q.y_end || null,
-      topics: q.topics || [],
-      bbox: {
-        x1: 100,
-        y1: q.y_start || 100,
-        x2: 1685,
-        y2: q.y_end || 350
-      }
-    }));
+    // Convert tuple format [question_identifier, question_text, marks, page_number, y_start, y_end, topics] to our format
+    const questions = questionsData.map(q => {
+      // q is a tuple: [question_identifier, question_text, marks, page_number, y_start, y_end, topics]
+      const [question_identifier, question_text, marks, page_number, y_start, y_end, topicTuples] = q;
+      
+      // Convert topic tuples [[name, weight], ...] to objects [{topic, weight}, ...]
+      const topics = Array.isArray(topicTuples)
+        ? topicTuples.map(([topic, weight]) => ({ topic, weight }))
+        : [];
+      
+      return {
+        question_identifier: question_identifier || 'unknown',
+        question_text: question_text || '',
+        marks: marks || undefined,
+        page: page_number || 1,
+        topics: topics,
+        bbox: {
+          x1: 100,
+          y1: 100,
+          x2: 1685,
+          y2: 350
+        }
+      };
+    });
     
     console.log(`   ✅ Found ${questions.length} questions across all pages`);
     
@@ -336,7 +362,17 @@ ${contextInfo}
 4. SHORT ANSWER - Include instruction if present:
    "Answer the following: [question text]"
 
-5. READ MATHEMATICAL EXPRESSIONS CHARACTER BY CHARACTER:
+5. OR QUESTIONS - CRITICAL HANDLING:
+   When you see "OR" between two question options:
+   - Include BOTH options in the same question entry
+   - Separate with " OR " in question_text
+   - Use marks from one option (usually same)
+   
+   EXAMPLE:
+   "Find ∫(e^x log a)dx [5] OR Find ∫(sec²x)/(3+tan x) dx [5]"
+   Extract as: "Find integral of (e to the power x times log a) dx OR Find integral of (sec squared x) divided by (3 plus tan x) dx"
+
+6. READ MATHEMATICAL EXPRESSIONS CHARACTER BY CHARACTER:
 
 MATHEMATICAL NOTATION GUIDE:
 
@@ -417,27 +453,17 @@ EXAMPLE CONVERSIONS:
    Image: "Choose correct answer. Q1. 2+2 = ? (a) 3 (b) 4 (c) 5"
    Extract: "Choose the correct option: 2+2 = ? Options: (a) 3, (b) 4, (c) 5"
 
-Return JSON array ONLY (no markdown, no explanation):
+Return as array of tuples (NOT objects) to save tokens:
 [
-  {
-    "question_identifier": "Q3(i)",
-    "question_text": "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.",
-    "marks": 1,
-    "y_start": 500,
-    "y_end": 600,
-    "topics": [
-      {"topic": "Fractions", "weight": 80},
-      {"topic": "Number Theory", "weight": 20}
-    ]
-  }
+  ["Q3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, [["Fractions", 80], ["Number Theory", 20]]],
+  ["Q3(ii)", "Write TRUE or FALSE: Sum of all sides is called Area.", 1, [["Geometry", 100]]]
 ]
 
-IMPORTANT:
-- Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
-- y_start: Y pixel coordinate where the question starts on the page
-- y_end: Y pixel coordinate where the question ends on the page
-- Measure these carefully to capture the entire question including any diagrams or images
-- topics: Array of topics covered by this question with their weightage percentage (must sum to 100). Identify 1-3 main topics that this question tests. Be specific and accurate based on the question content.`;
+Format: [question_identifier, question_text, marks, topics]
+- question_identifier: Original numbering from paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
+- topics: Nested tuples [[topic_name, weight_percentage], ...] - Must sum to 100
+
+IMPORTANT: Return ONLY the array of tuples, no additional text or markdown`;
 
     // Log prompt
     console.log('\n' + '='.repeat(80));
@@ -510,24 +536,27 @@ IMPORTANT:
     
     const questions = JSON.parse(jsonMatch[0]);
     
-    // Return questions as-is from AI (no conversion needed)
+    // Convert tuple format [question_identifier, question_text, marks, topics] to our format
     return questions.map((q, idx) => {
-      const y1 = q.y_start || (idx * 300 + 200);
-      const y2 = q.y_end || (y1 + 250);
+      // q is a tuple: [question_identifier, question_text, marks, topics]
+      const [question_identifier, question_text, marks, topicTuples] = q;
+      
+      // Convert topic tuples [[name, weight], ...] to objects [{topic, weight}, ...]
+      const topics = Array.isArray(topicTuples)
+        ? topicTuples.map(([topic, weight]) => ({ topic, weight }))
+        : [];
       
       return {
-        question_identifier: q.question_identifier,
-        question_text: q.question_text,
-        marks: q.marks || 1,
+        question_identifier: question_identifier || 'unknown',
+        question_text: question_text || '',
+        marks: marks || 1,
         page: pageNumber,
-        y_start: q.y_start || null,
-        y_end: q.y_end || null,
-        topics: q.topics || [],
+        topics: topics,
         bbox: {
           x1: 100,
-          y1: Math.max(0, y1),
+          y1: 100,
           x2: 1685,
-          y2: Math.min(2525, y2)
+          y2: 350
         }
       };
     });

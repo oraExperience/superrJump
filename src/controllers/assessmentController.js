@@ -502,16 +502,14 @@ async function processQuestionExtraction(assessmentId, assessment) {
         }
         
         await client.query(
-          `INSERT INTO questions (assessment_id, question_number, question_identifier, question_text, max_marks, y_start, y_end, page_number, topics, verified)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)`,
+          `INSERT INTO questions (assessment_id, question_number, question_identifier, question_text, max_marks, page_number, topics, verified)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, false)`,
           [
             assessmentId,
             nextQuestionNumber++, // Auto-generated sequential number (1, 2, 3...)
             question.question_identifier || null, // AI-extracted identifier (e.g., "i", "ii", "1a", "Q1")
             question.question_text, // Full question text from AI
             question.marks || 0, // Marks from AI response
-            question.y_start || null, // Y coordinate where question starts
-            question.y_end || null, // Y coordinate where question ends
             question.page || 1, // Page number in PDF
             JSON.stringify(question.topics || []) // Topics with weightage as JSONB
           ]
@@ -1481,27 +1479,22 @@ exports.updateQuestionPaper = async (req, res) => {
       });
     }
 
-    // Use the uploaded file path (multer already saved it)
-    const pdfPath = req.file.path;
-    console.log(`New question paper saved at: ${pdfPath}`);
+    console.log(`📄 Updating question paper for assessment ${id}:`, req.file.originalname);
 
-    // Update assessment with new PDF link and reset status to start extraction
+    // Update assessment status to Processing Ques first
     await pool.query(
-      `UPDATE assessments
-       SET question_paper_link = $1, status = 'Processing Ques', updated_at = CURRENT_TIMESTAMP
-       WHERE id = $2`,
-      [pdfPath, id]
+      'UPDATE assessments SET status = $1 WHERE id = $2',
+      ['Processing Ques', id]
     );
 
-    // Get updated assessment data
-    const updatedAssessment = await pool.query(
-      'SELECT * FROM assessments WHERE id = $1',
-      [id]
-    );
-
-    // Trigger question extraction in background using existing function
-    processQuestionExtraction(id, updatedAssessment.rows[0])
-      .catch(err => console.error('Background extraction error:', err));
+    // Process PDF locally in background (same as upload flow)
+    processLocalPDF(id, req.file.path, {
+      id: id,
+      title: assessment.rows[0].title,
+      originalName: req.file.originalname
+    }).catch(err => {
+      console.error(`Failed to process updated PDF for assessment ${id}:`, err);
+    });
 
     res.status(200).json({
       success: true,

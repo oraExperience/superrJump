@@ -51,6 +51,16 @@ module.exports = async (req, res) => {
     const app = require('../src/app');
     console.log('Express app loaded successfully');
     
+    // Reconstruct the original URL from Vercel's path rewrite
+    const path = req.query.path || '';
+    if (path) {
+      // Remove the path query parameter and reconstruct the URL
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      url.searchParams.delete('path');
+      req.url = `/api/${path}${url.search}`;
+      console.log('Reconstructed URL:', req.url);
+    }
+    
     console.log('Passing request to Express app...');
     return app(req, res);
     

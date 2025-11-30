@@ -1485,22 +1485,28 @@ exports.getQuestionImage = async (req, res) => {
 
 // Update question paper and restart extraction
 exports.updateQuestionPaper = async (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const r2Storage = require('../services/r2Storage');
+  
   try {
     const { id } = req.params;
     const userId = req.user.id;
 
     // Verify assessment ownership
-    const assessment = await pool.query(
+    const assessmentResult = await pool.query(
       'SELECT * FROM assessments WHERE id = $1 AND created_by = $2',
       [id, userId]
     );
 
-    if (assessment.rows.length === 0) {
+    if (assessmentResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Assessment not found or access denied'
       });
     }
+
+    const assessment = assessmentResult.rows[0];
 
     // Check if file was uploaded
     if (!req.file) {
@@ -1518,23 +1524,92 @@ exports.updateQuestionPaper = async (req, res) => {
       ['Processing Ques', id]
     );
 
-    // Process PDF locally in background (same as upload flow)
-    processLocalPDF(id, req.file.path, {
-      id: id,
-      title: assessment.rows[0].title,
-      originalName: req.file.originalname
-    }).catch(err => {
-      console.error(`Failed to process updated PDF for assessment ${id}:`, err);
-    });
+    // SAME LOGIC AS uploadPDFAndCreateAssessment: Upload to R2 immediately
+    try {
+      console.log(`📤 Uploading updated PDF to R2 (synchronous for Vercel compatibility)...`);
+      
+      // Read the file buffer while it still exists
+      const fileBuffer = fs.readFileSync(req.file.path);
+      console.log(`   ✓ File read successfully: ${fileBuffer.length} bytes`);
+      
+      // Generate filename
+      const sanitizedTitle = assessment.title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+      const extension = path.extname(req.file.originalname || '.pdf');
+      const fileName = `Assessment_${id}_${sanitizedTitle}${extension}`;
 
-    res.status(200).json({
-      success: true,
-      message: 'Question paper updated successfully. AI extraction started.',
-      assessmentId: id
-    });
+      // Upload to R2 immediately
+      const r2Url = await r2Storage.uploadFile(
+        fileBuffer,
+        fileName,
+        'question-papers',
+        'application/pdf'
+      );
+      
+      console.log(`   ✅ Uploaded to R2: ${r2Url}`);
+      
+      // Update assessment with R2 URL
+      await pool.query(
+        'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
+        [r2Url, id]
+      );
+      
+      console.log(`   ✅ Database updated with R2 URL`);
+      
+      // Clean up temp file
+      try {
+        fs.unlinkSync(req.file.path);
+        console.log(`   🗑️  Temp file deleted: ${req.file.path}`);
+      } catch (cleanupErr) {
+        console.warn('   ⚠️  Could not cleanup temp file:', cleanupErr.message);
+      }
+
+      // Now trigger AI extraction in background with R2 URL
+      console.log(`🤖 Triggering AI extraction in background...`);
+      processQuestionExtraction(id, {
+        id: id,
+        title: assessment.title,
+        class: assessment.class,
+        subject: assessment.subject,
+        question_paper_link: r2Url,
+        status: 'Processing Ques'
+      }).catch(err => {
+        console.error(`❌ Background extraction failed for assessment ${id}:`, err);
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Question paper updated successfully. PDF uploaded. AI extraction in progress...',
+        assessmentId: id,
+        questionPaperLink: r2Url
+      });
+
+    } catch (uploadError) {
+      console.error(`❌ R2 upload failed:`, uploadError);
+      
+      // Clean up temp file on error
+      try {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+      } catch (cleanupErr) {
+        console.warn('Could not cleanup temp file:', cleanupErr.message);
+      }
+      
+      // Update assessment status to indicate upload failure
+      await pool.query(
+        'UPDATE assessments SET status = $1 WHERE id = $2',
+        ['Upload Failed', id]
+      );
+      
+      return res.status(500).json({
+        success: false,
+        message: 'PDF upload to storage failed',
+        error: uploadError.message
+      });
+    }
 
   } catch (error) {
-    console.error('Update question paper error:', error);
+    console.error('❌ Update question paper error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update question paper',

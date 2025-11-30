@@ -1031,92 +1031,84 @@ exports.uploadPDFAndCreateAssessment = async (req, res) => {
 
     console.log(`✅ Assessment created: ID ${assessment.id}`);
 
-    // CRITICAL FIX: Upload to R2 IMMEDIATELY (before response)
-    // This ensures file is uploaded before serverless function terminates
-    console.log(`📤 Uploading PDF to R2 (synchronous for Vercel compatibility)...`);
+    // ⚡ RESPOND IMMEDIATELY - Don't wait for upload/extraction
+    res.status(201).json({
+      success: true,
+      message: 'Assessment created. AI extraction starting...',
+      assessment: assessment
+    });
+
+    // 📤 Upload to R2 and process in background (non-blocking)
+    console.log(`📤 Starting background R2 upload and AI extraction...`);
     
-    try {
-      // Read the file buffer while it still exists
-      const fileBuffer = fs.readFileSync(req.file.path);
-      console.log(`   ✓ File read successfully: ${fileBuffer.length} bytes`);
-      
-      // Generate filename
-      const sanitizedTitle = title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
-      const extension = path.extname(req.file.originalname || '.pdf');
-      const fileName = `Assessment_${assessment.id}_${sanitizedTitle}${extension}`;
-
-      // Upload to R2 immediately
-      const r2Url = await r2Storage.uploadFile(
-        fileBuffer,
-        fileName,
-        'question-papers',
-        'application/pdf'
-      );
-      
-      console.log(`   ✅ Uploaded to R2: ${r2Url}`);
-      
-      // Update assessment with R2 URL
-      await pool.query(
-        'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
-        [r2Url, assessment.id]
-      );
-      
-      console.log(`   ✅ Database updated with R2 URL`);
-      
-      // Clean up temp file
+    (async () => {
       try {
-        fs.unlinkSync(req.file.path);
-        console.log(`   🗑️  Temp file deleted: ${req.file.path}`);
-      } catch (cleanupErr) {
-        console.warn('   ⚠️  Could not cleanup temp file:', cleanupErr.message);
-      }
+        // Read the file buffer while it still exists
+        const fileBuffer = fs.readFileSync(req.file.path);
+        console.log(`   ✓ File read successfully: ${fileBuffer.length} bytes`);
+        
+        // Generate filename
+        const sanitizedTitle = title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+        const extension = path.extname(req.file.originalname || '.pdf');
+        const fileName = `Assessment_${assessment.id}_${sanitizedTitle}${extension}`;
 
-      // Now trigger AI extraction in background with R2 URL
-      console.log(`🤖 Triggering AI extraction in background...`);
-      processQuestionExtraction(assessment.id, {
-        id: assessment.id,
-        title: title,
-        class: className,
-        subject: subject,
-        question_paper_link: r2Url,
-        status: 'Processing Ques'
-      }).catch(err => {
-        console.error(`❌ Background extraction failed for assessment ${assessment.id}:`, err);
-      });
-
-      res.status(201).json({
-        success: true,
-        message: 'Assessment created. PDF uploaded. AI extraction in progress...',
-        assessment: {
-          ...assessment,
-          question_paper_link: r2Url
-        }
-      });
-
-    } catch (uploadError) {
-      console.error(`❌ R2 upload failed:`, uploadError);
-      
-      // Clean up temp file on error
-      try {
-        if (fs.existsSync(req.file.path)) {
+        // Upload to R2
+        console.log(`   📤 Uploading to R2...`);
+        const r2Url = await r2Storage.uploadFile(
+          fileBuffer,
+          fileName,
+          'question-papers',
+          'application/pdf'
+        );
+        
+        console.log(`   ✅ Uploaded to R2: ${r2Url}`);
+        
+        // Update assessment with R2 URL
+        await pool.query(
+          'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
+          [r2Url, assessment.id]
+        );
+        
+        console.log(`   ✅ Database updated with R2 URL`);
+        
+        // Clean up temp file
+        try {
           fs.unlinkSync(req.file.path);
+          console.log(`   🗑️  Temp file deleted: ${req.file.path}`);
+        } catch (cleanupErr) {
+          console.warn('   ⚠️  Could not cleanup temp file:', cleanupErr.message);
         }
-      } catch (cleanupErr) {
-        console.warn('Could not cleanup temp file:', cleanupErr.message);
+
+        // Trigger AI extraction with R2 URL
+        console.log(`🤖 Triggering AI extraction...`);
+        await processQuestionExtraction(assessment.id, {
+          id: assessment.id,
+          title: title,
+          class: className,
+          subject: subject,
+          question_paper_link: r2Url,
+          status: 'Processing Ques'
+        });
+
+      } catch (backgroundError) {
+        console.error(`❌ Background upload/extraction failed for assessment ${assessment.id}:`, backgroundError);
+        
+        // Clean up temp file on error
+        try {
+          if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (cleanupErr) {
+          console.warn('Could not cleanup temp file:', cleanupErr.message);
+        }
+        
+        // Update assessment status to indicate failure
+        await pool.query(
+          'UPDATE assessments SET status = $1 WHERE id = $2',
+          ['Extraction Failed', assessment.id]
+        );
       }
-      
-      // Update assessment status to indicate upload failure
-      await pool.query(
-        'UPDATE assessments SET status = $1 WHERE id = $2',
-        ['Upload Failed', assessment.id]
-      );
-      
-      return res.status(500).json({
-        success: false,
-        message: 'PDF upload to storage failed',
-        error: uploadError.message
-      });
-    }
+    })(); // End of background processing IIFE
 
   } catch (error) {
     console.error('❌ Upload PDF error:', error);

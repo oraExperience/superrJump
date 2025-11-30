@@ -13,8 +13,13 @@ const USE_HARDCODED_RESPONSE = false; // Set to true for testing without API cre
  */
 async function analyzeMultiStudentPDF(pdfUrl, assessmentContext) {
     try {
-        console.log('📚 Analyzing multi-student PDF...');
-        console.log('PDF URL:', pdfUrl);
+        console.log('\n' + '='.repeat(80));
+        console.log('📚 MULTI-STUDENT PDF ANALYSIS - STARTING');
+        console.log('='.repeat(80));
+        console.log('📂 PDF URL:', pdfUrl);
+        console.log('📋 Assessment Context:', JSON.stringify(assessmentContext, null, 2));
+        console.log('⏰ Start Time:', new Date().toISOString());
+        console.log('='.repeat(80) + '\n');
         
         const prompt = buildMultiStudentPrompt(assessmentContext);
         

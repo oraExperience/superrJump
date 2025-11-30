@@ -16,6 +16,14 @@ const PDF_SERVICE_URL = process.env.PDF_SERVICE_URL;
  * Convert PDF to images - uses remote service if PDF_SERVICE_URL is set
  */
 async function convertPDFToImages(pdfPath) {
+  console.log('\n' + '='.repeat(80));
+  console.log('📄 PDF TO IMAGE CONVERSION STARTED');
+  console.log('='.repeat(80));
+  console.log('📂 Input PDF:', pdfPath);
+  console.log('🔧 PDF_SERVICE_URL:', process.env.PDF_SERVICE_URL || 'NOT SET');
+  console.log('🎯 Using Remote Service:', USE_REMOTE_PDF_SERVICE);
+  console.log('='.repeat(80) + '\n');
+  
   // If PDF_SERVICE_URL is set, use remote service (works in both local and production)
   if (USE_REMOTE_PDF_SERVICE) {
     console.log('🌐 Using Render microservice for PDF conversion');
@@ -32,48 +40,89 @@ async function convertPDFToImages(pdfPath) {
  */
 async function convertPDFToImagesRemote(pdfPath) {
   try {
-    console.log('🌐 Using remote PDF service:', PDF_SERVICE_URL);
+    console.log('\n' + '─'.repeat(80));
+    console.log('🌐 REMOTE PDF SERVICE CALL');
+    console.log('─'.repeat(80));
+    console.log('📡 Service URL:', PDF_SERVICE_URL);
+    console.log('📂 PDF Path:', pdfPath);
+    console.log('⏰ Request Time:', new Date().toISOString());
+    console.log('─'.repeat(80) + '\n');
+    
+    const requestBody = { pdfUrl: pdfPath };
+    console.log('📤 Request Body:', JSON.stringify(requestBody, null, 2));
     
     // Call remote service
     const response = await fetch(`${PDF_SERVICE_URL}/convert-pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdfUrl: pdfPath })
+      body: JSON.stringify(requestBody)
     });
+    
+    console.log('📥 Response Status:', response.status, response.statusText);
     
     if (!response.ok) {
       const error = await response.text();
+      console.error('❌ Service Error Response:', error);
       throw new Error(`Remote PDF service error: ${response.status} - ${error}`);
     }
     
     const data = await response.json();
     
+    console.log('\n' + '─'.repeat(80));
+    console.log('📊 REMOTE SERVICE RESPONSE');
+    console.log('─'.repeat(80));
+    console.log('✓ Success:', data.success);
+    console.log('📄 Pages Converted:', data.pages);
+    console.log('🖼️  Images Received:', data.images?.length || 0);
+    console.log('─'.repeat(80) + '\n');
+    
     if (!data.success) {
       throw new Error(data.error || 'Remote PDF conversion failed');
     }
     
-    console.log(`✅ Remote service converted ${data.pages} pages`);
-    
-    // Debug: Check what we received
-    console.log(`🔍 Checking response data:`, {
-      imageCount: data.images?.length,
-      firstImageKeys: data.images?.[0] ? Object.keys(data.images[0]) : [],
-      base64Length: data.images?.[0]?.base64?.length,
-      base64Preview: data.images?.[0]?.base64?.substring(0, 50)
+    // Detailed validation of each image
+    console.log('🔍 Validating received images...');
+    data.images.forEach((img, index) => {
+      const base64Length = img.base64?.length || 0;
+      const bufferSize = Math.round(base64Length * 0.75); // Approximate buffer size
+      console.log(`  Page ${img.pageNumber}:`, {
+        base64Length,
+        estimatedBufferSize: `${(bufferSize / 1024).toFixed(1)} KB`,
+        dimensions: `${img.width}x${img.height}`,
+        base64Prefix: img.base64?.substring(0, 20) + '...'
+      });
     });
     
     // Convert base64 images back to buffers
-    const pageImages = data.images.map(img => ({
-      page: img.pageNumber,
-      buffer: Buffer.from(img.base64, 'base64'),
-      width: img.width,
-      height: img.height
-    }));
+    console.log('\n🔄 Converting base64 to buffers...');
+    const pageImages = data.images.map(img => {
+      const buffer = Buffer.from(img.base64, 'base64');
+      console.log(`  ✓ Page ${img.pageNumber}: Buffer created (${buffer.length} bytes)`);
+      return {
+        page: img.pageNumber,
+        buffer: buffer,
+        width: img.width,
+        height: img.height
+      };
+    });
+    
+    console.log('\n' + '='.repeat(80));
+    console.log('✅ PDF CONVERSION COMPLETED SUCCESSFULLY');
+    console.log('='.repeat(80));
+    console.log('📦 Total Pages:', pageImages.length);
+    console.log('💾 Total Size:', `${(pageImages.reduce((sum, p) => sum + p.buffer.length, 0) / 1024).toFixed(1)} KB`);
+    console.log('='.repeat(80) + '\n');
     
     return pageImages;
     
   } catch (error) {
-    console.error('❌ Remote PDF service failed:', error);
+    console.error('\n' + '❌'.repeat(40));
+    console.error('❌ REMOTE PDF SERVICE FAILED');
+    console.error('❌'.repeat(40));
+    console.error('Error Name:', error.name);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('❌'.repeat(40) + '\n');
     throw new Error(`PDF conversion failed: ${error.message}`);
   }
 }

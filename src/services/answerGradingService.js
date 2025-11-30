@@ -11,17 +11,27 @@ const googleDriveService = require('./googleDriveService');
  */
 async function gradeAnswerSheet(submissionId, assessmentId, answerSheetLink) {
     try {
-        console.log(`🎯 Starting AI grading for submission ${submissionId}`);
+        console.log('\n' + '='.repeat(80));
+        console.log('🎯 ANSWER SHEET GRADING - STARTING');
+        console.log('='.repeat(80));
+        console.log('📝 Submission ID:', submissionId);
+        console.log('📋 Assessment ID:', assessmentId);
+        console.log('📂 Answer Sheet:', answerSheetLink);
+        console.log('⏰ Start Time:', new Date().toISOString());
+        console.log('='.repeat(80) + '\n');
 
         // Update submission status to "Processing"
+        console.log('🔄 Updating submission status to "Processing"...');
         await pool.query(
             `UPDATE student_submissions
              SET status = 'Processing', updated_at = CURRENT_TIMESTAMP
              WHERE id = $1`,
             [submissionId]
         );
+        console.log('✅ Status updated');
 
         // Fetch assessment details
+        console.log('\n📋 Fetching assessment details...');
         const assessmentResult = await pool.query(
             `SELECT title, class, subject FROM assessments WHERE id = $1`,
             [assessmentId]

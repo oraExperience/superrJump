@@ -245,8 +245,14 @@ async function parseWithVision(pdfUrls, prompt) {
     if (pdfUrl.startsWith('http')) {
       // Remote URL - check if it's a PDF
       if (pdfUrl.toLowerCase().endsWith('.pdf')) {
-        console.log(`🌐 Remote PDF detected: ${pdfUrl}`);
-        console.log(`🔄 Downloading and converting PDF to images...`);
+        console.log('\n' + '─'.repeat(80));
+        console.log('🌐 REMOTE PDF PROCESSING');
+        console.log('─'.repeat(80));
+        console.log('📂 PDF URL:', pdfUrl);
+        console.log('⏰ Start Time:', new Date().toISOString());
+        console.log('─'.repeat(80) + '\n');
+        
+        console.log(`🔄 Downloading PDF...`);
         
         // Download PDF to temp location
         const os = require('os');
@@ -256,16 +262,22 @@ async function parseWithVision(pdfUrls, prompt) {
         
         try {
           const response = await fetch(pdfUrl);
+          console.log('📥 Download response:', response.status, response.statusText);
+          
           if (!response.ok) {
             throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`);
           }
           
           const buffer = await response.buffer();
+          console.log(`✅ Downloaded ${(buffer.length / 1024).toFixed(1)} KB`);
+          
           fs.writeFileSync(tempPdfPath, buffer);
-          console.log(`✅ Downloaded PDF to: ${tempPdfPath}`);
+          console.log(`💾 Saved to: ${tempPdfPath}`);
           
           // Convert to images
+          console.log(`\n🔄 Converting PDF to images...`);
           const imagePages = await convertPdfToImages(tempPdfPath);
+          console.log(`✅ Conversion complete: ${imagePages.length} pages`);
           
           if (imagePages.length === 0) {
             throw new Error('Failed to convert remote PDF to images');

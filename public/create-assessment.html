@@ -1121,6 +1121,12 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
                 return;
             }
             
+            if (response.status === 400) {
+                const errorData = await response.json();
+                alert(errorData.message || 'Invalid request. Please check your input.');
+                return;
+            }
+            
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);

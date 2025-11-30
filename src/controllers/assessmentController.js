@@ -222,23 +222,22 @@ FROM student_submissions ss
 
     const submission = submissionResult.rows[0];
 
-    // Get all answers with questions
+    // Get all answers with questions (using answers table, not student_answers)
     const answersQuery = `
       SELECT
-        sa.id as answer_id,
-        sa.marks_obtained,
-        sa.ai_suggested_marks,
-        sa.ai_generated_feedback,
-        sa.teacher_comment,
-        sa.approved,
+        a.id as answer_id,
+        a.marks_obtained,
+        a.ai_explanation,
+        a.user_feedback as teacher_comment,
+        a.verified as approved,
+        a.page_number,
         q.id as question_id,
         q.question_number,
         q.question_text,
-        q.max_marks as question_max_marks,
-        '[Student answer text would be stored here]' as answer_text
-      FROM student_answers sa
-      JOIN questions q ON sa.question_id = q.id
-      WHERE sa.submission_id = $1
+        q.max_marks as question_max_marks
+      FROM answers a
+      JOIN questions q ON a.question_id = q.id
+      WHERE a.submission_id = $1
       ORDER BY q.question_number
     `;
     const answersResult = await pool.query(answersQuery, [submission.id]);
@@ -282,14 +281,14 @@ exports.approveStudentAnswer = async (req, res) => {
       });
     }
 
-    // Update the answer with approval
+    // Update the answer with approval (using answers table, not student_answers)
     const updateQuery = `
-      UPDATE student_answers
+      UPDATE answers
       SET
         marks_obtained = $1,
-        teacher_comment = $2,
-        approved = true,
-        updated_at = NOW()
+        user_feedback = $2,
+        verified = true,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = $3
       AND submission_id = (
         SELECT id FROM student_submissions

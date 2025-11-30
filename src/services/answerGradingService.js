@@ -114,26 +114,26 @@ async function gradeAnswerSheet(submissionId, assessmentId, answerSheetLink) {
         console.log(`✅ Grading completed: ${totalMarksObtained}/${totalMarksPossible} (${percentage.toFixed(2)}%)`);
         console.log(`📊 Total marks are calculated from answers table, not stored in student_submissions`);
 
-        // Check if ALL submissions for this assessment are now graded
+        // Check if ALL submissions for this assessment are now graded (including failed ones)
         const allSubmissionsCheck = await pool.query(
             `SELECT COUNT(*) as total,
-                    COUNT(CASE WHEN status IN ('Ready for Verification', 'Verifying', 'Approved') THEN 1 END) as graded
+                    COUNT(CASE WHEN status IN ('Ready for Verification', 'Verifying', 'Approved', 'Failed') THEN 1 END) as completed
              FROM student_submissions
              WHERE assessment_id = $1`,
             [assessmentId]
         );
 
-        const { total, graded } = allSubmissionsCheck.rows[0];
+        const { total, completed } = allSubmissionsCheck.rows[0];
 
-        // If all submissions are graded, update assessment status to "Ans Pending Approval"
-        if (parseInt(total) > 0 && parseInt(total) === parseInt(graded)) {
+        // If all submissions are completed (graded or failed), update assessment status to "Ans Pending Approval"
+        if (parseInt(total) > 0 && parseInt(total) === parseInt(completed)) {
             await pool.query(
                 `UPDATE assessments
                  SET status = 'Ans Pending Approval', updated_at = CURRENT_TIMESTAMP
                  WHERE id = $1 AND status = 'Processing Ans'`,
                 [assessmentId]
             );
-            console.log(`✅ All submissions graded for assessment ${assessmentId}. Status updated to "Ans Pending Approval"`);
+            console.log(`✅ All submissions completed for assessment ${assessmentId}. Status updated to "Ans Pending Approval"`);
         }
 
         return {
@@ -171,14 +171,9 @@ function buildGradingPrompt(questions, assessment) {
    Max Marks: ${q.max_marks}`;
     }).join('\n\n');
 
-    // Build example response with actual question numbers
+    // Build example response with tuples
     const exampleResponse = questions.slice(0, 2).map(q => {
-        return `  {
-    "question_number": ${q.question_number},
-    "marks_obtained": 0.0,
-    "explanation": "Your grading explanation here",
-    "page_number": 1
-  }`;
+        return `  [${q.question_number}, 0.0, "Brief grading explanation", 1]`;
     }).join(',\n');
 
     return `You are an expert teacher grading student answer sheets.
@@ -188,42 +183,38 @@ function buildGradingPrompt(questions, assessment) {
 - Class: ${assessment.class}
 - Subject: ${assessment.subject}
 
-This context helps you verify that the student's answers are relevant to the correct subject and class level.
-
 **Question Paper:**
 ${questionsText}
 
 **Instructions:**
-1. Analyze the student's answer sheet PDF carefully
-2. Verify that the answers are relevant to ${assessment.subject} for ${assessment.class}
-3. For EACH question above, provide:
-   - question_number: MUST match the question number from the question paper (e.g., ${questions[0].question_number}, ${questions[1]?.question_number || questions[0].question_number}, etc.)
-   - marks_obtained: Marks awarded (can be decimal, e.g., 2.5). MUST be between 0 and the Max Marks shown above
-   - explanation: Brief explanation of why marks were awarded or deducted
-   - page_number: The page number in the PDF where this answer appears (starting from 1)
+1. Analyze the student's answer sheet PDF
+2. For EACH question, grade and provide brief feedback
+3. Verify answers are relevant to ${assessment.subject} for ${assessment.class}
 
 **Grading Criteria:**
-- Award full marks for complete, correct answers
-- Award partial marks for partially correct answers
-- Award zero marks for wrong or missing answers
-- Be fair and consistent in grading
-- marks_obtained MUST NOT exceed the Max Marks for each question
-- Consider the class level (${assessment.class}) and subject (${assessment.subject}) when evaluating answers
+- Full marks: Complete, correct answers
+- Partial marks: Partially correct answers
+- Zero marks: Wrong/missing answers
+- marks_obtained MUST NOT exceed Max Marks
+- Be fair and consistent
 
-**Output Format (JSON Array):**
-Return ONLY a JSON array with one object per question. Example structure:
+**Output Format (Tuple Array):**
+Return as array of tuples (NOT objects) to save tokens:
 
 [
 ${exampleResponse}
 ]
 
-**Critical Requirements:**
-- Return ONLY the JSON array, no additional text or markdown
-- Include ALL ${questions.length} questions from the question paper
-- Use the exact question_number values shown in the question paper above
-- Ensure marks_obtained <= Max Marks for each question
-- Include page_number for each answer (the page in the PDF where the answer is written)
-- If a question is not answered, set marks_obtained to 0`;
+Format: [question_number, marks_obtained, explanation, page_number]
+
+**Requirements:**
+- Return ONLY the array, no markdown or extra text
+- Include ALL ${questions.length} questions
+- Use exact question_number from question paper
+- marks_obtained: decimal between 0 and Max Marks
+- explanation: Brief reason for marks (keep concise)
+- page_number: PDF page where answer appears (1-indexed)
+- If question not answered: marks = 0`;
 }
 
 /**
@@ -278,11 +269,33 @@ async function callAIGradingService(prompt, answerSheetPdfUrl, questions) {
                             response.match(/\[[\s\S]*\]/);
             
             const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : response;
-            gradingResults = JSON.parse(jsonString);
+            const parsed = JSON.parse(jsonString);
 
-            if (!Array.isArray(gradingResults)) {
+            if (!Array.isArray(parsed)) {
                 throw new Error('AI response is not an array');
             }
+
+            // Convert tuples to objects
+            gradingResults = parsed.map(item => {
+                if (Array.isArray(item)) {
+                    // Tuple format: [question_number, marks_obtained, explanation, page_number]
+                    const [question_number, marks_obtained, explanation, page_number] = item;
+                    return {
+                        question_number: parseInt(question_number),
+                        marks_obtained: parseFloat(marks_obtained),
+                        explanation: explanation || '',
+                        page_number: page_number ? parseInt(page_number) : null
+                    };
+                } else {
+                    // Legacy object format (backward compatibility)
+                    return {
+                        question_number: parseInt(item.question_number),
+                        marks_obtained: parseFloat(item.marks_obtained || 0),
+                        explanation: item.explanation || '',
+                        page_number: item.page_number ? parseInt(item.page_number) : null
+                    };
+                }
+            });
 
         } catch (parseError) {
             console.error('❌ Failed to parse AI grading response:', parseError);

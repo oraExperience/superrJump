@@ -87,15 +87,14 @@ CRITICAL RULES:
    - Headers ("Section A")
    - Page numbers
 
-Return JSON array ONLY (no markdown, no explanation):
+Return as array of tuples (NOT objects) to save tokens:
 [
-  {
-    "question_number": "i",
-    "question_text": "Complete question with all expressions in plain English",
-    "marks": 1,
-    "estimated_y": 500
-  }
-]`;
+  ["i", "Complete question with all expressions in plain English", 1, 500]
+]
+
+Format: [question_number, question_text, marks, estimated_y]
+
+Return ONLY the array, no markdown or extra text.`;
 
     // Log prompt
     console.log('\n' + '='.repeat(80));
@@ -167,13 +166,27 @@ Return JSON array ONLY (no markdown, no explanation):
     
     // Convert to our format
     return questions.map((q, idx) => {
-      const y1 = q.estimated_y || (idx * 300 + 200);
+      // Handle both tuple and object formats
+      let questionNumber, questionText, marks, estimatedY;
+      
+      if (Array.isArray(q)) {
+        // Tuple format: [question_number, question_text, marks, estimated_y]
+        [questionNumber, questionText, marks, estimatedY] = q;
+      } else {
+        // Legacy object format
+        questionNumber = q.question_number;
+        questionText = q.question_text;
+        marks = q.marks;
+        estimatedY = q.estimated_y;
+      }
+      
+      const y1 = estimatedY || (idx * 300 + 200);
       const y2 = y1 + 250;
       
       return {
-        questionNumber: q.question_number,
-        questionText: q.question_text,
-        marks: q.marks || 1,
+        question_identifier: questionNumber,
+        question_text: questionText,
+        marks: marks || 1,
         page: pageNumber,
         bbox: {
           x1: 100,

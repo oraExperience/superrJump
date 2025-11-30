@@ -30,6 +30,8 @@ const answerRoutes = require('./routes/answers');
 console.log('answerRoutes loaded');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 console.log('dashboardRoutes loaded');
+const proxyRoutes = require('./routes/proxyRoutes');
+console.log('proxyRoutes loaded');
 
 console.log('Creating Express app...');
 const app = express();
@@ -77,6 +79,7 @@ app.use('/api/mappings', mappingRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/answers', answerRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/proxy', proxyRoutes);
 app.use('/api', submissionRoutes);
 
 // Health check endpoint

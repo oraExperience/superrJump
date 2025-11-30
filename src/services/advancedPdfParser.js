@@ -170,18 +170,20 @@ IMPORTANT FOR MULTIPLE CHOICE QUESTIONS:
 PDF Text:
 ${fullText.substring(0, 8000)}
 
-Return ONLY a JSON array like:
+Return as array of tuples (NOT objects) to save tokens:
 [
-  {"line_number": 15, "question_text": "Find the value of x when x squared plus 2x equals 8", "marks": 2},
-  {"line_number": 23, "question_text": "Evaluate the integral of five e to the power x with respect to x", "marks": 3}
+  [15, "Find the value of x when x squared plus 2x equals 8", 2],
+  [23, "Evaluate the integral of five e to the power x with respect to x", 3]
 ]
+
+Format: [line_number, question_text, marks]
 
 Rules:
 - SKIP instructions like "Attempt any 5", "Section A contains", "Use of calculator"
 - SKIP headers like "Multiple Choice Questions", "Short Answer Type"
 - ONLY include lines that are actual questions requiring answers
 - Provide COMPLETE question text, not summaries
-- Return ONLY the JSON array, no explanation`;
+- Return ONLY the array, no markdown or extra text`;
 
     console.log(`   🤖 Sending ${fullText.length} characters to AI...`);
     
@@ -215,16 +217,28 @@ Rules:
     const aiQuestions = JSON.parse(response);
     console.log(`   ✅ AI identified ${aiQuestions.length} real questions`);
     
+    // Convert tuples to objects
+    const processedQuestions = aiQuestions.map(q => {
+      if (Array.isArray(q)) {
+        // Tuple format: [line_number, question_text, marks]
+        const [line_number, question_text, marks] = q;
+        return { line_number, question_text, marks };
+      } else {
+        // Legacy object format
+        return q;
+      }
+    });
+    
     // Log each extracted question for evaluation
     console.log('\n📋 EXTRACTED QUESTIONS:');
-    aiQuestions.forEach((q, idx) => {
+    processedQuestions.forEach((q, idx) => {
       console.log(`\n   Q${idx + 1} [Line ${q.line_number}] (${q.marks} marks):`);
       console.log(`   "${q.question_text}"`);
     });
     console.log('\n');
     
     // Convert AI output to our format with coordinates
-    const questions = aiQuestions.map((q, idx) => {
+    const questions = processedQuestions.map((q, idx) => {
       const coords = lineCoordinates[q.line_number] || lineCoordinates[0];
       const PDF_TO_PIXEL_Y = 2525 / (coords.height || 18);
       

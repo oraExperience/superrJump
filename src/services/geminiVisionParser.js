@@ -117,19 +117,16 @@ async function extractQuestionsFromImage(genAI, imagePath, pageNumber) {
 
 5. Y-COORDINATE: Estimate pixel position from top (0=top, 2525=bottom of page)
 
-Return a JSON array ONLY (no markdown, no explanation):
+Return as array of tuples (NOT objects) to save tokens:
 [
-  {
-    "question_number": "i",
-    "question_text": "COMPLETE question with ALL expressions and ALL options",
-    "marks": 1,
-    "estimated_y": 500
-  }
+  ["i", "COMPLETE question with ALL expressions and ALL options", 1, 500]
 ]
+
+Format: [question_number, question_text, marks, estimated_y]
 
 REMEMBER: Your job is to read EVERY character visible in the image. Do not skip or truncate anything!
 
-Return ONLY the JSON array.`;
+Return ONLY the array, no markdown or extra text.`;
 
     // Log prompt being sent
     console.log('\n' + '='.repeat(80));
@@ -166,13 +163,27 @@ Return ONLY the JSON array.`;
     
     // Convert to our format with proper coordinates
     return questions.map((q, idx) => {
-      const y1 = q.estimated_y || (idx * 300 + 200);
+      // Handle both tuple and object formats
+      let questionNumber, questionText, marks, estimatedY;
+      
+      if (Array.isArray(q)) {
+        // Tuple format: [question_number, question_text, marks, estimated_y]
+        [questionNumber, questionText, marks, estimatedY] = q;
+      } else {
+        // Legacy object format
+        questionNumber = q.question_number;
+        questionText = q.question_text;
+        marks = q.marks;
+        estimatedY = q.estimated_y;
+      }
+      
+      const y1 = estimatedY || (idx * 300 + 200);
       const y2 = y1 + 250; // Assume ~250px height
       
       return {
-        questionNumber: q.question_number,
-        questionText: q.question_text,
-        marks: q.marks || 1,
+        question_identifier: questionNumber,
+        question_text: questionText,
+        marks: marks || 1,
         page: pageNumber,
         bbox: {
           x1: 100,

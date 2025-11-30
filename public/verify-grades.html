@@ -801,12 +801,17 @@ async function loadSubmissionData() {
             // Check if we need to extract specific pages (multi-student PDF)
             // page_numbers is already an array from JSONB column
             const pageNumbers = submission.page_numbers;
+            
+            // Convert R2 URL to proxy URL
+            const pdfUrl = submission.answer_sheet_link;
+            const proxyUrl = `/api/proxy/pdf?url=${encodeURIComponent(pdfUrl)}`;
+            
             if (pageNumbers && Array.isArray(pageNumbers) && pageNumbers.length > 0) {
                 console.log('📄 Multi-student PDF detected. Extracting pages:', pageNumbers);
-                loadPDFWithPageExtraction(submission.answer_sheet_link, pageNumbers);
+                loadPDFWithPageExtraction(proxyUrl, pageNumbers);
             } else {
                 console.log('📄 Single-student PDF. Loading full PDF.');
-                loadPDF(submission.answer_sheet_link);
+                loadPDF(proxyUrl);
             }
         } else {
             throw new Error(data.message || 'Failed to load submission');
@@ -1965,10 +1970,17 @@ function toggleQuestionsSidebar() {
 async function loadPDFWithPageExtraction(url, pageNumbers) {
     try {
         console.log('🔧 Extracting pages from PDF:', pageNumbers);
+        console.log('📥 Fetching PDF from proxy:', url);
         
-        // Fetch the original PDF
+        // Fetch the PDF (already proxied through backend)
         const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const pdfBytes = await response.arrayBuffer();
+        console.log('✅ PDF fetched successfully, size:', pdfBytes.byteLength, 'bytes');
         
         // Load with pdf-lib
         const { PDFDocument } = PDFLib;
@@ -2004,7 +2016,20 @@ async function loadPDF(url) {
     try {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
-        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        console.log('Loading PDF from URL:', url);
+        
+        // Configure pdf.js to handle CORS
+        const loadingTask = pdfjsLib.getDocument({
+            url: url,
+            withCredentials: false,
+            // Enable CORS mode
+            httpHeaders: {},
+            // Disable range requests which can cause CORS issues
+            disableRange: true,
+            disableStream: true
+        });
+        
+        pdfDoc = await loadingTask.promise;
         document.getElementById('pageCount').textContent = pdfDoc.numPages;
         
         // Hide placeholder, show canvas
@@ -2014,7 +2039,9 @@ async function loadPDF(url) {
         renderPage(pageNum);
     } catch (error) {
         console.error('Error loading PDF:', error);
-        alert('Failed to load PDF');
+        console.error('PDF URL:', url);
+        console.error('Error details:', error.message);
+        alert('Failed to load PDF: ' + error.message);
     }
 }
 

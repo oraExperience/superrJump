@@ -5,6 +5,7 @@
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const fetch = require('node-fetch');
 
 // Dynamic import for ES Module
 let pdfToImgModule = null;
@@ -19,15 +20,39 @@ async function getPdfToImg() {
 
 /**
  * Convert PDF to high-quality images (one per page)
- * @param {string} pdfPath - Path to the PDF file
+ * @param {string} pdfPath - Path to the PDF file or URL to remote PDF
  * @returns {Promise<Array>} - Array of page images with metadata
  */
 async function convertPDFToImages(pdfPath) {
+  let localPdfPath = pdfPath;
+  let tempPdfPath = null;
+  
   try {
     console.log(`📄 Converting PDF to images: ${pdfPath}`);
     
+    // Handle remote URLs - download first
+    if (pdfPath.startsWith('http://') || pdfPath.startsWith('https://')) {
+      console.log(`🌐 Remote PDF detected, downloading...`);
+      
+      const fetch = require('node-fetch');
+      const os = require('os');
+      
+      tempPdfPath = path.join(os.tmpdir(), `remote-pdf-${Date.now()}.pdf`);
+      
+      const response = await fetch(pdfPath);
+      if (!response.ok) {
+        throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`);
+      }
+      
+      const buffer = await response.buffer();
+      fs.writeFileSync(tempPdfPath, buffer);
+      console.log(`✅ Downloaded PDF to: ${tempPdfPath}`);
+      
+      localPdfPath = tempPdfPath;
+    }
+    
     const pdfToImg = await getPdfToImg();
-    const document = await pdfToImg(pdfPath, {
+    const document = await pdfToImg(localPdfPath, {
       scale: 1.5  // Reduced from 3.0 to 1.5 for better API compatibility (still 150 DPI, readable quality)
     });
 
@@ -55,16 +80,23 @@ async function convertPDFToImages(pdfPath) {
   } catch (error) {
     console.error('Error converting PDF to images:', error);
     throw new Error(`PDF conversion failed: ${error.message}`);
+  } finally {
+    // Clean up temp PDF if we downloaded one
+    if (tempPdfPath && fs.existsSync(tempPdfPath)) {
+      fs.unlinkSync(tempPdfPath);
+      console.log(`🗑️  Cleaned up temp PDF: ${tempPdfPath}`);
+    }
   }
 }
 
 /**
  * Convert PDF to images and save to temp files for vision AI
- * @param {string} pdfPath - Path to the PDF file
+ * @param {string} pdfPath - Path to the PDF file or URL to remote PDF
  * @returns {Promise<Array>} - Array of {pageNumber, imagePath}
  */
 async function convertPdfToImages(pdfPath) {
   try {
+    // convertPDFToImages now handles remote URLs internally
     const pageImages = await convertPDFToImages(pdfPath);
     
     // Save each page to a temp file - use /tmp in production

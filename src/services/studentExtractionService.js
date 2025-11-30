@@ -25,8 +25,8 @@ async function extractStudentInfo(answerSheetPdfUrl, assessmentContext) {
                 student_name: "Ravi Kumar",
                 student_identifier: "2024-ADM-001",
                 roll_number: "15",
-                subject: assessmentContext.subject,
-                class: assessmentContext.className
+                class: assessmentContext.className,
+                subject: assessmentContext.subject
             };
 
             console.log(`✅ Student info extracted (hardcoded):`, studentInfo);
@@ -37,15 +37,31 @@ async function extractStudentInfo(answerSheetPdfUrl, assessmentContext) {
         const prompt = buildStudentExtractionPrompt(assessmentContext);
         const response = await openaiVisionParser.parseWithVision([answerSheetPdfUrl], prompt);
 
-        // Parse JSON response
+        // Parse response (handles both tuple and legacy object format)
         let studentInfo;
         try {
             const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||
                             response.match(/```\n?([\s\S]*?)\n?```/) ||
+                            response.match(/\[[\s\S]*?\]/) ||
                             response.match(/\{[\s\S]*\}/);
             
             const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : response;
-            studentInfo = JSON.parse(jsonString);
+            const parsed = JSON.parse(jsonString);
+
+            // Handle tuple format: [student_name, student_identifier, roll_number, class]
+            if (Array.isArray(parsed)) {
+                const [student_name, student_identifier, roll_number, class_name] = parsed;
+                studentInfo = {
+                    student_name: student_name || null,
+                    student_identifier: student_identifier || null,
+                    roll_number: roll_number || null,
+                    subject: assessmentContext.subject,
+                    class: class_name || assessmentContext.className
+                };
+            } else {
+                // Legacy object format (for backward compatibility)
+                studentInfo = parsed;
+            }
 
             console.log(`✅ Student info extracted:`, studentInfo);
             return studentInfo;
@@ -81,26 +97,21 @@ Analyze the answer sheet carefully and extract the following student information
 1. Student Name - Full name of the student
 2. Student Identifier - Permanent ID like enrollment number, admission number, or student ID
 3. Roll Number - Current roll number or seat number for this exam
-4. Subject - Subject name written on the answer sheet (should match: ${subject})
-5. Class - Class/Grade written on the answer sheet (should match: ${className})
+4. Class - Class/Grade written on the answer sheet (should match: ${className})
 
-**Output Format (JSON):**
-Return ONLY a JSON object with the extracted information:
+**Output Format:**
+Return as tuple (NOT object) to save tokens:
 
-{
-  "student_name": "Ravi Kumar",
-  "student_identifier": "2024-ADM-001",
-  "roll_number": "15",
-  "subject": "Mathematics",
-  "class": "Class 10"
-}
+["Ravi Kumar", "2024-ADM-001", "15", "Class 10"]
+
+Format: [student_name, student_identifier, roll_number, class]
 
 **Important:**
-- Return ONLY the JSON object, no additional text
+- Return ONLY the array tuple, no additional text or markdown
 - Use null for any field that cannot be found or is unclear
+- Maintain the exact order shown above
 - student_identifier should be the permanent enrollment/admission number
-- Ensure subject matches the assessment subject: ${subject}
-- Ensure class matches the assessment class: ${className}
+- class should match the assessment class: ${className}
 - If multiple formats of student ID exist (e.g., both admission number and roll number), prefer the permanent admission/enrollment number for student_identifier`;
 }
 

@@ -1012,67 +1012,63 @@ exports.uploadPDFAndCreateAssessment = async (req, res) => {
   }
 };
 
-// Background function to process PDF locally and trigger extraction
+// Background function to upload PDF to R2 and trigger extraction
 async function processLocalPDF(assessmentId, tempFilePath, metadata) {
   const fs = require('fs');
   const path = require('path');
+  const r2Storage = require('../services/r2Storage');
   
   try {
-    console.log(`📁 Processing PDF locally for assessment ${assessmentId}`);
+    console.log(`📁 Processing PDF for assessment ${assessmentId}`);
 
-    // Create permanent storage directory if it doesn't exist
-    const permanentDir = path.join(__dirname, '../../uploads/assessments');
-    if (!fs.existsSync(permanentDir)) {
-      fs.mkdirSync(permanentDir, { recursive: true });
-    }
-
-    // Generate permanent filename
-    const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    // Read the file buffer
+    const fileBuffer = fs.readFileSync(tempFilePath);
+    
+    // Generate filename
     const sanitizedTitle = (metadata.title || 'Assessment')
       .replace(/[^a-z0-9]/gi, '_')
       .substring(0, 50);
     const extension = path.extname(metadata.originalName || '.pdf');
-    const permanentFilename = `Assessment_${assessmentId}_${sanitizedTitle}_${timestamp}${extension}`;
-    const permanentPath = path.join(permanentDir, permanentFilename);
+    const fileName = `Assessment_${assessmentId}_${sanitizedTitle}${extension}`;
 
-    // Move file from temp to permanent location
+    // Upload to R2
+    console.log(`📤 Uploading question paper to R2...`);
+    const r2Url = await r2Storage.uploadFile(
+      fileBuffer,
+      fileName,
+      'question-papers',
+      'application/pdf'
+    );
+    
+    console.log(`✅ Question paper uploaded to R2: ${r2Url}`);
+    
+    // Update assessment with R2 URL
+    await pool.query(
+      'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
+      [r2Url, assessmentId]
+    );
+
+    console.log(`✅ Assessment ${assessmentId} updated with R2 link: ${r2Url}`);
+    
+    // Clean up temp file
     try {
-      fs.renameSync(tempFilePath, permanentPath);
-      console.log(`✅ PDF saved to: ${permanentPath}`);
-      
-      // Verify file exists at new location
-      if (!fs.existsSync(permanentPath)) {
-        throw new Error(`File not found after move: ${permanentPath}`);
-      }
-      
-      // Create local URL for the file
-      const localUrl = `/uploads/assessments/${permanentFilename}`;
-      
-      // Update assessment with PDF link
-      await pool.query(
-        'UPDATE assessments SET question_paper_link = $1 WHERE id = $2',
-        [localUrl, assessmentId]
-      );
-
-      console.log(`✅ Assessment ${assessmentId} updated with local link: ${localUrl}`);
-    } catch (moveError) {
-      console.error(`❌ Failed to move/save PDF file:`, moveError);
-      throw new Error(`PDF file operation failed: ${moveError.message}`);
+      fs.unlinkSync(tempFilePath);
+      console.log(`🗑️  Temp file deleted: ${tempFilePath}`);
+    } catch (cleanupErr) {
+      console.warn('Warning: Could not cleanup temp file:', cleanupErr.message);
     }
 
-    // Now trigger AI extraction with local file path
+    // Now trigger AI extraction
+    // We need to download the PDF temporarily for AI processing
     const assessment = await pool.query(
       'SELECT id, title, class, subject, question_paper_link, status FROM assessments WHERE id = $1',
       [assessmentId]
     );
 
     if (assessment.rows.length > 0) {
-      // Pass the actual file path for AI processing
-      const assessmentWithPath = {
-        ...assessment.rows[0],
-        localFilePath: permanentPath
-      };
-      await processQuestionExtraction(assessmentId, assessmentWithPath);
+      // For AI processing, we'll pass the R2 URL
+      // The AI service will download it temporarily if needed
+      await processQuestionExtraction(assessmentId, assessment.rows[0]);
     }
 
   } catch (error) {

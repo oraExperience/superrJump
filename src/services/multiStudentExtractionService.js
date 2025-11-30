@@ -31,32 +31,13 @@ async function analyzeMultiStudentPDF(pdfUrl, assessmentContext) {
             console.log('⚠️  TESTING MODE: Using HARDCODED multi-student detection response');
             
             // Hardcoded response simulating 2 students detected
+            // Tuple format: [page_number, student_name, student_identifier, roll_number, class]
             aiResponse = JSON.stringify([
-                {
-                    page_number: 1,
-                    student_name: "Rajat Gupta",
-                    student_identifier: "2024-ADM-001",
-                    roll_number: "15",
-                    class: assessmentContext.class,
-                    subject: assessmentContext.subject,
-                    is_new_student: true,
-                    confidence: 0.95,
-                    notes: "Clear header with all student information"
-                },
-                {
-                    page_number: 2,
-                    student_name: "Unez Kazy",
-                    student_identifier: "2024-ADM-002",
-                    roll_number: "16",
-                    class: assessmentContext.class,
-                    subject: assessmentContext.subject,
-                    is_new_student: true,
-                    confidence: 0.92,
-                    notes: "New student header detected on page 2"
-                }
+                [1, "Rajat Gupta", "2024-ADM-001", "15", "10B"],
+                [2, "Unez Kazy", "2024-ADM-002", "16", "10B"]
             ]);
             
-            console.log('📝 Hardcoded response created for 2 students');
+            console.log('📝 Hardcoded response created for 2 students (tuple format)');
         } else {
             // Call AI to analyze all pages
             console.log('📡 Calling AI vision service...');
@@ -136,49 +117,34 @@ Analyze EACH PAGE of this PDF and identify:
 - If a page has no student info, it belongs to the previous student
 
 **Output Format:**
-Return a JSON array with one object per page:
+Return as array of tuples (NOT objects) to save tokens:
 
 [
-  {
-    "page_number": 1,
-    "student_name": "Ravi Kumar",
-    "student_identifier": "2024-ADM-001",
-    "roll_number": "15",
-    "is_new_student": true,
-    "confidence": 0.95,
-    "notes": "Clear header with all student information"
-  },
-  {
-    "page_number": 2,
-    "student_name": "Ravi Kumar",
-    "student_identifier": "2024-ADM-001",
-    "is_new_student": false,
-    "confidence": 0.85,
-    "notes": "Continuation page, no header but consistent handwriting"
-  },
-  {
-    "page_number": 3,
-    "student_name": "Priya Singh",
-    "student_identifier": "2024-ADM-002",
-    "roll_number": "16",
-    "is_new_student": true,
-    "confidence": 0.98,
-    "notes": "New student header detected"
-  }
+  [1, "Ravi Kumar", "2024-ADM-001", "15", "10B"],
+  [2, "Ravi Kumar", "2024-ADM-001", "15", "10B"],
+  [3, "Priya Singh", "2024-ADM-002", "16", "10B"]
 ]
 
-**Guidelines:**
-- confidence: 0-1 scale (how confident you are about the identification)
-- is_new_student: true only for the FIRST page of each student
-- If no student info visible, use previous page's student (is_new_student: false)
-- Include all fields even if empty (use null for missing data)
-- Be thorough - analyze every page
+Format: [page_number, student_name, student_identifier, roll_number, class]
 
-Return ONLY the JSON array, no additional text.`;
+**Guidelines:**
+- page_number: Integer page number (1, 2, 3...)
+- student_name: Full name as written on page (use PREVIOUS student's name if page has no header)
+- student_identifier: Student ID/Admission number (use PREVIOUS if not visible)
+- roll_number: Roll number (use PREVIOUS if not visible)
+- class: Class/Grade (e.g., "10B", "Class 10") - use from header or assessment context
+
+**IMPORTANT:**
+- First page of each student has name/ID header
+- Continuation pages: use same student info as previous page
+- Detect new student when you see a NEW name/ID header
+
+Return ONLY the array of tuples, no additional text or markdown.`;
 }
 
 /**
  * Parse AI response into structured page analysis
+ * Handles tuple format: [page_number, student_name, student_identifier, roll_number, is_new_student, confidence, notes]
  */
 function parseAIResponse(aiResponse) {
     try {
@@ -188,22 +154,34 @@ function parseAIResponse(aiResponse) {
                          aiResponse.match(/\[[\s\S]*\]/);
         
         const jsonString = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : aiResponse;
-        const pageAnalysis = JSON.parse(jsonString);
+        const tupleArray = JSON.parse(jsonString);
         
-        if (!Array.isArray(pageAnalysis)) {
+        if (!Array.isArray(tupleArray)) {
             throw new Error('AI response is not an array');
         }
         
-        // Validate each page entry
-        pageAnalysis.forEach((page, index) => {
-            if (!page.page_number) {
-                page.page_number = index + 1;
-            }
-            if (page.confidence === undefined) {
-                page.confidence = 0.5;
-            }
-            if (page.is_new_student === undefined) {
-                page.is_new_student = false;
+        // Convert tuples to objects
+        const pageAnalysis = tupleArray.map((tuple, index) => {
+            // Handle both tuple format and legacy object format
+            if (Array.isArray(tuple)) {
+                // Tuple format: [page_number, student_name, student_identifier, roll_number, class]
+                const [page_number, student_name, student_identifier, roll_number, student_class] = tuple;
+                return {
+                    page_number: page_number || (index + 1),
+                    student_name: student_name || 'Unknown',
+                    student_identifier: student_identifier || null,
+                    roll_number: roll_number || null,
+                    class: student_class || null
+                };
+            } else {
+                // Legacy object format (for backward compatibility)
+                return {
+                    page_number: tuple.page_number || (index + 1),
+                    student_name: tuple.student_name || 'Unknown',
+                    student_identifier: tuple.student_identifier || null,
+                    roll_number: tuple.roll_number || null,
+                    class: tuple.class || null
+                };
             }
         });
         
@@ -224,44 +202,31 @@ function groupPagesByStudent(pageAnalysis) {
     let currentStudent = null;
     
     pageAnalysis.forEach(page => {
-        if (page.is_new_student) {
+        // Detect new student by checking if name or identifier changed
+        const isNewStudent = !currentStudent ||
+                            (page.student_name && page.student_name !== currentStudent.student_name) ||
+                            (page.student_identifier && page.student_identifier !== currentStudent.student_identifier);
+        
+        if (isNewStudent) {
             // Start new student group
             if (currentStudent) {
                 students.push(currentStudent);
             }
             
             currentStudent = {
-                student_name: page.student_name,
-                student_identifier: page.student_identifier,
-                roll_number: page.roll_number || null,
-                class: page.class || null,
-                subject: page.subject || null,
-                page_numbers: [page.page_number],
-                total_pages: 1,
-                pages: [page],
-                avg_confidence: page.confidence
-            };
-        } else if (currentStudent) {
-            // Add page to current student
-            currentStudent.page_numbers.push(page.page_number);
-            currentStudent.total_pages++;
-            currentStudent.pages.push(page);
-            currentStudent.avg_confidence =
-                (currentStudent.avg_confidence * (currentStudent.total_pages - 1) + page.confidence)
-                / currentStudent.total_pages;
-        } else {
-            // First page but not marked as new student - create a student anyway
-            currentStudent = {
                 student_name: page.student_name || 'Unknown Student',
                 student_identifier: page.student_identifier || null,
                 roll_number: page.roll_number || null,
                 class: page.class || null,
-                subject: page.subject || null,
                 page_numbers: [page.page_number],
                 total_pages: 1,
-                pages: [page],
-                avg_confidence: page.confidence
+                pages: [page]
             };
+        } else if (currentStudent) {
+            // Add page to current student (continuation page)
+            currentStudent.page_numbers.push(page.page_number);
+            currentStudent.total_pages++;
+            currentStudent.pages.push(page);
         }
     });
     

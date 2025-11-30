@@ -14,20 +14,25 @@ const { convertPdfToImages } = require('./pdfImageService');
  */
 async function getPdfPageImage(pdfPath, pageNumber) {
   try {
-    // Convert relative path to absolute path
-    const absolutePdfPath = pdfPath.startsWith('/')
-      ? path.join(process.cwd(), pdfPath.substring(1))
-      : pdfPath;
+    // Handle both remote URLs and local paths
+    let processPath = pdfPath;
     
-    console.log(`Getting PDF page ${pageNumber} from: ${absolutePdfPath}`);
-    
-    // Check if PDF file exists
-    if (!fs.existsSync(absolutePdfPath)) {
-      throw new Error(`PDF file not found: ${absolutePdfPath}. The file may have been deleted or moved.`);
+    // If it's not a URL, convert relative path to absolute path
+    if (!pdfPath.startsWith('http://') && !pdfPath.startsWith('https://')) {
+      processPath = pdfPath.startsWith('/')
+        ? path.join(process.cwd(), pdfPath.substring(1))
+        : pdfPath;
+      
+      // Check if local PDF file exists
+      if (!fs.existsSync(processPath)) {
+        throw new Error(`PDF file not found: ${processPath}. The file may have been deleted or moved.`);
+      }
     }
     
-    // Convert PDF to images
-    const imagePages = await convertPdfToImages(absolutePdfPath);
+    console.log(`Getting PDF page ${pageNumber} from: ${processPath}`);
+    
+    // Convert PDF to images (handles both local and remote URLs)
+    const imagePages = await convertPdfToImages(processPath);
     
     // Find the specific page
     const pageImage = imagePages.find(p => p.pageNumber === pageNumber);

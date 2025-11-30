@@ -148,6 +148,14 @@ async function convertPdfToImages(pdfPath) {
     
     for (const pageData of pageImages) {
       const imagePath = path.join(tempDir, `page-${pageData.page}-${Date.now()}.png`);
+      
+      // Debug buffer
+      console.log(`   🔍 Buffer info for page ${pageData.page}:`, {
+        isBuffer: Buffer.isBuffer(pageData.buffer),
+        length: pageData.buffer?.length,
+        firstBytes: pageData.buffer?.slice(0, 10).toString('hex')
+      });
+      
       // Explicitly specify PNG format when saving
       await sharp(pageData.buffer)
         .png()

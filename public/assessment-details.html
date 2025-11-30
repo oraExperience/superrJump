@@ -1602,6 +1602,8 @@ async function generateStudentResults() {
                             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
                                 ${assessmentData.status === 'Ques Pending Approval'
                                     ? 'Please verify and approve questions before uploading answer sheets'
+                                    : assessmentData.status === 'Extraction Failed'
+                                    ? 'Question extraction failed. Please retry with a better quality PDF'
                                     : 'Upload answer sheets to get AI-powered grading and see results here'}
                             </p>
                             ${(assessmentData.status === 'Ready for Grading' ||
@@ -1611,12 +1613,14 @@ async function generateStudentResults() {
                                     <span class="material-symbols-outlined">cloud_upload</span>
                                     Upload Answer Sheets
                                 </button>
-                            ` : `
+                            ` : assessmentData.status === 'Ques Pending Approval' ? `
                                 <button onclick="goToVerification()" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
                                     <span class="material-symbols-outlined">fact_check</span>
                                     Verify Questions First
                                 </button>
-                            `}
+                            ` : assessmentData.status === 'Extraction Failed' ? `
+                                <!-- No button shown - extraction failed section handles retry -->
+                            ` : ''}
                         </div>
                     </td>
                 </tr>

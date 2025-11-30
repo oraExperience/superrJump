@@ -7,6 +7,41 @@ const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
 
+// Polyfill DOMMatrix for serverless environment
+if (typeof global.DOMMatrix === 'undefined') {
+  global.DOMMatrix = class DOMMatrix {
+    constructor(init) {
+      this.m = init || [1, 0, 0, 1, 0, 0];
+    }
+    
+    translate(x, y) {
+      return new DOMMatrix([
+        this.m[0], this.m[1], this.m[2], this.m[3],
+        this.m[4] + x, this.m[5] + y
+      ]);
+    }
+    
+    scale(x, y = x) {
+      return new DOMMatrix([
+        this.m[0] * x, this.m[1] * x,
+        this.m[2] * y, this.m[3] * y,
+        this.m[4], this.m[5]
+      ]);
+    }
+    
+    transform(a, b, c, d, e, f) {
+      return new DOMMatrix([
+        this.m[0] * a + this.m[2] * b,
+        this.m[1] * a + this.m[3] * b,
+        this.m[0] * c + this.m[2] * d,
+        this.m[1] * c + this.m[3] * d,
+        this.m[0] * e + this.m[2] * f + this.m[4],
+        this.m[1] * e + this.m[3] * f + this.m[5]
+      ]);
+    }
+  };
+}
+
 // Dynamic import for ES Module
 let pdfToImgModule = null;
 

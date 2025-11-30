@@ -361,17 +361,19 @@
 
 <!-- Extraction In Progress Section -->
 <div id="extractionProgressSection" class="hidden mb-6">
+<!-- Main Card with Blue Background -->
 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md">
-<div class="flex items-start gap-4">
+<div class="flex items-start gap-4 mb-6">
 <span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
 <div class="flex-1">
 <h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Extracting Questions...</h3>
-<p class="text-base text-text-dark/70 dark:text-text-light/70 mb-4">Our AI is analyzing your question paper and extracting questions. This process continues in the background.</p>
-<button onclick="window.location.href='/assessments'" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md">
-<span class="material-symbols-outlined">arrow_back</span>
-<span>Back to Assessments</span>
-</button>
+<p class="text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is analyzing the question paper and extracting all questions with their marks. This usually takes a few moments.</p>
 </div>
+</div>
+
+<!-- Motivational Quote Card (Inside blue box) -->
+<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
+<p class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed" id="extractionQuote">AI is analyzing your question paper and extracting questions. This process continues in the background.</p>
 </div>
 </div>
 </div>
@@ -785,8 +787,47 @@ function showExtractionProgress() {
     const extractionSection = document.getElementById('extractionProgressSection');
     extractionSection.classList.remove('hidden');
     
+    // Start rotating extraction quotes
+    rotateExtractionQuotes();
+    
     // Start polling for extraction completion
     pollExtractionStatus();
+}
+
+// Rotate extraction quotes
+function rotateExtractionQuotes() {
+    const quotes = [
+        "AI is analyzing your question paper and extracting questions. This process continues in the background.",
+        "Smart extraction means less manual work and more time for teaching.",
+        "Our AI understands question patterns across different subjects and formats.",
+        "Extracting questions automatically saves hours of manual data entry.",
+        "Technology working behind the scenes to make your life easier."
+    ];
+    const quoteElement = document.getElementById('extractionQuote');
+    
+    if (!quoteElement) return;
+    
+    // Add transition style
+    quoteElement.style.transition = 'opacity 0.3s ease';
+    
+    let quoteIndex = 0;
+    
+    // Change quote every 6 seconds with fade effect
+    const quoteInterval = setInterval(() => {
+        // Check if section is still visible
+        if (document.getElementById('extractionProgressSection').classList.contains('hidden')) {
+            clearInterval(quoteInterval);
+            return;
+        }
+        
+        quoteIndex = (quoteIndex + 1) % quotes.length;
+        quoteElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            quoteElement.textContent = quotes[quoteIndex];
+            quoteElement.style.opacity = '1';
+        }, 300);
+    }, 6000);
 }
 
 // Poll backend for extraction status

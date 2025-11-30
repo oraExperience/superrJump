@@ -243,16 +243,23 @@
 <div class="space-y-6">
 <!-- Title Field -->
 <div class="flex flex-col gap-2">
-<label for="assessmentTitle" class="text-sm font-semibold text-text-dark dark:text-text-light">
-Assessment Title <span class="text-red-500">*</span>
-</label>
-<input
-type="text"
-id="assessmentTitle"
-placeholder="e.g., Mathematics Mid-term Exam"
-required
-class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-base focus:ring-2 focus:ring-primary focus:border-transparent"
-/>
+    <label for="assessmentTitle" class="text-sm font-semibold text-text-dark dark:text-text-light">
+        Assessment Title <span class="text-red-500">*</span>
+    </label>
+    <input
+        type="text"
+        id="assessmentTitle"
+        placeholder="e.g., Mathematics Mid-term Exam"
+        required
+        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-base focus:ring-2 focus:ring-primary focus:border-transparent"
+    />
+    <!-- Error message for duplicate title -->
+    <div id="titleError" class="hidden mt-1 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div class="flex items-start gap-2">
+            <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-xl">error</span>
+            <p class="text-sm text-red-700 dark:text-red-300" id="titleErrorMessage"></p>
+        </div>
+    </div>
 </div>
 
 <!-- Class and Subject Row -->
@@ -478,8 +485,8 @@ Yes, Proceed
 <!-- Main Content -->
 <div class="flex-1 flex items-center justify-center p-4 md:p-8">
 <div class="max-w-2xl w-full">
-<!-- Main Card with Blue Background (matches grading screen) -->
-<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md mb-6">
+<!-- Main Card with White Background -->
+<div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg mb-6">
 <div class="flex items-start gap-4 mb-6">
 <span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
 <div class="flex-1">
@@ -488,19 +495,19 @@ Yes, Proceed
 </div>
 </div>
 
-<!-- Assessment Details -->
+<!-- Assessment Details - Yellow/Beige Box -->
 <div id="gradingAssessmentDetails" class="bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 rounded-xl p-5 space-y-3 border-l-4 border-accent-yellow mb-6">
 <!-- Will be populated by JS -->
 </div>
 
-<!-- Motivational Quote Card (Inside blue box, like grading screen) -->
-<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
+<!-- Motivational Quote Card -->
+<div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-5 border-l-4 border-blue-500">
 <p id="motivationalQuote" class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed"></p>
 </div>
 </div>
 
-<!-- Back Button Below Blue Box -->
-<div class="flex justify-center mt-6">
+<!-- Back Button Below Card -->
+<div class="flex justify-center">
     <div class="text-center">
         <button onclick="goBackFromExtraction()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
             <span class="material-symbols-outlined">arrow_back</span>
@@ -535,6 +542,18 @@ let userMappings = {
     subjects: [],
     classSubjectMap: {}
 };
+
+// Hide title error when user starts typing
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('assessmentTitle');
+    const titleError = document.getElementById('titleError');
+    
+    if (titleInput && titleError) {
+        titleInput.addEventListener('input', function() {
+            titleError.classList.add('hidden');
+        });
+    }
+});
 
 // Fetch user mappings and populate dropdowns
 async function fetchUserMappings() {
@@ -1123,7 +1142,19 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
             
             if (response.status === 400) {
                 const errorData = await response.json();
-                alert(errorData.message || 'Invalid request. Please check your input.');
+                // Show inline error message for duplicate title
+                const titleError = document.getElementById('titleError');
+                const titleErrorMessage = document.getElementById('titleErrorMessage');
+                titleErrorMessage.textContent = errorData.message || 'Invalid request. Please check your input.';
+                titleError.classList.remove('hidden');
+                
+                // Scroll to error message
+                titleError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Hide loading state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnContent;
+                
                 return;
             }
             

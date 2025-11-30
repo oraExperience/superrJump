@@ -1019,6 +1019,28 @@ exports.uploadPDFAndCreateAssessment = async (req, res) => {
       });
     }
 
+    // Check for duplicate assessment title
+    const duplicateCheck = await pool.query(
+      'SELECT id, title FROM assessments WHERE LOWER(TRIM(title)) = LOWER(TRIM($1)) AND created_by = $2',
+      [title, userId]
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      // Clean up uploaded file
+      try {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+      } catch (cleanupErr) {
+        console.warn('Could not cleanup temp file:', cleanupErr.message);
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: `An assessment with the title "${duplicateCheck.rows[0].title}" already exists. Please use a different title.`
+      });
+    }
+
     // Create assessment record first (without PDF link)
     const insertQuery = `
       INSERT INTO assessments (title, class, subject, status, created_by, created_at)
@@ -1148,6 +1170,19 @@ exports.createAssessment = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to create assessments for this class and subject combination'
+      });
+    }
+
+    // Check for duplicate assessment title
+    const duplicateCheck = await pool.query(
+      'SELECT id, title FROM assessments WHERE LOWER(TRIM(title)) = LOWER(TRIM($1)) AND created_by = $2',
+      [title, userId]
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `An assessment with the title "${duplicateCheck.rows[0].title}" already exists. Please use a different title.`
       });
     }
 

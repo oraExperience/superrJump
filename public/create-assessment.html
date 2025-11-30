@@ -462,8 +462,8 @@ Yes, Proceed
 <!-- Main Content -->
 <div class="flex-1 flex items-center justify-center p-4 md:p-8">
 <div class="max-w-2xl w-full">
-<!-- Assessment Details Card with White Background -->
-<div class="bg-white dark:bg-slate-800 rounded-xl p-8 mb-6 shadow-lg">
+<!-- Main Card with Blue Background (matches grading screen) -->
+<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md mb-6">
 <div class="flex items-start gap-4 mb-6">
 <span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
 <div class="flex-1">
@@ -473,17 +473,17 @@ Yes, Proceed
 </div>
 
 <!-- Assessment Details -->
-<div id="gradingAssessmentDetails" class="bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 rounded-xl p-5 space-y-3 border-l-4 border-accent-yellow">
+<div id="gradingAssessmentDetails" class="bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 rounded-xl p-5 space-y-3 border-l-4 border-accent-yellow mb-6">
 <!-- Will be populated by JS -->
 </div>
-</div>
 
-<!-- Motivational Quote Card (Outside main card) -->
-<div class="bg-white dark:bg-slate-700 rounded-xl p-6 border-l-4 border-primary shadow-md mb-6">
+<!-- Motivational Quote Card (Inside blue box, like grading screen) -->
+<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
 <p id="motivationalQuote" class="text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed"></p>
 </div>
+</div>
 
-<!-- Back Button Below Card -->
+<!-- Back Button Below Blue Box -->
 <div class="flex justify-center mt-6">
     <div class="text-center">
         <button onclick="goBackFromExtraction()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">

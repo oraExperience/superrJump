@@ -16,16 +16,20 @@ async function getDashboardStats(req, res) {
             [organisation]
         );
 
-        // Get total assessments for this user
+        // Get total assessments for this user (excluding failed ones)
         const assessmentsResult = await pool.query(
-            'SELECT COUNT(*) as count FROM assessments WHERE created_by = $1',
+            `SELECT COUNT(*) as count FROM assessments
+             WHERE created_by = $1
+             AND status NOT IN ('Upload Failed', 'Extraction Failed')`,
             [userId]
         );
 
-        // Get pending reviews (assessments with Pending in status)
+        // Get pending reviews (assessments with Pending in status, excluding failed ones)
         const pendingResult = await pool.query(
-            `SELECT COUNT(*) as count FROM assessments 
-             WHERE created_by = $1 AND status LIKE '%Pending%'`,
+            `SELECT COUNT(*) as count FROM assessments
+             WHERE created_by = $1
+             AND status LIKE '%Pending%'
+             AND status NOT IN ('Upload Failed', 'Extraction Failed')`,
             [userId]
         );
 
@@ -36,11 +40,12 @@ async function getDashboardStats(req, res) {
             [organisation]
         );
 
-        // Get assessments grouped by status
+        // Get assessments grouped by status (excluding failed ones)
         const statusResult = await pool.query(
-            `SELECT status, COUNT(*) as count 
-             FROM assessments 
-             WHERE created_by = $1 
+            `SELECT status, COUNT(*) as count
+             FROM assessments
+             WHERE created_by = $1
+             AND status NOT IN ('Upload Failed', 'Extraction Failed')
              GROUP BY status`,
             [userId]
         );
@@ -95,12 +100,13 @@ async function getRecentActivity(req, res) {
         const userId = req.user.id;
         const organisation = req.user.organisation;
 
-        // Get recent assessments (last 5)
+        // Get recent assessments (last 5, excluding failed ones)
         const recentAssessmentsResult = await pool.query(
-            `SELECT id, title, class, subject, status, created_at 
-             FROM assessments 
-             WHERE created_by = $1 
-             ORDER BY created_at DESC 
+            `SELECT id, title, class, subject, status, created_at
+             FROM assessments
+             WHERE created_by = $1
+             AND status NOT IN ('Upload Failed', 'Extraction Failed')
+             ORDER BY created_at DESC
              LIMIT 5`,
             [userId]
         );

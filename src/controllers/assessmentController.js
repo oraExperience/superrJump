@@ -422,8 +422,15 @@ exports.triggerQuestionExtraction = async (req, res) => {
     );
 
     // Start AI extraction in background (non-blocking)
+    console.log(`🚀 Starting background extraction for assessment ${assessmentId}`);
+    console.log(`   PDF Link: ${assessment.question_paper_link}`);
+    console.log(`   Status: ${assessment.status} → Processing Ques`);
+    
     processQuestionExtraction(assessmentId, assessment).catch(err => {
-      console.error(`Background extraction failed for assessment ${assessmentId}:`, err);
+      console.error(`❌ FATAL: Background extraction failed for assessment ${assessmentId}:`, err);
+      console.error(`   Error Name: ${err.name}`);
+      console.error(`   Error Message: ${err.message}`);
+      console.error(`   Error Stack:`, err.stack);
     });
 
     res.status(200).json({
@@ -447,14 +454,17 @@ async function processQuestionExtraction(assessmentId, assessment) {
   try {
     console.log(`\n========================================`);
     console.log(`🚀 Starting background extraction for assessment ${assessmentId}`);
+    console.log(`   Title: ${assessment.title}`);
+    console.log(`   Class: ${assessment.class}`);
+    console.log(`   Subject: ${assessment.subject}`);
     console.log(`========================================\n`);
 
     // STEP 1: Delete existing questions and images FIRST (before extraction)
-    console.log(`🗑️  Deleting existing questions for assessment ${assessmentId}...`);
+    console.log(`🗑️  STEP 1: Deleting existing questions for assessment ${assessmentId}...`);
     
     try {
       await deleteAssessmentImages(assessmentId);
-      console.log(`   ✓ Images deleted`);
+      console.log(`   ✓ Images deleted successfully`);
     } catch (imgError) {
       console.log(`   ⚠️  Image delete failed (non-critical):`, imgError.message);
     }
@@ -464,9 +474,14 @@ async function processQuestionExtraction(assessmentId, assessment) {
 
     // STEP 2: Extract questions with images
     const pdfSource = assessment.localFilePath || assessment.question_paper_link;
-    console.log(`📄 Extracting questions with images from: ${pdfSource}`);
+    console.log(`\n📄 STEP 2: Extracting questions from PDF`);
+    console.log(`   PDF Source: ${pdfSource}`);
+    console.log(`   Using AI Service...`);
 
     // Extract questions using AI (text extraction only, no image cropping)
+    console.log(`   🤖 Calling aiService.extractQuestionsFromPDF()...`);
+    const startTime = Date.now();
+    
     const questions = await aiService.extractQuestionsFromPDF(
       pdfSource,
       {
@@ -476,10 +491,16 @@ async function processQuestionExtraction(assessmentId, assessment) {
       }
     );
     
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`   ✅ AI extraction completed in ${duration}s`);
+    console.log(`   📊 Extracted ${questions.length} questions`);
+    
     // STEP 3: Save extracted questions to database (with transaction)
+    console.log(`\n💾 STEP 3: Saving ${questions.length} questions to database...`);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      console.log(`   ✓ Transaction started`);
       
       // Get the current max question_number for this assessment
       const maxNumberResult = await client.query(
@@ -487,6 +508,7 @@ async function processQuestionExtraction(assessmentId, assessment) {
         [assessmentId]
       );
       let nextQuestionNumber = maxNumberResult.rows[0].max_num + 1;
+      console.log(`   ✓ Next question number: ${nextQuestionNumber}`);
       
       // Save extracted questions to database (now with image URLs)
       let savedCount = 0;
@@ -495,7 +517,7 @@ async function processQuestionExtraction(assessmentId, assessment) {
       for (const question of questions) {
         // Validate required fields - skip incomplete questions
         if (!question.question_text || question.question_text.trim() === '') {
-          console.log(`⚠️  Skipping question ${question.question_identifier || 'unknown'} - missing question text`);
+          console.log(`   ⚠️  Skipping question ${question.question_identifier || 'unknown'} - missing question text`);
           skippedCount++;
           continue;
         }
@@ -516,15 +538,16 @@ async function processQuestionExtraction(assessmentId, assessment) {
         savedCount++;
       }
       
-      console.log(`✅ Saved ${savedCount} questions to database`);
+      console.log(`   ✅ Saved ${savedCount} questions to database`);
       if (skippedCount > 0) {
-        console.log(`⚠️  Skipped ${skippedCount} incomplete questions`);
+        console.log(`   ⚠️  Skipped ${skippedCount} incomplete questions`);
       }
       
       await client.query('COMMIT');
-      console.log(`✅ Successfully saved ${questions.length} questions`);
+      console.log(`   ✅ Transaction committed successfully`);
       
     } catch (error) {
+      console.error(`   ❌ Database error - rolling back transaction:`, error.message);
       await client.query('ROLLBACK');
       throw error;
     } finally {
@@ -533,25 +556,42 @@ async function processQuestionExtraction(assessmentId, assessment) {
 
     // Calculate total marks
     const totalMarks = questions.reduce((sum, q) => sum + (parseFloat(q.max_marks) || 0), 0);
+    console.log(`\n📊 STEP 4: Updating assessment metadata...`);
+    console.log(`   Total Questions: ${questions.length}`);
+    console.log(`   Total Marks: ${totalMarks}`);
 
     // Update assessment with question count and status
     await pool.query(
-      `UPDATE assessments 
-       SET status = $1, question_count = $2, total_marks = $3 
+      `UPDATE assessments
+       SET status = $1, question_count = $2, total_marks = $3
        WHERE id = $4`,
       ['Ques Pending Approval', questions.length, totalMarks, assessmentId]
     );
-
-    console.log(`Successfully extracted ${questions.length} questions for assessment ${assessmentId}`);
+    
+    console.log(`   ✅ Assessment status updated to: Ques Pending Approval`);
+    console.log(`\n========================================`);
+    console.log(`✅ SUCCESS: Extraction completed for assessment ${assessmentId}`);
+    console.log(`========================================\n`);
 
   } catch (error) {
-    console.error(`Extraction process failed for assessment ${assessmentId}:`, error);
+    console.error(`\n========================================`);
+    console.error(`❌ EXTRACTION FAILED for assessment ${assessmentId}`);
+    console.error(`========================================`);
+    console.error(`Error Name: ${error.name}`);
+    console.error(`Error Message: ${error.message}`);
+    console.error(`Error Stack:`, error.stack);
+    console.error(`========================================\n`);
     
     // Update status to indicate failure
-    await pool.query(
-      'UPDATE assessments SET status = $1 WHERE id = $2',
-      ['Extraction Failed', assessmentId]
-    );
+    try {
+      await pool.query(
+        'UPDATE assessments SET status = $1 WHERE id = $2',
+        ['Extraction Failed', assessmentId]
+      );
+      console.log(`✓ Assessment status updated to: Extraction Failed`);
+    } catch (updateError) {
+      console.error(`❌ Failed to update assessment status:`, updateError.message);
+    }
   }
 }
 

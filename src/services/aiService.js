@@ -27,7 +27,13 @@ const groq = new Groq({
  */
 async function extractQuestionsFromPDF(pdfUrl, context = {}) {
   try {
-    console.log(`Starting question extraction from PDF: ${pdfUrl}`);
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`🔍 AI SERVICE: Starting question extraction`);
+    console.log(`${'='.repeat(80)}`);
+    console.log(`📄 PDF URL: ${pdfUrl}`);
+    console.log(`📋 Context:`, JSON.stringify(context, null, 2));
+    console.log(`⏰ Start Time: ${new Date().toISOString()}`);
+    console.log(`${'='.repeat(80)}\n`);
     
     const extractionPrompt = `You are analyzing an ACTUAL IMAGE of an examination paper. You can SEE the page layout, question numbers, marks in brackets, and spacing.
 
@@ -170,23 +176,50 @@ Context:
 PDF Path: ${pdfUrl}`;
 
     // VISION AI EXTRACTION - Try enabled models in priority order
-    console.log('📸  Converting PDF to images...\n');
+    console.log(`\n${'─'.repeat(80)}`);
+    console.log('📸  STEP 1: Converting PDF to images...');
+    console.log(`${'─'.repeat(80)}`);
     
     // Convert PDF to images
     let imagePages = null;
     try {
+      console.log(`   📂 Input: ${pdfUrl}`);
+      console.log(`   🔄 Calling convertPdfToImages()...`);
+      const conversionStart = Date.now();
+      
       imagePages = await convertPdfToImages(pdfUrl);
-      console.log(`✅ Converted ${imagePages.length} page(s) to images\n`);
+      
+      const conversionTime = ((Date.now() - conversionStart) / 1000).toFixed(2);
+      console.log(`   ✅ Conversion successful in ${conversionTime}s`);
+      console.log(`   📊 Result: ${imagePages.length} page(s) converted`);
+      console.log(`   💾 Image format: base64 encoded PNG`);
+      console.log(`${'─'.repeat(80)}\n`);
     } catch (imageError) {
-      console.error('❌ Failed to convert PDF to images:', imageError.message);
+      console.error(`\n${'❌'.repeat(40)}`);
+      console.error('❌ CRITICAL: PDF to image conversion failed');
+      console.error(`${'❌'.repeat(40)}`);
+      console.error('Error Name:', imageError.name);
+      console.error('Error Message:', imageError.message);
+      console.error('Error Stack:', imageError.stack);
+      console.error(`${'❌'.repeat(40)}\n`);
       throw new Error(`Cannot process PDF: ${imageError.message}`);
     }
     
     // Get enabled models in priority order from config
+    console.log(`\n${'─'.repeat(80)}`);
+    console.log('🎯 STEP 2: Selecting Vision AI model...');
+    console.log(`${'─'.repeat(80)}`);
+    
     const enabledModels = visionConfig.getEnabledModels();
-    console.log(`🎯 Vision models enabled: ${enabledModels.map(m => m.name).join(', ') || 'NONE'}\n`);
+    console.log(`   📋 Enabled models: ${enabledModels.map(m => m.name).join(', ') || 'NONE'}`);
+    console.log(`   🔢 Total enabled: ${enabledModels.length}`);
+    console.log(`${'─'.repeat(80)}\n`);
     
     if (enabledModels.length === 0) {
+      console.error(`\n${'❌'.repeat(40)}`);
+      console.error('❌ CRITICAL: No vision models enabled');
+      console.error('❌ Please enable at least one model in visionConfig.js');
+      console.error(`${'❌'.repeat(40)}\n`);
       throw new Error('No vision models enabled in visionConfig.js. Please enable at least one model.');
     }
     
@@ -194,33 +227,43 @@ PDF Path: ${pdfUrl}`;
     let lastError = null;
     for (const modelConfig of enabledModels) {
       try {
-        console.log(`\n${'='.repeat(60)}`);
-        console.log(`🚀 Attempting vision extraction with: ${modelConfig.name.toUpperCase()}`);
-        console.log(`   Priority: ${modelConfig.priority}`);
+        console.log(`\n${'='.repeat(80)}`);
+        console.log(`🚀 ATTEMPTING: ${modelConfig.name.toUpperCase()} Vision AI`);
+        console.log(`${'='.repeat(80)}`);
+        console.log(`   📊 Priority: ${modelConfig.priority}`);
         if (modelConfig.model) {
-          console.log(`   Model: ${modelConfig.model}`);
+          console.log(`   🤖 Model: ${modelConfig.model}`);
         }
-        console.log(`${'='.repeat(60)}\n`);
+        console.log(`   🖼️  Processing ${imagePages.length} page(s)...`);
+        console.log(`${'='.repeat(80)}\n`);
         
         let questions = null;
+        const extractionStart = Date.now();
         
         switch (modelConfig.name) {
           case 'openrouter':
+            console.log(`   🔄 Calling extractWithOpenRouter()...`);
             questions = await extractWithOpenRouter(imagePages, context);
             break;
           case 'openai':
+            console.log(`   🔄 Calling extractWithOpenAI()...`);
             questions = await extractWithOpenAI(imagePages, context);
             break;
           case 'gemini':
+            console.log(`   🔄 Calling extractWithGemini()...`);
             questions = await extractWithGemini(imagePages, context);
             break;
           case 'huggingface':
+            console.log(`   🔄 Calling extractWithHuggingFace()...`);
             questions = await extractWithHuggingFace(imagePages, context);
             break;
           default:
-            console.log(`⚠️  Unknown model: ${modelConfig.name}, skipping...`);
+            console.log(`   ⚠️  Unknown model: ${modelConfig.name}, skipping...`);
             continue;
         }
+        
+        const extractionTime = ((Date.now() - extractionStart) / 1000).toFixed(2);
+        console.log(`   ⏱️  Extraction took ${extractionTime}s`);
         
         if (questions && questions.length > 0) {
           console.log('\n' + '🎉'.repeat(40));
@@ -262,7 +305,15 @@ PDF Path: ${pdfUrl}`;
     throw new Error(`All vision models failed. Last error: ${lastError?.message || 'Unknown error'}`);
     
   } catch (error) {
-    console.error('\n❌ PDF extraction failed:', error.message);
+    console.error(`\n${'❌'.repeat(80)}`);
+    console.error('❌ AI SERVICE EXTRACTION FAILED');
+    console.error(`${'❌'.repeat(80)}`);
+    console.error('⏰ Failed At:', new Date().toISOString());
+    console.error('📄 PDF URL:', pdfUrl);
+    console.error('Error Type:', error.name);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error(`${'❌'.repeat(80)}\n`);
     throw error;
   }
 }

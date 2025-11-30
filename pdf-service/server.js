@@ -65,8 +65,13 @@ app.post('/convert-pdf', async (req, res) => {
     let pageIndex = 1;
     
     for await (const page of document) {
-      // Convert buffer to base64
-      const base64Image = page.buffer.toString('base64');
+      // Ensure we have a Node.js Buffer (page.buffer might be ArrayBuffer or Uint8Array)
+      const nodeBuffer = Buffer.isBuffer(page.buffer)
+        ? page.buffer
+        : Buffer.from(page.buffer);
+      
+      // Convert buffer to base64 string
+      const base64Image = nodeBuffer.toString('base64');
       
       pageImages.push({
         pageNumber: pageIndex,
@@ -76,7 +81,7 @@ app.post('/convert-pdf', async (req, res) => {
         height: page.height
       });
       
-      console.log(`   ✓ Page ${pageIndex} converted`);
+      console.log(`   ✓ Page ${pageIndex} converted (${base64Image.length} chars)`);
       pageIndex++;
     }
     

@@ -54,6 +54,14 @@ async function convertPDFToImagesRemote(pdfPath) {
     
     console.log(`✅ Remote service converted ${data.pages} pages`);
     
+    // Debug: Check what we received
+    console.log(`🔍 Checking response data:`, {
+      imageCount: data.images?.length,
+      firstImageKeys: data.images?.[0] ? Object.keys(data.images[0]) : [],
+      base64Length: data.images?.[0]?.base64?.length,
+      base64Preview: data.images?.[0]?.base64?.substring(0, 50)
+    });
+    
     // Convert base64 images back to buffers
     const pageImages = data.images.map(img => ({
       page: img.pageNumber,

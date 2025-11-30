@@ -8,19 +8,22 @@ const path = require('path');
 const fetch = require('node-fetch');
 
 // Check if we should use remote PDF service
-const USE_REMOTE_PDF_SERVICE = process.env.PDF_SERVICE_URL && process.env.NODE_ENV === 'production';
+// If PDF_SERVICE_URL is set, always use remote service (both local and production)
+const USE_REMOTE_PDF_SERVICE = !!process.env.PDF_SERVICE_URL;
 const PDF_SERVICE_URL = process.env.PDF_SERVICE_URL;
 
 /**
- * Convert PDF to images - uses remote service in production, local in dev
+ * Convert PDF to images - uses remote service if PDF_SERVICE_URL is set
  */
 async function convertPDFToImages(pdfPath) {
-  // In production with PDF_SERVICE_URL, use remote service
+  // If PDF_SERVICE_URL is set, use remote service (works in both local and production)
   if (USE_REMOTE_PDF_SERVICE) {
+    console.log('🌐 Using Render microservice for PDF conversion');
     return convertPDFToImagesRemote(pdfPath);
   }
   
-  // In development, use local pdf-to-img (requires native deps)
+  // Fallback to local pdf-to-img (only if PDF_SERVICE_URL not set)
+  console.log('🖥️  Using local pdf-to-img library');
   return convertPDFToImagesLocal(pdfPath);
 }
 

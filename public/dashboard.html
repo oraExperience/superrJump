@@ -352,7 +352,7 @@
         // Check Auth
         const user = JSON.parse(sessionStorage.getItem('user'));
         const token = sessionStorage.getItem('token');
-        if (!user || !token) window.location.href = '/login';
+        if (!user || !token) window.location.href = '/home';
 
         // Display user info
         const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
@@ -599,7 +599,7 @@
         function logout() {
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.href = '/login';
+            window.location.href = '/home';
         }
 
         function toggleSidebar() {

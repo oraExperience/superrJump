@@ -604,7 +604,7 @@ Total Students: <span id="totalStudents" class="font-semibold">0</span>
 const user = JSON.parse(sessionStorage.getItem('user'));
 
 if (!user) {
-    window.location.href = '/login';
+    window.location.href = '/home';
 } else {
     const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
     document.getElementById('orgName').textContent = orgName;
@@ -612,7 +612,7 @@ if (!user) {
 
 function logout() {
     sessionStorage.removeItem('user');
-    window.location.href = '/login';
+    window.location.href = '/home';
 }
 
 // Sidebar toggle functionality
@@ -651,7 +651,7 @@ window.addEventListener('popstate', (event) => {
             // User confirmed - log out and redirect to login
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.replace('/login');
+            window.location.replace('/home');
         }
     }
 });
@@ -673,7 +673,7 @@ async function loadAssessmentDetails() {
         
         if (!token) {
             // Redirect to login if no token
-            window.location.href = '/login';
+            window.location.href = '/home';
             return;
         }
         
@@ -689,7 +689,7 @@ async function loadAssessmentDetails() {
             // Token expired or invalid - redirect to login
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.href = '/login';
+            window.location.href = '/home';
             return;
         }
         

@@ -506,7 +506,7 @@ const API_BASE_URL = '/api';
 const user = JSON.parse(sessionStorage.getItem('user'));
 
 if (!user) {
-    window.location.href = '/login';
+    window.location.href = '/home';
 } else {
     // Display organization name instead of user name
     const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
@@ -539,7 +539,7 @@ window.addEventListener('popstate', (event) => {
             // User confirmed - log out and redirect to login
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.replace('/login');
+            window.location.replace('/home');
         }
     }
 });
@@ -549,7 +549,7 @@ window.addEventListener('popstate', (event) => {
         
         if (!token) {
             alert('Session expired. Please login again.');
-            window.location.href = '/login';
+            window.location.href = '/home';
             return;
         }
         
@@ -563,7 +563,7 @@ window.addEventListener('popstate', (event) => {
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
             alert('Session expired. Please login again.');
-            window.location.href = '/login';
+            window.location.href = '/home';
             return;
         }
         
@@ -680,7 +680,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function logout() {
     sessionStorage.removeItem('user');
-    window.location.href = '/login';
+    window.location.href = '/home';
 }
 
 function toggleSidebar() {
@@ -1033,7 +1033,7 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
             
             if (!token) {
                 alert('Session expired. Please login again.');
-                window.location.href = '/login';
+                window.location.href = '/home';
                 return;
             }
             
@@ -1069,7 +1069,7 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('user');
                 alert('Session expired. Please login again.');
-                window.location.href = '/login';
+                window.location.href = '/home';
                 return;
             }
             

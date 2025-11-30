@@ -244,7 +244,7 @@
 
         if (!user) {
             // Redirect to login if not logged in
-            window.location.href = '/login';
+            window.location.href = '/home';
         } else {
             // Display organization name in header
             const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
@@ -280,7 +280,7 @@
 
         function logout() {
             sessionStorage.removeItem('user');
-            window.location.href = '/login';
+            window.location.href = '/home';
         }
 
         function toggleSidebar() {

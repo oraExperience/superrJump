@@ -1,11 +1,18 @@
 
 {
   "rewrites": [
+    { "source": "/home", "destination": "/home.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/assessments", "destination": "/assessments.html" },
     { "source": "/assessment-details", "destination": "/assessment-details.html" },
     { "source": "/verify-grades", "destination": "/verify-grades.html" },
+    { "source": "/verify-questions", "destination": "/verify-questions.html" },
     { "source": "/students", "destination": "/students.html" },
-    { "source": "/", "destination": "/index.html" }
+    { "source": "/student-submissions", "destination": "/student-submissions.html" },
+    { "source": "/create-assessment", "destination": "/create-assessment.html" },
+    { "source": "/profile", "destination": "/profile.html" },
+    { "source": "/", "destination": "/home.html" }
   ],
   "cleanUrls": true,
   "trailingSlash": false

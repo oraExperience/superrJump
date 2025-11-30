@@ -661,7 +661,7 @@
 const user = JSON.parse(sessionStorage.getItem('user'));
 
 if (!user) {
-    window.location.href = '/login';
+    window.location.href = '/home';
 }
 
 // Get student ID and assessment ID from URL
@@ -687,7 +687,7 @@ async function loadStudentSubmission() {
     try {
         const token = sessionStorage.getItem('token');
         if (!token) {
-            window.location.href = '/login';
+            window.location.href = '/home';
             return;
         }
 
@@ -701,7 +701,7 @@ async function loadStudentSubmission() {
             if (response.status === 401) {
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('user');
-                window.location.href = '/login';
+                window.location.href = '/home';
                 return;
             }
             throw new Error('Failed to load submission data');

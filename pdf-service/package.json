@@ -1,0 +1,20 @@
+
+{
+  "name": "pdf-rendering-service",
+  "version": "1.0.0",
+  "description": "Microservice for PDF to image conversion - runs on Render.com",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "cors": "^2.8.5",
+    "multer": "^2.0.2",
+    "pdf-to-img": "^5.0.0",
+    "sharp": "^0.34.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

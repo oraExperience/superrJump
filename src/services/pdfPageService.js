@@ -4,7 +4,7 @@
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
-const { convertPdfToImages } = require('./pdfImageService');
+const { convertPdfToImages } = require('./pdfImageServiceRemote');
 
 /**
  * Get a specific page from PDF as an image

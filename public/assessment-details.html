@@ -937,8 +937,25 @@ function uploadNewQuestionPaper() {
                 throw new Error('Failed to upload new question paper');
             }
             
-            // Reload to show extraction progress
-            window.location.reload();
+            // Save extraction state for showing progress screen
+            const extractionState = {
+                assessmentNumber: assessmentData.id,
+                formData: {
+                    id: assessmentData.id,
+                    title: assessmentData.title,
+                    class: assessmentData.class,
+                    subject: assessmentData.subject
+                },
+                startTime: new Date().toISOString(),
+                isGrading: true,
+                status: 'Processing Ques',
+                returnToAssessment: assessmentData.id // Remember to return to this assessment
+            };
+            sessionStorage.setItem('gradingState', JSON.stringify(extractionState));
+            sessionStorage.setItem('onExtractionScreen', 'true');
+            
+            // Navigate to extraction progress page
+            window.location.href = `/create-assessment.html?retry=${assessmentData.id}`;
         } catch (error) {
             console.error('Error uploading new question paper:', error);
             alert('Failed to upload question paper. Please try again.');

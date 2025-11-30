@@ -486,7 +486,7 @@ Yes, Proceed
 <!-- Back Button Below Card -->
 <div class="flex justify-center mt-6">
     <div class="text-center">
-        <button onclick="window.location.href='/assessments'" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
+        <button onclick="goBackFromExtraction()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2 mx-auto">
             <span class="material-symbols-outlined">arrow_back</span>
             <span>Back to Assessments</span>
         </button>
@@ -672,10 +672,22 @@ fetchUserMappings();
 
 // Handle page refresh during extraction
 window.addEventListener('DOMContentLoaded', () => {
-    // Clear any old grading state when opening create assessment page
-    // This ensures we start fresh each time
-    sessionStorage.removeItem('onExtractionScreen');
-    sessionStorage.removeItem('gradingState');
+    // Check if we're coming from a retry flow (URL has ?retry parameter)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isRetry = urlParams.get('retry');
+    
+    if (isRetry) {
+        // Coming from retry - show extraction screen with existing state
+        const gradingState = JSON.parse(sessionStorage.getItem('gradingState') || '{}');
+        if (gradingState && gradingState.formData) {
+            showGradingScreen(gradingState.formData, gradingState.assessmentNumber);
+            pollExtractionStatus(gradingState.assessmentNumber);
+        }
+    } else {
+        // Normal flow - clear any old state
+        sessionStorage.removeItem('onExtractionScreen');
+        sessionStorage.removeItem('gradingState');
+    }
 });
 
 function logout() {
@@ -942,6 +954,20 @@ function rotateQuotes() {
     
     // Add transition to quote element
     quoteElement.style.transition = 'opacity 0.3s ease';
+}
+
+// Function to navigate back from extraction screen
+function goBackFromExtraction() {
+    const gradingState = JSON.parse(sessionStorage.getItem('gradingState'));
+    
+    // Check if we came from a specific assessment (retry flow)
+    if (gradingState?.returnToAssessment) {
+        // Return to the assessment details page
+        window.location.href = `/assessment-details?id=${gradingState.returnToAssessment}`;
+    } else {
+        // Default: go to assessments list
+        window.location.href = '/assessments';
+    }
 }
 
 // Function to navigate to verification page

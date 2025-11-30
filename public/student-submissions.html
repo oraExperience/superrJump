@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -198,6 +199,77 @@
                     </div>
                 </div>
 
+                <!-- Performance Analytics -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+                        <h2 class="text-2xl font-bold">Performance Analytics</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Grade Progression Chart -->
+                        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">trending_up</span>
+                                Grade Progression Over Time
+                            </h3>
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="progressionChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Subject-wise Performance Chart -->
+                        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">bar_chart</span>
+                                Subject-wise Performance
+                            </h3>
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="subjectChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Grade Distribution Chart -->
+                        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">donut_large</span>
+                                Grade Distribution
+                            </h3>
+                            <div class="relative" style="height: 300px;">
+                                <canvas id="distributionChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">monitoring</span>
+                                Performance Metrics
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <span class="font-medium text-text-dark dark:text-text-light">Highest Score</span>
+                                    <span class="text-xl font-bold text-green-600 dark:text-green-400" id="highestScore">-</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <span class="font-medium text-text-dark dark:text-text-light">Lowest Score</span>
+                                    <span class="text-xl font-bold text-red-600 dark:text-red-400" id="lowestScore">-</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <span class="font-medium text-text-dark dark:text-text-light">Improvement Trend</span>
+                                    <span class="text-xl font-bold text-primary dark:text-blue-400" id="trendIndicator">-</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                    <span class="font-medium text-text-dark dark:text-text-light">Best Subject</span>
+                                    <span class="text-xl font-bold text-text-dark dark:text-text-light" id="bestSubject">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Submissions Table -->
                 <div class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg border-y md:border border-border-light dark:border-border-dark overflow-hidden">
                     <div class="overflow-x-auto">
@@ -335,6 +407,7 @@
 
                 updateStats();
                 renderSubmissions();
+                initializeCharts();
 
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -481,6 +554,340 @@
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
             window.location.href = '/home';
+        }
+
+        // Chart instances
+        let progressionChart = null;
+        let subjectChart = null;
+        let distributionChart = null;
+
+        function initializeCharts() {
+            const approvedSubmissions = submissions.filter(s => s.status === 'Approved' && s.percentage);
+            
+            if (approvedSubmissions.length === 0) {
+                // Show "No data" message in chart containers
+                ['progressionChart', 'subjectChart', 'distributionChart'].forEach(chartId => {
+                    const canvas = document.getElementById(chartId);
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.font = '14px Lexend';
+                    ctx.fillStyle = '#9CA3AF';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No approved submissions yet', canvas.width / 2, canvas.height / 2);
+                });
+                return;
+            }
+
+            createProgressionChart(approvedSubmissions);
+            createSubjectChart(approvedSubmissions);
+            createDistributionChart(approvedSubmissions);
+            updatePerformanceMetrics(approvedSubmissions);
+        }
+
+        function createProgressionChart(approvedSubmissions) {
+            // Sort by date
+            const sorted = [...approvedSubmissions].sort((a, b) =>
+                new Date(a.created_at) - new Date(b.created_at)
+            );
+
+            const labels = sorted.map(s =>
+                new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            );
+            const data = sorted.map(s => parseFloat(s.percentage));
+
+            const ctx = document.getElementById('progressionChart').getContext('2d');
+            
+            if (progressionChart) {
+                progressionChart.destroy();
+            }
+
+            progressionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Grade %',
+                        data: data,
+                        borderColor: '#2A6EBB',
+                        backgroundColor: 'rgba(42, 110, 187, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#2A6EBB',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, family: 'Lexend' },
+                            bodyFont: { size: 13, family: 'Lexend' },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Score: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                },
+                                font: { family: 'Lexend' }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { family: 'Lexend' }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSubjectChart(approvedSubmissions) {
+            // Group by subject
+            const subjectData = {};
+            approvedSubmissions.forEach(s => {
+                const subject = s.subject || 'Unknown';
+                if (!subjectData[subject]) {
+                    subjectData[subject] = { total: 0, count: 0 };
+                }
+                subjectData[subject].total += parseFloat(s.percentage);
+                subjectData[subject].count++;
+            });
+
+            const subjects = Object.keys(subjectData);
+            const averages = subjects.map(subject =>
+                (subjectData[subject].total / subjectData[subject].count).toFixed(1)
+            );
+
+            const ctx = document.getElementById('subjectChart').getContext('2d');
+            
+            if (subjectChart) {
+                subjectChart.destroy();
+            }
+
+            // Generate colors for each subject
+            const colors = subjects.map((_, i) => {
+                const hue = (i * 360 / subjects.length);
+                return `hsl(${hue}, 70%, 60%)`;
+            });
+
+            subjectChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: subjects,
+                    datasets: [{
+                        label: 'Average %',
+                        data: averages,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('60%', '50%')),
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, family: 'Lexend' },
+                            bodyFont: { size: 13, family: 'Lexend' },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Average: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                },
+                                font: { family: 'Lexend' }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { family: 'Lexend' }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDistributionChart(approvedSubmissions) {
+            // Group by grade ranges
+            const ranges = {
+                'A+ (90-100%)': 0,
+                'A (75-89%)': 0,
+                'B (60-74%)': 0,
+                'C (50-59%)': 0,
+                'D (35-49%)': 0,
+                'F (0-34%)': 0
+            };
+
+            approvedSubmissions.forEach(s => {
+                const percentage = parseFloat(s.percentage);
+                if (percentage >= 90) ranges['A+ (90-100%)']++;
+                else if (percentage >= 75) ranges['A (75-89%)']++;
+                else if (percentage >= 60) ranges['B (60-74%)']++;
+                else if (percentage >= 50) ranges['C (50-59%)']++;
+                else if (percentage >= 35) ranges['D (35-49%)']++;
+                else ranges['F (0-34%)']++;
+            });
+
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            
+            if (distributionChart) {
+                distributionChart.destroy();
+            }
+
+            distributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(ranges),
+                    datasets: [{
+                        data: Object.values(ranges),
+                        backgroundColor: [
+                            '#10B981', // Green for A+
+                            '#22C55E', // Light green for A
+                            '#EAB308', // Yellow for B
+                            '#F59E0B', // Orange for C
+                            '#EF4444', // Red for D
+                            '#DC2626'  // Dark red for F
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { family: 'Lexend', size: 11 },
+                                padding: 10,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, family: 'Lexend' },
+                            bodyFont: { size: 13, family: 'Lexend' },
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePerformanceMetrics(approvedSubmissions) {
+            const percentages = approvedSubmissions.map(s => parseFloat(s.percentage));
+            
+            // Highest and lowest scores
+            const highest = Math.max(...percentages);
+            const lowest = Math.min(...percentages);
+            
+            document.getElementById('highestScore').textContent = `${highest.toFixed(1)}%`;
+            document.getElementById('lowestScore').textContent = `${lowest.toFixed(1)}%`;
+
+            // Calculate trend (compare first half vs second half average)
+            if (percentages.length >= 4) {
+                const mid = Math.floor(percentages.length / 2);
+                const firstHalf = percentages.slice(0, mid);
+                const secondHalf = percentages.slice(mid);
+                
+                const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+                const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+                
+                const diff = secondAvg - firstAvg;
+                const trendElement = document.getElementById('trendIndicator');
+                
+                if (diff > 5) {
+                    trendElement.textContent = `↑ ${diff.toFixed(1)}%`;
+                    trendElement.className = 'text-xl font-bold text-green-600 dark:text-green-400';
+                } else if (diff < -5) {
+                    trendElement.textContent = `↓ ${Math.abs(diff).toFixed(1)}%`;
+                    trendElement.className = 'text-xl font-bold text-red-600 dark:text-red-400';
+                } else {
+                    trendElement.textContent = '→ Stable';
+                    trendElement.className = 'text-xl font-bold text-yellow-600 dark:text-yellow-400';
+                }
+            } else {
+                document.getElementById('trendIndicator').textContent = 'Not enough data';
+            }
+
+            // Best subject
+            const subjectData = {};
+            approvedSubmissions.forEach(s => {
+                const subject = s.subject || 'Unknown';
+                if (!subjectData[subject]) {
+                    subjectData[subject] = { total: 0, count: 0 };
+                }
+                subjectData[subject].total += parseFloat(s.percentage);
+                subjectData[subject].count++;
+            });
+
+            let bestSubject = 'N/A';
+            let bestAvg = 0;
+            
+            Object.keys(subjectData).forEach(subject => {
+                const avg = subjectData[subject].total / subjectData[subject].count;
+                if (avg > bestAvg) {
+                    bestAvg = avg;
+                    bestSubject = subject;
+                }
+            });
+
+            document.getElementById('bestSubject').textContent = bestSubject;
         }
 
         // Load data on page load

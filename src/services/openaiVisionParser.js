@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
-const { convertPdfToImages } = require('./pdfImageService');
+const { convertPdfToImages } = require('./pdfImageServiceRemote');
 
 /**
  * Extract questions by sending PDF images to OpenAI Vision

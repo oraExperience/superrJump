@@ -1,5 +1,5 @@
 
-const { convertPdfToImages } = require('./pdfImageService');
+const { convertPdfToImages } = require('./pdfImageServiceRemote');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');

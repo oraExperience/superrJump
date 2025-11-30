@@ -122,6 +122,12 @@
         color: #065F46;
     }
 
+    /* Failed - Light Red */
+    .status-failed {
+        background-color: #FEE2E2;
+        color: #DC2626;
+    }
+
     /* Submission Status Classes */
     .status-processing {
         background-color: #DBEAFE;
@@ -193,6 +199,11 @@
     .dark .status-completed {
         background-color: #064E3B;
         color: #D1FAE5;
+    }
+
+    .dark .status-failed {
+        background-color: #7F1D1D;
+        color: #FCA5A5;
     }
 
     .dark .status-in-progress {
@@ -707,6 +718,8 @@ async function loadAssessmentDetails() {
         let statusClass = 'status-processing-ques'; // default
         if (assessmentData.status === 'Completed') {
             statusClass = 'status-completed';
+        } else if (assessmentData.status === 'Extraction Failed') {
+            statusClass = 'status-failed';
         } else if (assessmentData.status === 'Processing Ques') {
             statusClass = 'status-processing-ques';
         } else if (assessmentData.status === 'Ques Pending Approval') {
@@ -720,7 +733,10 @@ async function loadAssessmentDetails() {
         statusBadge.className = `status-badge ${statusClass}`;
         
         // Show appropriate section based on status
-        if (assessmentData.status === 'Processing Ques') {
+        if (assessmentData.status === 'Extraction Failed') {
+            // Question extraction failed - show retry option
+            showExtractionFailed();
+        } else if (assessmentData.status === 'Processing Ques') {
             // AI is extracting questions - show loader
             showExtractionProgress();
         } else if (assessmentData.status === 'Ques Pending Approval') {
@@ -747,7 +763,9 @@ async function loadAssessmentDetails() {
         }
     } catch (error) {
         console.error('Error fetching assessment:', error);
-        alert('Failed to load assessment details. Redirecting to assessments page...');
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        alert('Failed to load assessment details: ' + error.message + '. Redirecting to assessments page...');
         setTimeout(() => {
             window.location.href = '/assessments.html';
         }, 2000);
@@ -871,6 +889,91 @@ async function showGradingProgress() {
         // On error, show completed state as fallback
         showCompletedState();
     }
+}
+
+// Show extraction failed state - allow retry
+function showExtractionFailed() {
+    const extractionSection = document.getElementById('extractionProgressSection');
+    
+    if (!extractionSection) {
+        console.error('extractionProgressSection element not found');
+        return;
+    }
+    
+    extractionSection.classList.remove('hidden');
+    
+    // Replace content with retry option
+    extractionSection.innerHTML = `
+        <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border-l-4 border-red-500 shadow-md">
+            <div class="text-center">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-red-600 dark:text-red-400">error</span>
+                </div>
+                <h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-3">Question Extraction Failed</h3>
+                <p class="text-base text-text-dark/70 dark:text-text-light/70 mb-6">
+                    The AI was unable to extract questions from the question paper. This could be due to poor image quality, unclear text, or formatting issues.
+                </p>
+                <button onclick="uploadNewQuestionPaper()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors mx-auto">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    <span>Upload Different Question Paper</span>
+                </button>
+                <p class="text-sm text-text-dark/60 dark:text-text-light/60 mt-6">
+                    💡 Tip: Ensure the question paper has clear, readable text and proper formatting for better extraction results.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+// Upload new question paper and start AI extraction
+function uploadNewQuestionPaper() {
+    // Trigger file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            // Show loading state
+            const extractionSection = document.getElementById('extractionProgressSection');
+            extractionSection.innerHTML = `
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md">
+                    <div class="flex items-start gap-4">
+                        <span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">Uploading New Question Paper...</h3>
+                            <p class="text-base text-text-dark/70 dark:text-text-light/70 mb-4">Please wait while we upload and start extracting questions.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const formData = new FormData();
+            formData.append('questionPaper', file);
+            
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/assessments/${assessmentData.id}/update-question-paper`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to upload new question paper');
+            }
+            
+            // Reload to show extraction progress
+            window.location.reload();
+        } catch (error) {
+            console.error('Error uploading new question paper:', error);
+            alert('Failed to upload question paper. Please try again.');
+        }
+    };
+    input.click();
 }
 
 // Show completed state (assessment fully graded)
@@ -1492,7 +1595,16 @@ async function generateStudentResults() {
             throw new Error('Failed to fetch student submissions');
         }
         
-        const data = await response.json();
+        // Handle empty or malformed responses
+        let data;
+        try {
+            const text = await response.text();
+            data = text ? JSON.parse(text) : { submissions: [] };
+        } catch (parseError) {
+            console.warn('Failed to parse submissions response:', parseError);
+            data = { submissions: [] };
+        }
+        
         const submissions = data.submissions || [];
         
         tbody.innerHTML = '';

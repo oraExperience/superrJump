@@ -1454,4 +1454,69 @@ exports.getQuestionImage = async (req, res) => {
   }
 };
 
+// Update question paper and restart extraction
+exports.updateQuestionPaper = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Verify assessment ownership
+    const assessment = await pool.query(
+      'SELECT * FROM assessments WHERE id = $1 AND created_by = $2',
+      [id, userId]
+    );
+
+    if (assessment.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found or access denied'
+      });
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No question paper file uploaded'
+      });
+    }
+
+    // Use the uploaded file path (multer already saved it)
+    const pdfPath = req.file.path;
+    console.log(`New question paper saved at: ${pdfPath}`);
+
+    // Update assessment with new PDF link and reset status to start extraction
+    await pool.query(
+      `UPDATE assessments
+       SET question_paper_link = $1, status = 'Processing Ques', updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2`,
+      [pdfPath, id]
+    );
+
+    // Get updated assessment data
+    const updatedAssessment = await pool.query(
+      'SELECT * FROM assessments WHERE id = $1',
+      [id]
+    );
+
+    // Trigger question extraction in background using existing function
+    processQuestionExtraction(id, updatedAssessment.rows[0])
+      .catch(err => console.error('Background extraction error:', err));
+
+    res.status(200).json({
+      success: true,
+      message: 'Question paper updated successfully. AI extraction started.',
+      assessmentId: id
+    });
+
+  } catch (error) {
+    console.error('Update question paper error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update question paper',
+      error: error.message
+    });
+  }
+};
+
 module.exports = exports;

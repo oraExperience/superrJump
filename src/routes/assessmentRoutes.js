@@ -61,6 +61,9 @@ router.post('/upload', upload.single('questionPaper'), assessmentController.uplo
 // Create new assessment (without PDF upload - for backward compatibility)
 router.post('/', assessmentController.createAssessment);
 
+// Update question paper and restart extraction (must come before /:id route)
+router.put('/:id/update-question-paper', upload.single('questionPaper'), assessmentController.updateQuestionPaper);
+
 // Get single assessment by ID (must come after specific routes)
 router.get('/:id', assessmentController.getAssessmentById);
 

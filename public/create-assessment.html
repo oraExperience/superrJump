@@ -539,7 +539,7 @@ window.addEventListener('popstate', (event) => {
             // User confirmed - log out and redirect to login
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.replace('/login.html');
+            window.location.replace('/login');
         }
     }
 });
@@ -549,7 +549,7 @@ window.addEventListener('popstate', (event) => {
         
         if (!token) {
             alert('Session expired. Please login again.');
-            window.location.href = '/login.html';
+            window.location.href = '/login';
             return;
         }
         
@@ -563,7 +563,7 @@ window.addEventListener('popstate', (event) => {
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
             alert('Session expired. Please login again.');
-            window.location.href = '/login.html';
+            window.location.href = '/login';
             return;
         }
         
@@ -916,7 +916,7 @@ function animateProgress() {
             
             // Redirect to verification page after extraction completion
             setTimeout(() => {
-                window.location.href = `/verify-questions.html?id=${assessmentNumber}`;
+                window.location.href = `/verify-questions?id=${assessmentNumber}`;
             }, 1500);
         }
     }, 300);
@@ -950,7 +950,7 @@ function goToAssessmentDetails() {
     const assessmentNumber = gradingState?.assessmentNumber || '001';
     
     // Navigate to verification page to review extracted questions
-    window.location.href = `/verify-questions.html?id=${assessmentNumber}`;
+    window.location.href = `/verify-questions?id=${assessmentNumber}`;
 }
 
 // Poll extraction status every 3 seconds
@@ -987,18 +987,18 @@ function pollExtractionStatus(assessmentId) {
                 // Wait for progress bar to reach 100%
                 setTimeout(() => {
                     // Redirect to verification page
-                    window.location.href = `/verify-questions.html?id=${assessmentId}`;
+                    window.location.href = `/verify-questions?id=${assessmentId}`;
                 }, 1000);
             } else if (assessment.status === 'Upload Failed' || assessment.status === 'Extraction Failed') {
                 clearInterval(pollInterval);
                 console.error('❌ Extraction failed');
                 alert('Failed to extract questions. Please try again or contact support.');
-                window.location.href = '/assessments.html';
+                window.location.href = '/assessments';
             } else if (pollCount >= maxPolls) {
                 clearInterval(pollInterval);
                 console.error('❌ Extraction timeout');
                 alert('Extraction is taking longer than expected. Please check the assessment details page.');
-                window.location.href = `/assessment-details.html?id=${assessmentId}`;
+                window.location.href = `/assessment-details?id=${assessmentId}`;
             }
             
         } catch (error) {
@@ -1033,7 +1033,7 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
             
             if (!token) {
                 alert('Session expired. Please login again.');
-                window.location.href = '/login.html';
+                window.location.href = '/login';
                 return;
             }
             
@@ -1069,7 +1069,7 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('user');
                 alert('Session expired. Please login again.');
-                window.location.href = '/login.html';
+                window.location.href = '/login';
                 return;
             }
             

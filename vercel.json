@@ -1,19 +1,12 @@
 
 {
-  "version": 2,
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.js"
-    }
-  ]
+  "rewrites": [
+    { "source": "/assessments", "destination": "/assessments.html" },
+    { "source": "/assessment-details", "destination": "/assessment-details.html" },
+    { "source": "/verify-grades", "destination": "/verify-grades.html" },
+    { "source": "/students", "destination": "/students.html" },
+    { "source": "/", "destination": "/index.html" }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 }

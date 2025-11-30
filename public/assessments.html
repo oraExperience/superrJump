@@ -544,7 +544,7 @@
                     // User confirmed - log out and redirect to login
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('user');
-                    window.location.replace('/login.html');
+                    window.location.replace('/login');
                 }
                 // If not confirmed, stay on current page (already prevented by pushState above)
             }
@@ -565,7 +565,7 @@
 
                 if (!token) {
                     // Redirect to login if no token
-                    window.location.href = '/login.html';
+                    window.location.href = '/login';
                     return;
                 }
 
@@ -580,7 +580,7 @@
                     // Token expired or invalid - redirect to login
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('user');
-                    window.location.href = '/login.html';
+                    window.location.href = '/login';
                     return;
                 }
 
@@ -787,7 +787,7 @@
 
         // Navigate to assessment details page
         function viewAssessmentDetails(assessmentId) {
-            window.location.href = `/assessment-details.html?id=${assessmentId}`;
+            window.location.href = `/assessment-details?id=${assessmentId}`;
         }
 
         // Pagination functionality

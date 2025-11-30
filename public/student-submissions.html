@@ -474,7 +474,7 @@
 
         function viewSubmissionDetails(submissionId, assessmentId) {
             // Pass returnTo parameter so verify-grades knows where to return after approval
-            window.location.href = `/verify-grades.html?id=${submissionId}&assessment=${assessmentId}&returnTo=student-submissions&studentId=${studentId}`;
+            window.location.href = `/verify-grades?id=${submissionId}&assessment=${assessmentId}&returnTo=student-submissions&studentId=${studentId}`;
         }
 
         function logout() {

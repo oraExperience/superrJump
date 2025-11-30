@@ -651,7 +651,7 @@ window.addEventListener('popstate', (event) => {
             // User confirmed - log out and redirect to login
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.replace('/login.html');
+            window.location.replace('/login');
         }
     }
 });
@@ -659,7 +659,7 @@ window.addEventListener('popstate', (event) => {
 
 
 if (!assessmentId) {
-    window.location.href = '/assessments.html';
+    window.location.href = '/assessments';
 }
 
 // Store assessment data
@@ -673,7 +673,7 @@ async function loadAssessmentDetails() {
         
         if (!token) {
             // Redirect to login if no token
-            window.location.href = '/login.html';
+            window.location.href = '/login';
             return;
         }
         
@@ -689,7 +689,7 @@ async function loadAssessmentDetails() {
             // Token expired or invalid - redirect to login
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
-            window.location.href = '/login.html';
+            window.location.href = '/login';
             return;
         }
         
@@ -767,7 +767,7 @@ async function loadAssessmentDetails() {
         console.error('Error stack:', error.stack);
         alert('Failed to load assessment details: ' + error.message + '. Redirecting to assessments page...');
         setTimeout(() => {
-            window.location.href = '/assessments.html';
+            window.location.href = '/assessments';
         }, 2000);
     }
 }
@@ -1303,7 +1303,7 @@ function displayModalQuestions(questions) {
 
 // Navigate to verification page
 function goToVerification() {
-    window.location.href = `/verify-questions.html?id=${assessmentId}`;
+    window.location.href = `/verify-questions?id=${assessmentId}`;
 }
 
 // Handle answer sheet upload - direct upload without modal
@@ -1746,12 +1746,12 @@ function stopSubmissionPolling() {
 
 // Navigate to verify grades page
 function verifyGrades(submissionId) {
-    window.location.href = `/verify-grades.html?submissionId=${submissionId}`;
+    window.location.href = `/verify-grades?submissionId=${submissionId}`;
 }
 
 // View student details (for verifying/approved submissions)
 function viewStudentDetails(submissionId) {
-    window.location.href = `/verify-grades.html?submissionId=${submissionId}`;
+    window.location.href = `/verify-grades?submissionId=${submissionId}`;
 }
 
 // Stop polling when page is unloaded

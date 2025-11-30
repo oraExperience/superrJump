@@ -670,7 +670,7 @@ const studentId = urlParams.get('studentId');
 const assessmentId = urlParams.get('assessmentId');
 
 if (!studentId || !assessmentId) {
-    window.location.href = '/assessments.html';
+    window.location.href = '/assessments';
 }
 
 // API Configuration
@@ -687,7 +687,7 @@ async function loadStudentSubmission() {
     try {
         const token = sessionStorage.getItem('token');
         if (!token) {
-            window.location.href = '/login.html';
+            window.location.href = '/login';
             return;
         }
 
@@ -701,7 +701,7 @@ async function loadStudentSubmission() {
             if (response.status === 401) {
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('user');
-                window.location.href = '/login.html';
+                window.location.href = '/login';
                 return;
             }
             throw new Error('Failed to load submission data');
@@ -763,7 +763,7 @@ async function loadStudentSubmission() {
             console.error('Error loading submission:', error);
             console.error('Error details:', error.message, error.stack);
             alert(`Failed to load student submission: ${error.message}`);
-            window.location.href = `/assessment-details.html?id=${assessmentId}`;
+            window.location.href = `/assessment-details?id=${assessmentId}`;
         }
     }
     
@@ -1415,7 +1415,7 @@ function toggleQuestionsSidebar() {
 
 // Go back to assessment details
 function goBack() {
-    window.location.href = `/assessment-details.html?id=${assessmentId}`;
+    window.location.href = `/assessment-details?id=${assessmentId}`;
 }
 
 // Initialize page by loading data from backend

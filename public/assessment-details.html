@@ -829,7 +829,7 @@ function showVerificationPending() {
     const verificationSection = document.getElementById('verificationPendingSection');
     
     // Use actual question count from assessment data
-    const extractedCount = assessmentData?.questionCount || Math.floor(Math.random() * 11) + 5;
+    const extractedCount = assessmentData?.question_count || 0;
     document.getElementById('extractedQuestionsCount').textContent = extractedCount;
     
     // Show the verification section
@@ -840,8 +840,8 @@ function showVerificationPending() {
 function showAnswerSheetUpload() {
     const uploadSection = document.getElementById('answerSheetUploadSection');
     
-    // Use actual question count from assessment data if available, otherwise use mock data
-    const verifiedCount = assessmentData?.questionCount || Math.floor(Math.random() * 11) + 5;
+    // Use actual question count from assessment data
+    const verifiedCount = assessmentData?.question_count || 0;
     document.getElementById('verifiedQuestionsCount').textContent = verifiedCount;
     
     // Show the upload section

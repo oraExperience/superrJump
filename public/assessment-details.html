@@ -848,47 +848,18 @@ function showAnswerSheetUpload() {
     uploadSection.classList.remove('hidden');
 }
 
-// Show grading progress message (only if submissions are actively being processed)
+// Show grading progress message (during student detection or AI grading)
 async function showGradingProgress() {
-    try {
-        // Check if there are any submissions being processed by AI
-        const token = sessionStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/assessments/${assessmentId}/submissions`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            const submissions = data.submissions || [];
-            
-            // Check if at least one submission is currently being processed by AI
-            const hasProcessing = submissions.some(s => s.status === 'Processing');
-            
-            if (hasProcessing) {
-                // Show "AI is Grading" section only when there are active processing submissions
-                const progressSection = document.getElementById('gradingProgressSection');
-                progressSection.classList.remove('hidden');
-                
-                // Rotate inspirational quotes
-                rotateQuotes();
-                
-                // Start polling to check when all grading is complete
-                pollGradingStatus();
-            } else {
-                // All submissions are done processing, show completed state with Assessment Questions
-                showCompletedState();
-            }
-        } else {
-            // If we can't fetch submissions, show completed state as fallback
-            showCompletedState();
-        }
-    } catch (error) {
-        console.error('Error checking grading status:', error);
-        // On error, show completed state as fallback
-        showCompletedState();
-    }
+    // Always show "AI is Grading" message when assessment status is "Processing Ans"
+    // This covers both student detection phase and actual grading phase
+    const progressSection = document.getElementById('gradingProgressSection');
+    progressSection.classList.remove('hidden');
+    
+    // Rotate inspirational quotes
+    rotateQuotes();
+    
+    // Start polling to check when all grading is complete
+    pollGradingStatus();
 }
 
 // Show extraction failed state - allow retry

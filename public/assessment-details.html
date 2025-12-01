@@ -325,7 +325,7 @@
 <!-- Back Button -->
 <div class="mb-4 md:mb-6">
 <button onclick="goBackToSource()" class="inline-flex items-center gap-2 text-primary hover:text-blue-700 transition-colors text-sm md:text-base">
-<span class="material-symbols-outlined text-xl md:text-2xl">arrow_back</span>
+<span class="material-symbols-outlined text-lg md:text-xl">arrow_back</span>
 <span class="font-medium" id="backButtonText">Back to Assessments</span>
 </button>
 </div>
@@ -334,21 +334,21 @@
 <div class="mb-6 md:mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
 <div>
-<h1 class="text-2xl md:text-3xl font-bold mb-2" id="assessmentTitle">Loading...</h1>
-<div class="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-text-dark/70 dark:text-text-light/70">
+<h1 class="text-xl md:text-3xl font-bold mb-2" id="assessmentTitle">Loading...</h1>
+<div class="flex flex-wrap gap-3 md:gap-4 text-sm md:text-base text-text-dark/70 dark:text-text-light/70">
 <span class="flex items-center">
 <span id="assessmentNumber">-</span>
 </span>
 <span class="flex items-center gap-1">
-<span class="material-symbols-outlined !text-sm md:!text-base">school</span>
+<span class="material-symbols-outlined !text-base md:!text-lg">school</span>
 <span id="assessmentClass">-</span>
 </span>
 <span class="flex items-center gap-1">
-<span class="material-symbols-outlined !text-sm md:!text-base">menu_book</span>
+<span class="material-symbols-outlined !text-base md:!text-lg">menu_book</span>
 <span id="assessmentSubject">-</span>
 </span>
 <span class="flex items-center gap-1">
-<span class="material-symbols-outlined !text-base">calendar_today</span>
+<span class="material-symbols-outlined !text-base md:!text-lg">calendar_today</span>
 <span id="assessmentDate">-</span>
 </span>
 </div>
@@ -462,11 +462,11 @@
 <p class="text-xs md:text-sm text-text-dark/70 dark:text-text-light/70 mt-1">View the verified questions for this assessment</p>
 </div>
 <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3">
-<button onclick="downloadQuestions()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors text-sm">
+<button onclick="downloadQuestions()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors text-sm">
 <span class="material-symbols-outlined text-lg">download</span>
 <span>Download Questions</span>
 </button>
-<button onclick="toggleQuestionsView()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 md:py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm">
+<button onclick="toggleQuestionsView()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm">
 <span class="material-symbols-outlined text-lg" id="questionsToggleIcon">visibility</span>
 <span id="questionsToggleText">View Questions</span>
 </button>

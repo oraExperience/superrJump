@@ -1772,6 +1772,7 @@ async function generateStudentResults() {
             const marksObtained = parseFloat(submission.total_marks_obtained || 0);
             const formattedMarks = marksObtained % 1 === 0 ? Math.floor(marksObtained) : marksObtained.toFixed(1);
             const formattedTotal = totalMarks % 1 === 0 ? Math.floor(totalMarks) : totalMarks;
+            const percentage = totalMarks > 0 ? Math.round((marksObtained / totalMarks) * 100) : 0;
             
             // Determine status class
             let statusClass = 'status-processing';
@@ -1817,7 +1818,13 @@ async function generateStudentResults() {
                     <div class="text-sm font-medium text-text-dark dark:text-text-light">${submission.student_name || 'Unknown'}</div>
                 </td>
                 <td class="px-6 py-4 border-r border-gray-200 dark:border-slate-600">
-                    <div class="text-sm font-semibold text-text-dark dark:text-text-light">${formattedMarks}/${formattedTotal}</div>
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="font-bold ${getPercentageColor(percentage)}">${percentage}%</div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div class="${getProgressBarColor(percentage)} h-full rounded-full transition-all" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">${formattedMarks}/${formattedTotal}</div>
+                    </div>
                 </td>
                 <td class="px-6 py-4 border-r border-gray-200 dark:border-slate-600">
                     <span class="status-badge ${statusClass}">${status}</span>
@@ -1839,46 +1846,45 @@ async function generateStudentResults() {
             card.innerHTML = `
                 <!-- Card Header -->
                 <div class="bg-gradient-to-r from-primary to-blue-600 p-3">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
                             <div class="text-white/80 text-xs font-medium mb-0.5">${submission.student_identifier || 'N/A'}</div>
-                            <h3 class="text-white font-bold text-base leading-tight">${submission.student_name || 'Unknown'}</h3>
+                            <h3 class="text-white font-bold text-base leading-tight mb-1.5">${submission.student_name || 'Unknown'}</h3>
+                            <span class="status-badge ${statusClass} text-xs">${status}</span>
                         </div>
-                        <span class="status-badge ${statusClass} text-xs">${status}</span>
+                        <div class="flex-shrink-0">
+                            ${status === 'Ready for Verification' ? `
+                                <button onclick="verifyGrades(${submission.id})" class="w-9 h-9 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-lg transition-colors" title="Verify Grades">
+                                    <span class="material-symbols-outlined text-white text-lg">fact_check</span>
+                                </button>
+                            ` : status === 'Verifying' || status === 'Approved' ? `
+                                <button onclick="viewStudentDetails(${submission.id})" class="w-9 h-9 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-lg transition-colors" title="View Details">
+                                    <span class="material-symbols-outlined text-white text-lg">visibility</span>
+                                </button>
+                            ` : status === 'Processing' ? `
+                                <div class="w-9 h-9 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-white text-lg animate-spin">autorenew</span>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Card Body -->
                 <div class="p-3">
                     <!-- Marks Display -->
-                    <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-600">
-                        <div class="flex items-center gap-2">
+                    <div class="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3">
+                        <div class="flex items-center gap-2 mb-2">
                             <span class="material-symbols-outlined text-primary text-base">school</span>
-                            <span class="text-xs text-gray-600 dark:text-gray-400">Marks Obtained</span>
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Marks Obtained</span>
                         </div>
-                        <div class="text-xl font-bold text-primary">
-                            ${formattedMarks}<span class="text-sm text-gray-500">/${formattedTotal}</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Button -->
-                    <div class="flex justify-end">
-                        ${status === 'Ready for Verification' ? `
-                            <button onclick="verifyGrades(${submission.id})" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-primary hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-xs">
-                                <span class="material-symbols-outlined text-base">fact_check</span>
-                                <span>Verify Grades</span>
-                            </button>
-                        ` : status === 'Verifying' || status === 'Approved' ? `
-                            <button onclick="viewStudentDetails(${submission.id})" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-600 dark:hover:bg-slate-500 text-text-dark dark:text-text-light font-semibold rounded-lg transition-colors text-xs">
-                                <span class="material-symbols-outlined text-base">visibility</span>
-                                <span>View Details</span>
-                            </button>
-                        ` : status === 'Processing' ? `
-                            <div class="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-primary rounded-lg text-xs">
-                                <span class="material-symbols-outlined text-base animate-spin">autorenew</span>
-                                <span class="font-medium">Processing...</span>
+                        <div class="flex flex-col items-center gap-1">
+                            <div class="text-2xl font-bold ${getPercentageColor(percentage)}">${percentage}%</div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                <div class="${getProgressBarColor(percentage)} h-full rounded-full transition-all" style="width: ${percentage}%"></div>
                             </div>
-                        ` : ''}
+                            <div class="text-sm text-gray-500 dark:text-gray-400">${formattedMarks}/${formattedTotal}</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1924,6 +1930,23 @@ function stopSubmissionPolling() {
         clearInterval(submissionPollInterval);
         submissionPollInterval = null;
     }
+}
+
+// Color helper functions for grade display
+function getPercentageColor(percentage) {
+    const p = parseFloat(percentage);
+    if (p >= 75) return 'text-green-600 dark:text-green-400';
+    if (p >= 50) return 'text-yellow-600 dark:text-yellow-400';
+    if (p >= 35) return 'text-orange-600 dark:text-orange-400';
+    return 'text-red-600 dark:text-red-400';
+}
+
+function getProgressBarColor(percentage) {
+    const p = parseFloat(percentage);
+    if (p >= 75) return 'bg-green-500';
+    if (p >= 50) return 'bg-yellow-500';
+    if (p >= 35) return 'bg-orange-500';
+    return 'bg-red-500';
 }
 
 // Navigate to verify grades page

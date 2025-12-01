@@ -1822,12 +1822,12 @@ function stopSubmissionPolling() {
 
 // Navigate to verify grades page
 function verifyGrades(submissionId) {
-    window.location.href = `/verify-grades?submissionId=${submissionId}`;
+    window.location.href = `/verify-grades?submissionId=${submissionId}&assessmentId=${assessmentData.id}`;
 }
 
 // View student details (for verifying/approved submissions)
 function viewStudentDetails(submissionId) {
-    window.location.href = `/verify-grades?submissionId=${submissionId}`;
+    window.location.href = `/verify-grades?submissionId=${submissionId}&assessmentId=${assessmentData.id}`;
 }
 
 // Stop polling when page is unloaded

@@ -17,8 +17,11 @@ async function analyzeMultiStudentPDF(pdfUrl, assessmentContext) {
         console.log('📚 MULTI-STUDENT PDF ANALYSIS - STARTING');
         console.log('='.repeat(80));
         console.log('📂 PDF URL:', pdfUrl);
+        console.log('📂 PDF URL Type:', typeof pdfUrl);
+        console.log('📂 PDF URL Length:', pdfUrl?.length);
         console.log('📋 Assessment Context:', JSON.stringify(assessmentContext, null, 2));
         console.log('⏰ Start Time:', new Date().toISOString());
+        console.log('🔧 USE_HARDCODED_RESPONSE:', USE_HARDCODED_RESPONSE);
         console.log('='.repeat(80) + '\n');
         
         const prompt = buildMultiStudentPrompt(assessmentContext);
@@ -45,8 +48,16 @@ async function analyzeMultiStudentPDF(pdfUrl, assessmentContext) {
             console.log('📝 Hardcoded response created for 2 students (tuple format)');
         } else {
             // Call AI to analyze all pages
-            console.log('📡 Calling AI vision service...');
+            console.log('📡 Calling AI vision service with PDF URL...');
+            console.log('   URL being sent:', pdfUrl);
+            console.log('   Prompt length:', prompt.length);
+            console.log('   Time before call:', new Date().toISOString());
+            
             aiResponse = await openaiVisionParser.parseWithVision([pdfUrl], prompt);
+            
+            console.log('✅ AI vision service returned');
+            console.log('   Response length:', aiResponse?.length);
+            console.log('   Time after call:', new Date().toISOString());
         }
         
         // Log the complete AI response

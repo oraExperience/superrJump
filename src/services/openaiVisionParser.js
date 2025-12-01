@@ -249,37 +249,56 @@ async function parseWithVision(pdfUrls, prompt) {
         console.log('🌐 REMOTE PDF PROCESSING');
         console.log('─'.repeat(80));
         console.log('📂 PDF URL:', pdfUrl);
+        console.log('📂 URL starts with http:', pdfUrl.startsWith('http'));
+        console.log('📂 URL ends with .pdf:', pdfUrl.toLowerCase().endsWith('.pdf'));
         console.log('⏰ Start Time:', new Date().toISOString());
         console.log('─'.repeat(80) + '\n');
         
         // Check if using remote PDF service
         const USE_REMOTE_PDF_SERVICE = !!process.env.PDF_SERVICE_URL;
+        console.log('🔧 PDF_SERVICE_URL set:', USE_REMOTE_PDF_SERVICE);
+        console.log('🔧 PDF_SERVICE_URL value:', process.env.PDF_SERVICE_URL || 'NOT SET');
         
         if (USE_REMOTE_PDF_SERVICE) {
-          console.log('🌐 Using remote PDF service - passing URL directly');
+          console.log('\n🌐 REMOTE SERVICE PATH - Passing URL directly to remote PDF service');
+          console.log('   URL to be passed:', pdfUrl);
+          console.log('   Time before conversion:', new Date().toISOString());
           
           // Pass the URL directly to remote service (no download needed)
-          const imagePages = await convertPdfToImages(pdfUrl);
-          console.log(`✅ Conversion complete: ${imagePages.length} pages`);
+          try {
+            console.log('   Calling convertPdfToImages with URL...');
+            const imagePages = await convertPdfToImages(pdfUrl);
+            console.log(`   ✅ Conversion complete: ${imagePages.length} pages`);
+            console.log('   Time after conversion:', new Date().toISOString());
           
-          if (imagePages.length === 0) {
-            throw new Error('Failed to convert remote PDF to images');
+            if (imagePages.length === 0) {
+              throw new Error('Failed to convert remote PDF to images');
+            }
+            
+            console.log(`   ✅ Converted ${imagePages.length} page(s) to images`);
+            
+            // Convert all pages to base64
+            console.log('   📝 Converting pages to base64...');
+            const imageContents = imagePages.map((page, index) => {
+              console.log(`   📄 Page ${index + 1}/${imagePages.length}: ${page.imagePath}`);
+              const imageBuffer = fs.readFileSync(page.imagePath);
+              const base64Image = imageBuffer.toString('base64');
+              console.log(`      Base64 length: ${base64Image.length} characters`);
+              return {
+                type: 'image_url',
+                image_url: { url: `data:image/png;base64,${base64Image}` }
+              };
+            });
+            
+            imageContent = imageContents;
+            console.log('   ✅ All pages converted to base64 successfully');
+            
+          } catch (conversionError) {
+            console.error('\n❌ PDF CONVERSION ERROR');
+            console.error('   Error:', conversionError.message);
+            console.error('   Stack:', conversionError.stack);
+            throw conversionError;
           }
-          
-          console.log(`✅ Converted ${imagePages.length} page(s) to images`);
-          
-          // Convert all pages to base64
-          const imageContents = imagePages.map((page) => {
-            console.log(`   📄 Including page ${page.pageNumber}: ${page.imagePath}`);
-            const imageBuffer = fs.readFileSync(page.imagePath);
-            const base64Image = imageBuffer.toString('base64');
-            return {
-              type: 'image_url',
-              image_url: { url: `data:image/png;base64,${base64Image}` }
-            };
-          });
-          
-          imageContent = imageContents;
         } else {
           console.log(`🔄 Downloading PDF for local processing...`);
           

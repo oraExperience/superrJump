@@ -44,12 +44,17 @@ async function convertPDFToImagesRemote(pdfPath) {
     console.log('🌐 REMOTE PDF SERVICE CALL');
     console.log('─'.repeat(80));
     console.log('📡 Service URL:', PDF_SERVICE_URL);
-    console.log('📂 PDF Path:', pdfPath);
+    console.log('📂 PDF Path/URL:', pdfPath);
+    console.log('📂 Input Type:', typeof pdfPath);
+    console.log('📂 Starts with http:', pdfPath?.startsWith?.('http'));
+    console.log('📂 Starts with /:', pdfPath?.startsWith?.('/'));
     console.log('⏰ Request Time:', new Date().toISOString());
     console.log('─'.repeat(80) + '\n');
     
     const requestBody = { pdfUrl: pdfPath };
     console.log('📤 Request Body:', JSON.stringify(requestBody, null, 2));
+    console.log('📤 Full Request URL:', `${PDF_SERVICE_URL}/convert-pdf`);
+    console.log('📤 Sending request at:', new Date().toISOString());
     
     // Call remote service
     const response = await fetch(`${PDF_SERVICE_URL}/convert-pdf`, {
@@ -57,6 +62,8 @@ async function convertPDFToImagesRemote(pdfPath) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     });
+    
+    console.log('📥 Response received at:', new Date().toISOString());
     
     console.log('📥 Response Status:', response.status, response.statusText);
     

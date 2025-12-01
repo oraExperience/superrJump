@@ -83,20 +83,40 @@ exports.uploadAnswerSheetNew = async (req, res) => {
         // Continue AI detection and grading in background (non-blocking)
         (async () => {
             try {
-                console.log('🔍 Detecting students in PDF (handles single or multiple)...');
+                console.log('\n' + '='.repeat(80));
+                console.log('🚀 BACKGROUND PROCESSING STARTED');
+                console.log('='.repeat(80));
+                console.log('📋 Assessment ID:', assessmentId);
+                console.log('📄 Answer Sheet Link:', answerSheetLink);
+                console.log('⏰ Start Time:', new Date().toISOString());
+                console.log('='.repeat(80) + '\n');
+                
+                console.log('🔍 Step 1: Loading multiStudentExtractionService...');
                 const multiStudentExtractionService = require('../services/multiStudentExtractionService');
+                console.log('✅ Service loaded successfully');
+                
+                console.log('\n🔍 Step 2: Calling analyzeMultiStudentPDF...');
+                console.log('   Input URL:', answerSheetLink);
+                console.log('   Context:', {
+                    title: assessment.title,
+                    class: assessment.class,
+                    subject: assessment.subject
+                });
                 
                 const analysisResult = await multiStudentExtractionService.analyzeMultiStudentPDF(
                     answerSheetLink,
-            {
-                title: assessment.title,
-                class: assessment.class,
-                subject: assessment.subject
-            }
-        );
+                    {
+                        title: assessment.title,
+                        class: assessment.class,
+                        subject: assessment.subject
+                    }
+                );
+                
+                console.log('✅ Step 2 Complete: PDF analysis finished');
+                console.log('   Raw result:', JSON.stringify(analysisResult, null, 2));
 
-        const detectedStudents = analysisResult.students;
-        console.log(`✅ Detected ${detectedStudents.length} student(s) in PDF`);
+                const detectedStudents = analysisResult.students;
+                console.log(`\n📊 Step 3: Processing ${detectedStudents.length} detected student(s)`);
 
                 // Handle based on number of students detected
                 if (detectedStudents.length === 0) {
@@ -235,16 +255,29 @@ exports.uploadAnswerSheetNew = async (req, res) => {
                 console.log(`✅ Completed processing ${createdSubmissions.length} submissions in background`);
                 
             } catch (error) {
-                console.error('❌ Background processing error:', error);
+                console.error('\n' + '❌'.repeat(40));
+                console.error('❌ BACKGROUND PROCESSING ERROR');
+                console.error('❌'.repeat(40));
+                console.error('Error Name:', error.name);
+                console.error('Error Message:', error.message);
+                console.error('Error Stack:', error.stack);
+                console.error('Assessment ID:', assessmentId);
+                console.error('Answer Sheet Link:', answerSheetLink);
+                console.error('Timestamp:', new Date().toISOString());
+                console.error('❌'.repeat(40) + '\n');
+                
                 // Update assessment status to Grading Failed when background processing fails
                 try {
+                    console.log('🔄 Attempting to mark assessment as Grading Failed...');
                     await pool.query(
                         `UPDATE assessments SET status = 'Grading Failed', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
                         [assessmentId]
                     );
-                    console.log(`❌ Assessment ${assessmentId} marked as Grading Failed due to processing error`);
+                    console.log(`✅ Assessment ${assessmentId} successfully marked as Grading Failed`);
                 } catch (updateError) {
-                    console.error('❌ Failed to update assessment status:', updateError);
+                    console.error('❌ CRITICAL: Failed to update assessment status');
+                    console.error('Update Error:', updateError.message);
+                    console.error('Update Error Stack:', updateError.stack);
                 }
             }
         })(); // Execute the async IIFE immediately but don't await it

@@ -169,37 +169,37 @@
         <!-- TopNavBar -->
         <header
             class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
-            <div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
-                <div class="flex items-center gap-3 text-text-dark dark:text-text-light">
+            <div class="flex items-center justify-between w-full max-w-7xl px-3 py-2 md:px-8 md:py-3">
+                <div class="flex items-center gap-2 md:gap-3 text-text-dark dark:text-text-light">
                     <button onclick="toggleSidebar()"
-                        class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
-                        <span class="material-symbols-outlined text-2xl">menu</span>
+                        class="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl md:text-2xl">menu</span>
                     </button>
-                    <a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
-                        <div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+                    <a href="/dashboard" class="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                        <div class="text-primary flex items-center" style="width: 24px; height: 24px;">
                             <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                                 <path clip-rule="evenodd"
                                     d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
                                     fill="currentColor" fill-rule="evenodd"></path>
                             </svg>
                         </div>
-                        <h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+                        <h2 class="text-lg md:text-xl font-bold leading-none">SuperrJump</h2>
                     </a>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span id="orgName" class="text-sm font-medium">Organization Name</span>
+                    <span id="orgName" class="text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
                 </div>
             </div>
         </header>
 
         <main class="flex flex-col items-center w-full flex-1">
-            <div class="w-full max-w-7xl px-4 md:px-8 py-10">
+            <div class="w-full max-w-7xl px-4 md:px-8 py-6 md:py-10">
                 <!-- Page Header -->
                 <div
-                    class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-6 rounded-xl border-l-4 border-accent-yellow">
+                    class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
                     <div>
-                        <h1 class="text-4xl font-bold mb-2">Assessments</h1>
-                        <p class="text-lg text-text-dark/70 dark:text-text-light/70">View and manage all your
+                        <h1 class="text-2xl md:text-4xl font-bold mb-1 md:mb-2">Assessments</h1>
+                        <p class="text-sm md:text-lg text-text-dark/70 dark:text-text-light/70">View and manage all your
                             assessments</p>
                     </div>
                     <button onclick="window.location.href='/create-assessment'"
@@ -209,8 +209,18 @@
                     </button>
                 </div>
 
+                <!-- Mobile Filter Button (visible only on mobile) -->
+                <div class="mb-6 md:hidden">
+                    <button onclick="toggleMobileFilters()"
+                        class="w-full px-4 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+                        <span class="material-symbols-outlined">tune</span>
+                        <span>Filters & Search</span>
+                        <span id="filterBadge" class="hidden ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">0</span>
+                    </button>
+                </div>
+
                 <!-- Search and Filter Section -->
-                <div class="mb-6 space-y-4">
+                <div id="filtersSection" class="mb-6 space-y-4 hidden md:block">
                     <!-- First Row -->
                     <div class="flex flex-col md:flex-row gap-4">
                         <input type="text" id="searchAssessmentNumber" placeholder="Assessment No."
@@ -271,10 +281,85 @@
                     </div>
                 </div>
 
+                <!-- Mobile Filter Modal Content (hidden initially) -->
+                <div id="mobileFilterModal" class="hidden">
+                    <!-- Backdrop -->
+                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onclick="closeMobileFilters()"></div>
+                    
+                    <!-- Modal Content -->
+                    <div class="fixed inset-x-0 top-0 bottom-0 bg-white dark:bg-slate-800 z-50 overflow-y-auto flex flex-col">
+                        <!-- Modal Header -->
+                        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-primary">
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined">tune</span>
+                                Filters & Search
+                            </h2>
+                            <button onclick="closeMobileFilters()"
+                                class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+                                <span class="material-symbols-outlined text-white">close</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Filter Form Content -->
+                        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                            <input type="text" id="mobileSearchAssessmentNumber" placeholder="Assessment No."
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent" />
+
+                            <input type="text" id="mobileSearchTitle" placeholder="Search by Title"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent" />
+
+                            <select id="mobileFilterClass"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">All Classes</option>
+                            </select>
+
+                            <select id="mobileFilterSubject"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">All Subjects</option>
+                            </select>
+
+                            <select id="mobileFilterCreatedBy"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">All Teachers</option>
+                            </select>
+
+                            <select id="mobileFilterStatus"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">All Status</option>
+                            </select>
+
+                            <div class="pt-2">
+                                <span class="block text-sm font-medium text-text-dark dark:text-text-light mb-3">Created at:</span>
+                                <div class="space-y-3">
+                                    <input type="text" id="mobileFilterDateFrom" placeholder="Start Date" onfocus="(this.type='date')"
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent" />
+
+                                    <input type="text" id="mobileFilterDateTo" placeholder="End Date" onfocus="(this.type='date')"
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary focus:border-transparent" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal Footer with Action Buttons -->
+                        <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3 bg-gray-50 dark:bg-slate-900">
+                            <button onclick="applyMobileFilters()"
+                                class="w-full px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">check</span>
+                                Apply Filters
+                            </button>
+                            <button onclick="clearMobileFilters()"
+                                class="w-full px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold transition-colors">
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Assessments Table -->
                 <div
-                    class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg border-y md:border border-border-light dark:border-border-dark overflow-hidden">
-                    <div class="overflow-x-auto">
+                    class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg md:border border-border-light dark:border-border-dark overflow-hidden">
+                    <!-- Desktop Table View -->
+                    <div class="overflow-x-auto hidden md:block">
                         <table class="w-full min-w-[800px]">
                             <thead class="bg-primary">
                                 <tr>
@@ -312,6 +397,11 @@
 
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Mobile Card View -->
+                    <div class="md:hidden" id="assessmentsCardView">
+                        <!-- Cards will be dynamically generated here -->
                     </div>
 
                     <!-- Pagination -->
@@ -407,7 +497,7 @@
             }
         }
 
-        // Filter functionality
+        // Filter functionality - works for both desktop and mobile
         function applyFilters() {
             const searchAssessmentNumber = document.getElementById('searchAssessmentNumber').value.toLowerCase();
             const searchTitle = document.getElementById('searchTitle').value.toLowerCase();
@@ -418,9 +508,8 @@
             const filterDateFrom = document.getElementById('filterDateFrom').value;
             const filterDateTo = document.getElementById('filterDateTo').value;
 
+            // Filter table rows
             const rows = document.querySelectorAll('.assessment-row');
-            let visibleCount = 0;
-
             rows.forEach(row => {
                 const assessmentNumber = row.querySelector('td:nth-child(1) div').textContent.toLowerCase();
                 const title = row.querySelector('td:nth-child(2) div').textContent.toLowerCase();
@@ -429,70 +518,70 @@
                 const createdBy = row.querySelector('td:nth-child(5) div').textContent;
                 const dateText = row.querySelector('td:nth-child(6) div').textContent;
                 const status = row.querySelector('td:nth-child(7) span').textContent;
-
-                // Convert date to comparable format (assuming format "Nov 8, 2025")
                 const date = new Date(dateText);
 
-                let showRow = true;
+                let showRow = shouldShowItem(
+                    assessmentNumber, title, classText, subject, createdBy, status, date,
+                    searchAssessmentNumber, searchTitle, filterClass, filterSubject,
+                    filterCreatedBy, filterStatus, filterDateFrom, filterDateTo
+                );
 
-                // Apply assessment number filter
-                if (searchAssessmentNumber && !assessmentNumber.includes(searchAssessmentNumber)) {
-                    showRow = false;
-                }
+                row.dataset.filteredOut = showRow ? 'false' : 'true';
+            });
 
-                // Apply title filter
-                if (searchTitle && !title.includes(searchTitle)) {
-                    showRow = false;
-                }
+            // Filter mobile cards using data attribute
+            const cards = document.querySelectorAll('#assessmentsCardView > div');
+            cards.forEach(card => {
+                const assessmentNum = card.querySelector('.text-white\\/80')?.textContent.replace('Assessment #', '').toLowerCase() || '';
+                const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
+                const classText = card.querySelectorAll('.font-semibold')[0]?.textContent || '';
+                const subject = card.querySelectorAll('.font-semibold')[1]?.textContent || '';
+                const createdByEl = card.querySelector('.flex.items-center.gap-1 span:last-child');
+                const createdBy = createdByEl?.textContent || '';
+                const dateEl = card.querySelectorAll('.flex.items-center.gap-1')[1]?.querySelector('span:last-child');
+                const dateText = dateEl?.textContent || '';
+                const status = card.querySelector('.status-badge')?.textContent || '';
+                const date = new Date(dateText);
 
-                // Apply class filter
-                if (filterClass && classText !== filterClass) {
-                    showRow = false;
-                }
+                let showCard = shouldShowItem(
+                    assessmentNum, title, classText, subject, createdBy, status, date,
+                    searchAssessmentNumber, searchTitle, filterClass, filterSubject,
+                    filterCreatedBy, filterStatus, filterDateFrom, filterDateTo
+                );
 
-                // Apply subject filter
-                if (filterSubject && subject !== filterSubject) {
-                    showRow = false;
-                }
-
-                // Apply created by filter
-                if (filterCreatedBy && createdBy !== filterCreatedBy) {
-                    showRow = false;
-                }
-
-                // Apply status filter
-                if (filterStatus && status !== filterStatus) {
-                    showRow = false;
-                }
-
-                // Apply date range filter
-                if (filterDateFrom) {
-                    const fromDate = new Date(filterDateFrom);
-                    if (date < fromDate) {
-                        showRow = false;
-                    }
-                }
-
-                if (filterDateTo) {
-                    const toDate = new Date(filterDateTo);
-                    toDate.setHours(23, 59, 59, 999); // Include the entire end date
-                    if (date > toDate) {
-                        showRow = false;
-                    }
-                }
-
-                // Mark row as filtered using data attribute
-                if (showRow) {
-                    row.dataset.filteredOut = 'false';
-                    visibleCount++;
-                } else {
-                    row.dataset.filteredOut = 'true';
-                }
+                // Mark card as filtered using data attribute (don't change display here)
+                card.dataset.filteredOut = showCard ? 'false' : 'true';
             });
 
             // Reset to first page when filtering
             currentPage = 1;
             showPage(currentPage);
+            updateFilterBadge();
+        }
+
+        // Helper function to determine if an item should be shown based on filters
+        function shouldShowItem(assessmentNum, title, classText, subject, createdBy, status, date,
+                                searchNum, searchTitle, filterClass, filterSubject, filterCreatedBy,
+                                filterStatus, filterDateFrom, filterDateTo) {
+            if (searchNum && !assessmentNum.includes(searchNum)) return false;
+            if (searchTitle && !title.includes(searchTitle)) return false;
+            if (filterClass && classText !== filterClass) return false;
+            if (filterSubject && subject !== filterSubject) return false;
+            if (filterCreatedBy && createdBy !== filterCreatedBy) return false;
+            if (filterStatus && status !== filterStatus) return false;
+            
+            if (filterDateFrom) {
+                const fromDate = new Date(filterDateFrom);
+                if (date < fromDate) return false;
+            }
+            
+            if (filterDateTo) {
+                const toDate = new Date(filterDateTo);
+                toDate.setHours(23, 59, 59, 999);
+                if (date > toDate) return false;
+            }
+            
+            return true;
         }
 
         function clearFilters() {
@@ -511,9 +600,106 @@
                 row.dataset.filteredOut = 'false';
             });
 
+            // Reset all cards to visible using data attribute
+            const cards = document.querySelectorAll('#assessmentsCardView > div');
+            cards.forEach(card => {
+                card.dataset.filteredOut = 'false';
+            });
+
             // Reset to page 1
             currentPage = 1;
             showPage(currentPage);
+            
+            // Update filter badge
+            updateFilterBadge();
+        }
+
+        // Mobile filter functions
+        function toggleMobileFilters() {
+            const modal = document.getElementById('mobileFilterModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Sync desktop filters to mobile
+            syncFiltersToMobile();
+        }
+
+        function closeMobileFilters() {
+            const modal = document.getElementById('mobileFilterModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function applyMobileFilters() {
+            // Sync mobile filter values to desktop filters
+            document.getElementById('searchAssessmentNumber').value = document.getElementById('mobileSearchAssessmentNumber').value;
+            document.getElementById('searchTitle').value = document.getElementById('mobileSearchTitle').value;
+            document.getElementById('filterClass').value = document.getElementById('mobileFilterClass').value;
+            document.getElementById('filterSubject').value = document.getElementById('mobileFilterSubject').value;
+            document.getElementById('filterCreatedBy').value = document.getElementById('mobileFilterCreatedBy').value;
+            document.getElementById('filterStatus').value = document.getElementById('mobileFilterStatus').value;
+            document.getElementById('filterDateFrom').value = document.getElementById('mobileFilterDateFrom').value;
+            document.getElementById('filterDateTo').value = document.getElementById('mobileFilterDateTo').value;
+            
+            // Apply filters
+            applyFilters();
+            
+            // Close modal
+            closeMobileFilters();
+        }
+
+        function clearMobileFilters() {
+            // Clear mobile filter inputs
+            document.getElementById('mobileSearchAssessmentNumber').value = '';
+            document.getElementById('mobileSearchTitle').value = '';
+            document.getElementById('mobileFilterClass').value = '';
+            document.getElementById('mobileFilterSubject').value = '';
+            document.getElementById('mobileFilterCreatedBy').value = '';
+            document.getElementById('mobileFilterStatus').value = '';
+            
+            // Reset date inputs to text type with placeholders
+            const dateFromInput = document.getElementById('mobileFilterDateFrom');
+            const dateToInput = document.getElementById('mobileFilterDateTo');
+            dateFromInput.type = 'text';
+            dateFromInput.value = '';
+            dateToInput.type = 'text';
+            dateToInput.value = '';
+            
+            // Also clear desktop filters
+            clearFilters();
+        }
+
+        function syncFiltersToMobile() {
+            // Sync current desktop filter values to mobile modal
+            document.getElementById('mobileSearchAssessmentNumber').value = document.getElementById('searchAssessmentNumber').value;
+            document.getElementById('mobileSearchTitle').value = document.getElementById('searchTitle').value;
+            document.getElementById('mobileFilterClass').value = document.getElementById('filterClass').value;
+            document.getElementById('mobileFilterSubject').value = document.getElementById('filterSubject').value;
+            document.getElementById('mobileFilterCreatedBy').value = document.getElementById('filterCreatedBy').value;
+            document.getElementById('mobileFilterStatus').value = document.getElementById('filterStatus').value;
+            document.getElementById('mobileFilterDateFrom').value = document.getElementById('filterDateFrom').value;
+            document.getElementById('mobileFilterDateTo').value = document.getElementById('filterDateTo').value;
+        }
+
+        // Update filter badge count
+        function updateFilterBadge() {
+            let count = 0;
+            if (document.getElementById('searchAssessmentNumber').value) count++;
+            if (document.getElementById('searchTitle').value) count++;
+            if (document.getElementById('filterClass').value) count++;
+            if (document.getElementById('filterSubject').value) count++;
+            if (document.getElementById('filterCreatedBy').value) count++;
+            if (document.getElementById('filterStatus').value) count++;
+            if (document.getElementById('filterDateFrom').value) count++;
+            if (document.getElementById('filterDateTo').value) count++;
+            
+            const badge = document.getElementById('filterBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
 
@@ -601,7 +787,9 @@
         // Render assessments in table
         function renderAssessments() {
             const tbody = document.getElementById('assessmentsTableBody');
+            const cardView = document.getElementById('assessmentsCardView');
             tbody.innerHTML = '';
+            cardView.innerHTML = '';
 
             if (allAssessments.length === 0) {
                 tbody.innerHTML = `
@@ -612,6 +800,13 @@
                     <p class="text-text-dark/70 dark:text-text-light/70 mb-6">Create your first assessment to get started</p>
                 </td>
             </tr>
+        `;
+                cardView.innerHTML = `
+            <div class="px-6 py-12 text-center">
+                <span class="material-symbols-outlined !text-6xl text-gray-400 mb-4">assignment</span>
+                <h3 class="text-xl font-semibold mb-2">No Assessments Yet</h3>
+                <p class="text-text-dark/70 dark:text-text-light/70 mb-6">Create your first assessment to get started</p>
+            </div>
         `;
                 return;
             }
@@ -641,16 +836,19 @@
                 const gradedCount = parseInt(assessment.graded_count) || 0;
                 const totalSubmissions = parseInt(assessment.total_submissions) || 0;
                 
+                // Declare variables in outer scope for card rendering
+                let gradedPercentage = 0;
+                let progressColor = 'bg-gray-300';
+                let textColor = 'text-gray-600 dark:text-gray-400';
+                
                 // Generate graded column content
                 let gradedContent = '';
                 if (totalSubmissions === 0) {
                     gradedContent = '<div class="text-sm text-text-dark/50 dark:text-text-light/50">-</div>';
                 } else {
-                    const gradedPercentage = Math.round((gradedCount / totalSubmissions) * 100);
+                    gradedPercentage = Math.round((gradedCount / totalSubmissions) * 100);
                     
                     // Determine progress bar color
-                    let progressColor = 'bg-gray-300';
-                    let textColor = 'text-gray-600 dark:text-gray-400';
                     if (gradedPercentage === 100) {
                         progressColor = 'bg-green-500';
                         textColor = 'text-green-600 dark:text-green-400';
@@ -706,6 +904,94 @@
         `;
 
                 tbody.appendChild(row);
+                
+                // Create mobile card with improved design
+                const card = document.createElement('div');
+                card.className = 'mx-4 mb-6 bg-white dark:bg-slate-700 rounded-xl shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 overflow-hidden transition-all duration-200 cursor-pointer';
+                card.dataset.filteredOut = 'false'; // Initialize filter state
+                card.onclick = () => viewAssessmentDetails(assessment.id);
+                
+                card.innerHTML = `
+                    <!-- Card Header with colored accent -->
+                    <div class="bg-gradient-to-r from-primary to-blue-600 p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex-1">
+                                <div class="text-white/80 text-xs font-medium mb-1">Assessment #${assessment.id}</div>
+                                <h3 class="text-white font-bold text-lg leading-tight">${assessment.title}</h3>
+                            </div>
+                            <button onclick="event.stopPropagation(); viewAssessmentDetails(${assessment.id})"
+                                class="flex-shrink-0 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-colors flex items-center justify-center"
+                                title="View Details">
+                                <span class="material-symbols-outlined text-white">arrow_forward</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="status-badge ${statusClass} text-xs">${assessment.status}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="p-4">
+                        <!-- Key Info Grid - 2x2 layout -->
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-4 pb-3 mb-3 border-b border-gray-200 dark:border-gray-600">
+                            <!-- Class -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-lg flex-shrink-0">school</span>
+                                <div class="min-w-0">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Class</div>
+                                    <div class="font-semibold text-text-dark dark:text-text-light truncate">${assessment.class}</div>
+                                </div>
+                            </div>
+                            <!-- Subject -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-lg flex-shrink-0">book</span>
+                                <div class="min-w-0">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Subject</div>
+                                    <div class="font-semibold text-text-dark dark:text-text-light truncate">${assessment.subject}</div>
+                                </div>
+                            </div>
+                            <!-- Teacher -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-lg flex-shrink-0">person</span>
+                                <div class="min-w-0">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Teacher</div>
+                                    <div class="font-semibold text-text-dark dark:text-text-light truncate">${assessment.created_by_name || 'Unknown'}</div>
+                                </div>
+                            </div>
+                            <!-- Date -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-lg flex-shrink-0">calendar_today</span>
+                                <div class="min-w-0">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Date</div>
+                                    <div class="font-semibold text-text-dark dark:text-text-light truncate">${dateStr}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grading Progress -->
+                        ${totalSubmissions > 0 ? `
+                            <div class="pt-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Grading Progress</span>
+                                    <span class="text-sm font-bold ${textColor}">${gradedCount}/${totalSubmissions}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 overflow-hidden">
+                                        <div class="${progressColor} h-full rounded-full transition-all duration-500" style="width: ${gradedPercentage}%"></div>
+                                    </div>
+                                    <span class="text-sm font-semibold ${textColor} min-w-[45px] text-right">${gradedPercentage}%</span>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="pt-3 flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
+                                <span class="material-symbols-outlined text-base">hourglass_empty</span>
+                                <span class="text-sm">No submissions yet</span>
+                            </div>
+                        `}
+                    </div>
+                `;
+                
+                cardView.appendChild(card);
             });
 
             // Populate filter dropdowns with unique values from data
@@ -726,7 +1012,7 @@
             const currentTeacher = document.getElementById('filterCreatedBy').value;
             const currentStatus = document.getElementById('filterStatus').value;
 
-            // Populate Class dropdown
+            // Populate Desktop Class dropdown
             const classSelect = document.getElementById('filterClass');
             classSelect.innerHTML = '<option value="">All Classes</option>';
             classes.forEach(className => {
@@ -737,7 +1023,7 @@
                 classSelect.appendChild(option);
             });
 
-            // Populate Subject dropdown
+            // Populate Desktop Subject dropdown
             const subjectSelect = document.getElementById('filterSubject');
             subjectSelect.innerHTML = '<option value="">All Subjects</option>';
             subjects.forEach(subject => {
@@ -748,7 +1034,7 @@
                 subjectSelect.appendChild(option);
             });
 
-            // Populate Teacher dropdown
+            // Populate Desktop Teacher dropdown
             const teacherSelect = document.getElementById('filterCreatedBy');
             teacherSelect.innerHTML = '<option value="">All Teachers</option>';
             teachers.forEach(teacher => {
@@ -759,7 +1045,7 @@
                 teacherSelect.appendChild(option);
             });
 
-            // Populate Status dropdown
+            // Populate Desktop Status dropdown
             const statusSelect = document.getElementById('filterStatus');
             statusSelect.innerHTML = '<option value="">All Status</option>';
             statuses.forEach(status => {
@@ -768,6 +1054,46 @@
                 option.textContent = status;
                 option.selected = status === currentStatus;
                 statusSelect.appendChild(option);
+            });
+
+            // Populate Mobile Class dropdown
+            const mobileClassSelect = document.getElementById('mobileFilterClass');
+            mobileClassSelect.innerHTML = '<option value="">All Classes</option>';
+            classes.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                mobileClassSelect.appendChild(option);
+            });
+
+            // Populate Mobile Subject dropdown
+            const mobileSubjectSelect = document.getElementById('mobileFilterSubject');
+            mobileSubjectSelect.innerHTML = '<option value="">All Subjects</option>';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                mobileSubjectSelect.appendChild(option);
+            });
+
+            // Populate Mobile Teacher dropdown
+            const mobileTeacherSelect = document.getElementById('mobileFilterCreatedBy');
+            mobileTeacherSelect.innerHTML = '<option value="">All Teachers</option>';
+            teachers.forEach(teacher => {
+                const option = document.createElement('option');
+                option.value = teacher;
+                option.textContent = teacher;
+                mobileTeacherSelect.appendChild(option);
+            });
+
+            // Populate Mobile Status dropdown
+            const mobileStatusSelect = document.getElementById('mobileFilterStatus');
+            mobileStatusSelect.innerHTML = '<option value="">All Status</option>';
+            statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.textContent = status;
+                mobileStatusSelect.appendChild(option);
             });
         }
 
@@ -859,22 +1185,30 @@
 
         function showPage(pageNum) {
             const allRows = document.querySelectorAll('.assessment-row');
+            const allCards = document.querySelectorAll('#assessmentsCardView > div');
 
-            // Get only visible rows (not filtered out)
-            const visibleRows = Array.from(allRows).filter(row => {
-                return row.style.display !== 'none' || row.dataset.filteredOut !== 'true';
-            });
-
-            // First, hide all rows
+            // First, hide all rows based on filter
             allRows.forEach(row => {
                 if (row.dataset.filteredOut === 'true') {
                     row.style.display = 'none';
                 }
             });
 
-            // Get visible rows again after filtering
+            // Hide all cards based on filter
+            allCards.forEach(card => {
+                if (card.dataset.filteredOut === 'true') {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Get visible rows (not filtered out)
             const actualVisibleRows = Array.from(allRows).filter(row => {
                 return row.dataset.filteredOut !== 'true';
+            });
+
+            // Get visible cards (not filtered out)
+            const actualVisibleCards = Array.from(allCards).filter(card => {
+                return card.dataset.filteredOut !== 'true';
             });
 
             const visibleCount = actualVisibleRows.length;
@@ -889,6 +1223,15 @@
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
+                }
+            });
+
+            // Show only the cards for current page from visible cards
+            actualVisibleCards.forEach((card, index) => {
+                if (index >= startIndex && index < endIndex) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
                 }
             });
 

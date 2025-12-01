@@ -1151,10 +1151,6 @@ document.getElementById('assessmentForm').addEventListener('submit', async (e) =
                 // Scroll to error message
                 titleError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 
-                // Hide loading state
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnContent;
-                
                 return;
             }
             

@@ -730,6 +730,8 @@ async function loadAssessmentDetails() {
             statusClass = 'status-completed';
         } else if (assessmentData.status === 'Extraction Failed') {
             statusClass = 'status-failed';
+        } else if (assessmentData.status === 'Grading Failed') {
+            statusClass = 'status-failed';
         } else if (assessmentData.status === 'Processing Ques') {
             statusClass = 'status-processing-ques';
         } else if (assessmentData.status === 'Ques Pending Approval') {
@@ -758,8 +760,8 @@ async function loadAssessmentDetails() {
                 // Fallback to extraction progress if question count not available
                 showExtractionProgress();
             }
-        } else if (assessmentData.status === 'Ready for Grading') {
-            // Questions verified and ready for answer sheet upload
+        } else if (assessmentData.status === 'Ready for Grading' || assessmentData.status === 'Grading Failed') {
+            // Questions verified and ready for answer sheet upload (or retry after grading failure)
             showCompletedState();
         } else if (assessmentData.status === 'Processing Ans') {
             // AI is grading answers - show grading progress with loader
@@ -1019,8 +1021,9 @@ function showCompletedState() {
     showQuestionsSection();
     
     // Only show answer sheet upload section if questions are approved
-    // Status must be 'Ready for Grading', 'Ans Pending Approval', or 'Completed'
+    // Status must be 'Ready for Grading', 'Grading Failed', 'Ans Pending Approval', or 'Completed'
     if (assessmentData.status === 'Ready for Grading' ||
+        assessmentData.status === 'Grading Failed' ||
         assessmentData.status === 'Ans Pending Approval' ||
         assessmentData.status === 'Completed') {
         showAnswerSheetUpload();
@@ -1670,14 +1673,17 @@ async function generateStudentResults() {
                                     ? 'Please verify and approve questions before uploading answer sheets'
                                     : assessmentData.status === 'Extraction Failed'
                                     ? 'Question extraction failed. Please retry with a better quality PDF'
+                                    : assessmentData.status === 'Grading Failed'
+                                    ? 'Answer sheet grading failed. Please try uploading the answer sheet again'
                                     : 'Upload answer sheets to get AI-powered grading and see results here'}
                             </p>
                             ${(assessmentData.status === 'Ready for Grading' ||
+                               assessmentData.status === 'Grading Failed' ||
                                assessmentData.status === 'Ans Pending Approval' ||
                                assessmentData.status === 'Completed') ? `
                                 <button onclick="document.getElementById('answerSheetInput')?.click()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
                                     <span class="material-symbols-outlined">cloud_upload</span>
-                                    Upload Answer Sheets
+                                    ${assessmentData.status === 'Grading Failed' ? 'Retry Upload Answer Sheets' : 'Upload Answer Sheets'}
                                 </button>
                             ` : assessmentData.status === 'Ques Pending Approval' ? `
                                 <button onclick="goToVerification()" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">

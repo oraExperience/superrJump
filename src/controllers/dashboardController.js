@@ -20,7 +20,7 @@ async function getDashboardStats(req, res) {
         const assessmentsResult = await pool.query(
             `SELECT COUNT(*) as count FROM assessments
              WHERE created_by = $1
-             AND status NOT IN ('Upload Failed', 'Extraction Failed')`,
+             AND status NOT IN ('Upload Failed', 'Extraction Failed', 'Grading Failed')`,
             [userId]
         );
 
@@ -29,7 +29,7 @@ async function getDashboardStats(req, res) {
             `SELECT COUNT(*) as count FROM assessments
              WHERE created_by = $1
              AND status LIKE '%Pending%'
-             AND status NOT IN ('Upload Failed', 'Extraction Failed')`,
+             AND status NOT IN ('Upload Failed', 'Extraction Failed', 'Grading Failed')`,
             [userId]
         );
 
@@ -45,7 +45,7 @@ async function getDashboardStats(req, res) {
             `SELECT status, COUNT(*) as count
              FROM assessments
              WHERE created_by = $1
-             AND status NOT IN ('Upload Failed', 'Extraction Failed')
+             AND status NOT IN ('Upload Failed', 'Extraction Failed', 'Grading Failed')
              GROUP BY status`,
             [userId]
         );
@@ -105,7 +105,7 @@ async function getRecentActivity(req, res) {
             `SELECT id, title, class, subject, status, created_at
              FROM assessments
              WHERE created_by = $1
-             AND status NOT IN ('Upload Failed', 'Extraction Failed')
+             AND status NOT IN ('Upload Failed', 'Extraction Failed', 'Grading Failed')
              ORDER BY created_at DESC
              LIMIT 5`,
             [userId]

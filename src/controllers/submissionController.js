@@ -45,7 +45,7 @@ exports.uploadAnswerSheetNew = async (req, res) => {
         const assessment = assessmentResult.rows[0];
 
         // Check if assessment is in correct status
-        const allowedStatuses = ['Ready for Grading', 'Processing Ans', 'Ans Pending Approval', 'Completed'];
+        const allowedStatuses = ['Ready for Grading', 'Grading Failed', 'Processing Ans', 'Ans Pending Approval', 'Completed'];
         if (!allowedStatuses.includes(assessment.status)) {
             return res.status(400).json({
                 success: false,
@@ -65,7 +65,7 @@ exports.uploadAnswerSheetNew = async (req, res) => {
         console.log(`✅ Answer sheet saved at: ${answerSheetLink}`);
         
         // Update assessment status to "Processing Ans" IMMEDIATELY after upload
-        if (assessment.status === 'Ready for Grading' || assessment.status === 'Ans Pending Approval' || assessment.status === 'Completed') {
+        if (assessment.status === 'Ready for Grading' || assessment.status === 'Grading Failed' || assessment.status === 'Ans Pending Approval' || assessment.status === 'Completed') {
             await pool.query(
                 `UPDATE assessments SET status = 'Processing Ans', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
                 [assessmentId]
@@ -236,8 +236,16 @@ exports.uploadAnswerSheetNew = async (req, res) => {
                 
             } catch (error) {
                 console.error('❌ Background processing error:', error);
-                // Assessment status stays as "Processing Ans" even on error
-                // Individual submissions will have "Failed" status if they errored
+                // Update assessment status to Grading Failed when background processing fails
+                try {
+                    await pool.query(
+                        `UPDATE assessments SET status = 'Grading Failed', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+                        [assessmentId]
+                    );
+                    console.log(`❌ Assessment ${assessmentId} marked as Grading Failed due to processing error`);
+                } catch (updateError) {
+                    console.error('❌ Failed to update assessment status:', updateError);
+                }
             }
         })(); // Execute the async IIFE immediately but don't await it
 
@@ -391,8 +399,8 @@ exports.uploadAnswerSheet = async (req, res) => {
         const assessment = assessmentCheck.rows[0];
 
         // Check if assessment is in correct status
-        // Allow uploads for: Ready for Grading, Processing Ans, Ans Pending Approval, Completed
-        const allowedStatuses = ['Ready for Grading', 'Processing Ans', 'Ans Pending Approval', 'Completed'];
+        // Allow uploads for: Ready for Grading, Grading Failed, Processing Ans, Ans Pending Approval, Completed
+        const allowedStatuses = ['Ready for Grading', 'Grading Failed', 'Processing Ans', 'Ans Pending Approval', 'Completed'];
         if (!allowedStatuses.includes(assessment.status)) {
             return res.status(400).json({
                 success: false,

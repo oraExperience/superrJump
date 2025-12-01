@@ -252,31 +252,14 @@ async function parseWithVision(pdfUrls, prompt) {
         console.log('⏰ Start Time:', new Date().toISOString());
         console.log('─'.repeat(80) + '\n');
         
-        console.log(`🔄 Downloading PDF...`);
+        // Check if using remote PDF service
+        const USE_REMOTE_PDF_SERVICE = !!process.env.PDF_SERVICE_URL;
         
-        // Download PDF to temp location
-        const os = require('os');
-        
-        const tempDir = os.tmpdir();
-        const tempPdfPath = path.join(tempDir, `temp-${Date.now()}.pdf`);
-        
-        try {
-          const response = await fetch(pdfUrl);
-          console.log('📥 Download response:', response.status, response.statusText);
+        if (USE_REMOTE_PDF_SERVICE) {
+          console.log('🌐 Using remote PDF service - passing URL directly');
           
-          if (!response.ok) {
-            throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`);
-          }
-          
-          const buffer = await response.buffer();
-          console.log(`✅ Downloaded ${(buffer.length / 1024).toFixed(1)} KB`);
-          
-          fs.writeFileSync(tempPdfPath, buffer);
-          console.log(`💾 Saved to: ${tempPdfPath}`);
-          
-          // Convert to images
-          console.log(`\n🔄 Converting PDF to images...`);
-          const imagePages = await convertPdfToImages(tempPdfPath);
+          // Pass the URL directly to remote service (no download needed)
+          const imagePages = await convertPdfToImages(pdfUrl);
           console.log(`✅ Conversion complete: ${imagePages.length} pages`);
           
           if (imagePages.length === 0) {
@@ -297,14 +280,61 @@ async function parseWithVision(pdfUrls, prompt) {
           });
           
           imageContent = imageContents;
+        } else {
+          console.log(`🔄 Downloading PDF for local processing...`);
           
-          // Clean up temp PDF
-          fs.unlinkSync(tempPdfPath);
-          console.log(`🗑️  Cleaned up temp PDF`);
+          // Download PDF to temp location (for local pdf-to-img)
+          const os = require('os');
           
-        } catch (downloadError) {
-          console.error('❌ Failed to process remote PDF:', downloadError);
-          throw downloadError;
+          const tempDir = os.tmpdir();
+          const tempPdfPath = path.join(tempDir, `temp-${Date.now()}.pdf`);
+          
+          try {
+            const response = await fetch(pdfUrl);
+            console.log('📥 Download response:', response.status, response.statusText);
+            
+            if (!response.ok) {
+              throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`);
+            }
+            
+            const buffer = await response.buffer();
+            console.log(`✅ Downloaded ${(buffer.length / 1024).toFixed(1)} KB`);
+            
+            fs.writeFileSync(tempPdfPath, buffer);
+            console.log(`💾 Saved to: ${tempPdfPath}`);
+            
+            // Convert to images
+            console.log(`\n🔄 Converting PDF to images...`);
+            const imagePages = await convertPdfToImages(tempPdfPath);
+            console.log(`✅ Conversion complete: ${imagePages.length} pages`);
+            
+            if (imagePages.length === 0) {
+              throw new Error('Failed to convert remote PDF to images');
+            }
+            
+            console.log(`✅ Converted ${imagePages.length} page(s) to images`);
+            
+            // Convert all pages to base64
+            const imageContents = imagePages.map((page) => {
+              console.log(`   📄 Including page ${page.pageNumber}: ${page.imagePath}`);
+              const imageBuffer = fs.readFileSync(page.imagePath);
+              const base64Image = imageBuffer.toString('base64');
+              return {
+                type: 'image_url',
+                image_url: { url: `data:image/png;base64,${base64Image}` }
+              };
+            });
+            
+            imageContent = imageContents;
+            
+            // Clean up temp PDF
+            fs.unlinkSync(tempPdfPath);
+            console.log(`🗑️  Cleaned up temp PDF`);
+            
+          } catch (downloadError) {
+            console.error('❌ Failed to process remote PDF:', downloadError);
+            throw downloadError;
+          }
         }
       } else {
         // Remote image URL - use directly

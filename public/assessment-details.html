@@ -273,22 +273,22 @@
 
 <!-- TopNavBar -->
 <header class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
-<div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
-<div class="flex items-center gap-3 text-text-dark dark:text-text-light">
-<button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
-<span class="material-symbols-outlined text-2xl">menu</span>
+<div class="flex items-center justify-between w-full max-w-7xl px-3 py-2 md:px-8 md:py-3">
+<div class="flex items-center gap-2 md:gap-3 text-text-dark dark:text-text-light">
+<button onclick="toggleSidebar()" class="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-xl md:text-2xl">menu</span>
 </button>
-<a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
-<div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+<a href="/dashboard" class="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+<div class="text-primary flex items-center" style="width: 24px; height: 24px;">
 <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
 </svg>
 </div>
-<h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+<h2 class="text-lg md:text-xl font-bold leading-none">SuperrJump</h2>
 </a>
 </div>
 <div class="flex items-center gap-4">
-    <span id="orgName" class="text-sm font-medium">Organization Name</span>
+    <span id="orgName" class="text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
 </div>
 </div>
 </header>
@@ -321,30 +321,30 @@
 </div>
 
 <main class="flex flex-col items-center w-full flex-1">
-<div class="w-full max-w-7xl px-4 md:px-8 py-10">
+<div class="w-full max-w-7xl px-4 md:px-8 py-6 md:py-10">
 <!-- Back Button -->
-<div class="mb-6">
-<button onclick="goBackToSource()" class="inline-flex items-center gap-2 text-primary hover:text-blue-700 transition-colors">
-<span class="material-symbols-outlined">arrow_back</span>
+<div class="mb-4 md:mb-6">
+<button onclick="goBackToSource()" class="inline-flex items-center gap-2 text-primary hover:text-blue-700 transition-colors text-sm md:text-base">
+<span class="material-symbols-outlined text-xl md:text-2xl">arrow_back</span>
 <span class="font-medium" id="backButtonText">Back to Assessments</span>
 </button>
 </div>
 
 <!-- Assessment Info Header -->
-<div class="mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-6 rounded-xl border-l-4 border-accent-yellow">
-<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div class="mb-6 md:mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
 <div>
-<h1 class="text-3xl font-bold mb-2" id="assessmentTitle">Loading...</h1>
-<div class="flex flex-wrap gap-4 text-sm text-text-dark/70 dark:text-text-light/70">
+<h1 class="text-2xl md:text-3xl font-bold mb-2" id="assessmentTitle">Loading...</h1>
+<div class="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-text-dark/70 dark:text-text-light/70">
 <span class="flex items-center">
 <span id="assessmentNumber">-</span>
 </span>
 <span class="flex items-center gap-1">
-<span class="material-symbols-outlined !text-base">school</span>
+<span class="material-symbols-outlined !text-sm md:!text-base">school</span>
 <span id="assessmentClass">-</span>
 </span>
 <span class="flex items-center gap-1">
-<span class="material-symbols-outlined !text-base">menu_book</span>
+<span class="material-symbols-outlined !text-sm md:!text-base">menu_book</span>
 <span id="assessmentSubject">-</span>
 </span>
 <span class="flex items-center gap-1">
@@ -456,17 +456,17 @@
 <!-- View Questions Section (shown after verification) -->
 <div id="viewQuestionsSection" class="hidden mb-6">
 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-md border-l-4 border-primary overflow-hidden">
-<div class="px-6 py-4 flex items-center justify-between">
+<div class="px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
 <div>
-<h2 class="text-xl font-bold text-text-dark dark:text-text-light">Assessment Questions</h2>
-<p class="text-sm text-text-dark/70 dark:text-text-light/70 mt-1">View the verified questions for this assessment</p>
+<h2 class="text-lg md:text-xl font-bold text-text-dark dark:text-text-light">Assessment Questions</h2>
+<p class="text-xs md:text-sm text-text-dark/70 dark:text-text-light/70 mt-1">View the verified questions for this assessment</p>
 </div>
-<div class="flex items-center gap-3">
-<button onclick="downloadQuestions()" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors text-sm">
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3">
+<button onclick="downloadQuestions()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors text-sm">
 <span class="material-symbols-outlined text-lg">download</span>
 <span>Download Questions</span>
 </button>
-<button onclick="toggleQuestionsView()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm">
+<button onclick="toggleQuestionsView()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 md:py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm">
 <span class="material-symbols-outlined text-lg" id="questionsToggleIcon">visibility</span>
 <span id="questionsToggleText">View Questions</span>
 </button>
@@ -498,22 +498,22 @@ Edit Questions
 
 <!-- Answer Sheet Upload Section (shown only after verification) -->
 <div id="answerSheetUploadSection" class="hidden mb-6">
-<div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-l-4 border-green-500 shadow-md">
-<div class="flex items-start gap-4 mb-4">
-<span class="material-symbols-outlined text-3xl text-green-600 dark:text-green-400">check_circle</span>
+<div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 md:p-6 border-l-4 border-green-500 shadow-md">
+<div class="flex items-start gap-3 md:gap-4 mb-4">
+<span class="material-symbols-outlined text-2xl md:text-3xl text-green-600 dark:text-green-400 flex-shrink-0">check_circle</span>
 <div class="flex-1">
-<h3 class="text-2xl font-bold text-text-dark dark:text-text-light mb-2">Questions Verified Successfully</h3>
-<p class="text-base text-text-dark/70 dark:text-text-light/70 mb-4">Your assessment has <span id="verifiedQuestionsCount" class="font-semibold">0</span> verified questions. You can now upload answer sheets for grading.</p>
+<h3 class="text-lg md:text-2xl font-bold text-text-dark dark:text-text-light mb-2">Questions Verified Successfully</h3>
+<p class="text-sm md:text-base text-text-dark/70 dark:text-text-light/70">Your assessment has <span id="verifiedQuestionsCount" class="font-semibold">0</span> verified questions. You can now upload answer sheets for grading.</p>
 </div>
 </div>
 
 <!-- Answer Sheet Upload Area -->
-<div class="bg-white dark:bg-slate-700 rounded-xl p-6 border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-primary dark:hover:border-primary transition-colors cursor-pointer" id="answerSheetArea" onclick="document.getElementById('answerSheetInput').click()">
+<div class="bg-white dark:bg-slate-700 rounded-xl p-4 md:p-6 border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-primary dark:hover:border-primary transition-colors cursor-pointer" id="answerSheetArea" onclick="document.getElementById('answerSheetInput').click()">
 <input type="file" id="answerSheetInput" class="hidden" accept=".pdf" onchange="handleAnswerSheetUpload(this)" multiple />
 <div class="text-center">
-<span class="material-symbols-outlined text-5xl text-primary mb-2">upload_file</span>
-<p class="text-lg font-semibold text-text-dark dark:text-text-light mb-1">Upload Answer Sheets</p>
-<p class="text-sm text-text-dark/70 dark:text-text-light/70">Click to upload or drag and drop PDF files here</p>
+<span class="material-symbols-outlined text-4xl md:text-5xl text-primary mb-2">upload_file</span>
+<p class="text-base md:text-lg font-semibold text-text-dark dark:text-text-light mb-1">Upload Answer Sheets</p>
+<p class="text-xs md:text-sm text-text-dark/70 dark:text-text-light/70">Click to upload or drag and drop PDF files here</p>
 <p class="text-xs text-text-dark/60 dark:text-text-light/60 mt-2">You can upload multiple answer sheets at once</p>
 </div>
 </div>
@@ -521,13 +521,15 @@ Edit Questions
 </div>
 
 <!-- Filters Section -->
-<div class="mb-6">
-<div class="flex flex-col md:flex-row gap-4 md:items-center">
+<div class="mb-6 bg-gray-50 dark:bg-slate-800/50 md:bg-transparent md:dark:bg-transparent -mx-4 md:mx-0 p-4 md:p-0 md:mb-6">
+<!-- Mobile: Grid Layout -->
+<div class="flex flex-col gap-3 md:hidden">
+<div class="grid grid-cols-1 gap-3">
 <input
 type="text"
 id="filterStudentId"
 placeholder="Student ID"
-class="w-full md:w-auto px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+class="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
 oninput="applyFilters()"
 />
 
@@ -535,13 +537,15 @@ oninput="applyFilters()"
 type="text"
 id="filterStudentName"
 placeholder="Search by Name"
-class="w-full md:flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+class="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
 oninput="applyFilters()"
 />
+</div>
 
+<div class="flex gap-3">
 <select
 id="filterStatus"
-class="w-full md:w-auto pl-4 pr-10 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+class="flex-1 pl-4 pr-10 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
 onchange="applyFilters()"
 >
 <option value="">All Status</option>
@@ -551,7 +555,44 @@ onchange="applyFilters()"
 
 <button
 onclick="clearFilters()"
-class="w-full md:w-auto px-4 py-2 text-sm font-medium text-primary hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
+class="px-6 py-2.5 text-sm font-medium text-primary hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
+>
+Clear
+</button>
+</div>
+</div>
+
+<!-- Desktop: Original Layout -->
+<div class="hidden md:flex md:flex-row gap-4 items-center">
+<input
+type="text"
+id="desktopFilterStudentId"
+placeholder="Student ID"
+class="w-auto px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+oninput="applyFilters()"
+/>
+
+<input
+type="text"
+id="desktopFilterStudentName"
+placeholder="Search by Name"
+class="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+oninput="applyFilters()"
+/>
+
+<select
+id="desktopFilterStatus"
+class="w-auto pl-4 pr-10 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+onchange="applyFilters()"
+>
+<option value="">All Status</option>
+<option value="Pending">Pending</option>
+<option value="Approved">Approved</option>
+</select>
+
+<button
+onclick="clearFilters()"
+class="w-auto px-4 py-2 text-sm font-medium text-primary hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
 >
 Clear
 </button>
@@ -559,13 +600,14 @@ Clear
 </div>
 
 <!-- Students Table -->
-<div class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg border-y md:border border-border-light dark:border-border-dark overflow-hidden">
-<div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-<h2 class="text-xl font-bold">Student Results</h2>
-<p class="text-sm text-text-dark/70 dark:text-text-light/70 mt-1">Review and approve student grades</p>
+<div class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg md:border border-border-light dark:border-border-dark overflow-hidden">
+<div class="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 dark:border-gray-700">
+<h2 class="text-lg md:text-xl font-bold">Student Results</h2>
+<p class="text-xs md:text-sm text-text-dark/70 dark:text-text-light/70 mt-1">Review and approve student grades</p>
 </div>
 
-<div class="overflow-x-auto">
+<!-- Desktop Table View -->
+<div class="overflow-x-auto hidden md:block">
 <table class="w-full min-w-[700px]">
 <thead class="bg-primary">
 <tr>
@@ -582,9 +624,14 @@ Clear
 </table>
 </div>
 
+<!-- Mobile Card View -->
+<div class="md:hidden" id="studentsCardView">
+<!-- Cards will be dynamically generated here -->
+</div>
+
 <!-- Table Footer -->
-<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50">
-<div class="text-sm text-text-dark/70 dark:text-text-light/70">
+<div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50">
+<div class="text-xs md:text-sm text-text-dark/70 dark:text-text-light/70">
 Total Students: <span id="totalStudents" class="font-semibold">0</span>
 </div>
 </div>
@@ -1624,7 +1671,9 @@ let submissionPollInterval = null;
 // Generate student results from API
 async function generateStudentResults() {
     const tbody = document.getElementById('studentsTableBody');
+    const cardView = document.getElementById('studentsCardView');
     tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Loading student submissions...</td></tr>';
+    cardView.innerHTML = '<div class="p-4 text-center text-gray-500">Loading student submissions...</div>';
     
     try {
         const token = sessionStorage.getItem('token');
@@ -1653,50 +1702,50 @@ async function generateStudentResults() {
         const submissions = data.submissions || [];
         
         tbody.innerHTML = '';
+        cardView.innerHTML = '';
         
         if (submissions.length === 0) {
             // Show elegant empty state placeholder
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="px-6 py-16">
-                        <div class="flex flex-col items-center justify-center text-center">
-                            <div class="mb-4">
-                                <span class="material-symbols-outlined text-gray-400 dark:text-gray-500" style="font-size: 80px;">
-                                    upload_file
-                                </span>
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                No Student Answers Uploaded Yet
-                            </h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
-                                ${assessmentData.status === 'Ques Pending Approval'
-                                    ? 'Please verify and approve questions before uploading answer sheets'
-                                    : assessmentData.status === 'Extraction Failed'
-                                    ? 'Question extraction failed. Please retry with a better quality PDF'
-                                    : assessmentData.status === 'Grading Failed'
-                                    ? 'Answer sheet grading failed. Please try uploading the answer sheet again'
-                                    : 'Upload answer sheets to get AI-powered grading and see results here'}
-                            </p>
-                            ${(assessmentData.status === 'Ready for Grading' ||
-                               assessmentData.status === 'Grading Failed' ||
-                               assessmentData.status === 'Ans Pending Approval' ||
-                               assessmentData.status === 'Completed') ? `
-                                <button onclick="document.getElementById('answerSheetInput')?.click()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
-                                    <span class="material-symbols-outlined">cloud_upload</span>
-                                    ${assessmentData.status === 'Grading Failed' ? 'Retry Upload Answer Sheets' : 'Upload Answer Sheets'}
-                                </button>
-                            ` : assessmentData.status === 'Ques Pending Approval' ? `
-                                <button onclick="goToVerification()" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
-                                    <span class="material-symbols-outlined">fact_check</span>
-                                    Verify Questions First
-                                </button>
-                            ` : assessmentData.status === 'Extraction Failed' ? `
-                                <!-- No button shown - extraction failed section handles retry -->
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>
+            const emptyStateContent = `
+                <div class="flex flex-col items-center justify-center text-center">
+                    <div class="mb-4">
+                        <span class="material-symbols-outlined text-gray-400 dark:text-gray-500" style="font-size: 80px;">
+                            upload_file
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        No Student Answers Uploaded Yet
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-md">
+                        ${assessmentData.status === 'Ques Pending Approval'
+                            ? 'Please verify and approve questions before uploading answer sheets'
+                            : assessmentData.status === 'Extraction Failed'
+                            ? 'Question extraction failed. Please retry with a better quality PDF'
+                            : assessmentData.status === 'Grading Failed'
+                            ? 'Answer sheet grading failed. Please try uploading the answer sheet again'
+                            : 'Upload answer sheets to get AI-powered grading and see results here'}
+                    </p>
+                    ${(assessmentData.status === 'Ready for Grading' ||
+                       assessmentData.status === 'Grading Failed' ||
+                       assessmentData.status === 'Ans Pending Approval' ||
+                       assessmentData.status === 'Completed') ? `
+                        <button onclick="document.getElementById('answerSheetInput')?.click()" class="px-6 py-3 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
+                            <span class="material-symbols-outlined">cloud_upload</span>
+                            ${assessmentData.status === 'Grading Failed' ? 'Retry Upload Answer Sheets' : 'Upload Answer Sheets'}
+                        </button>
+                    ` : assessmentData.status === 'Ques Pending Approval' ? `
+                        <button onclick="goToVerification()" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2">
+                            <span class="material-symbols-outlined">fact_check</span>
+                            Verify Questions First
+                        </button>
+                    ` : assessmentData.status === 'Extraction Failed' ? `
+                        <!-- No button shown - extraction failed section handles retry -->
+                    ` : ''}
+                </div>
             `;
+            
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-16">${emptyStateContent}</td></tr>`;
+            cardView.innerHTML = `<div class="p-6">${emptyStateContent}</div>`;
             document.getElementById('totalStudents').textContent = '0';
             return;
         }
@@ -1779,6 +1828,62 @@ async function generateStudentResults() {
             `;
             
             tbody.appendChild(row);
+            
+            // Create mobile card
+            const card = document.createElement('div');
+            card.className = 'mx-4 mb-6 bg-white dark:bg-slate-700 rounded-xl shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 overflow-hidden transition-all duration-200';
+            card.setAttribute('data-student-id', submission.student_id || 'N/A');
+            card.setAttribute('data-student-name', (submission.student_name || '').toLowerCase());
+            card.setAttribute('data-status', submission.status);
+            
+            card.innerHTML = `
+                <!-- Card Header -->
+                <div class="bg-gradient-to-r from-primary to-blue-600 p-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="text-white/80 text-xs font-medium mb-1">${submission.student_identifier || 'N/A'}</div>
+                            <h3 class="text-white font-bold text-lg leading-tight">${submission.student_name || 'Unknown'}</h3>
+                        </div>
+                        <span class="status-badge ${statusClass} text-xs">${status}</span>
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="p-4">
+                    <!-- Marks Display -->
+                    <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-xl">school</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Marks Obtained</span>
+                        </div>
+                        <div class="text-2xl font-bold text-primary">
+                            ${formattedMarks}<span class="text-base text-gray-500">/${formattedTotal}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <div class="flex justify-end">
+                        ${status === 'Ready for Verification' ? `
+                            <button onclick="verifyGrades(${submission.id})" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">fact_check</span>
+                                <span>Verify Grades</span>
+                            </button>
+                        ` : status === 'Verifying' || status === 'Approved' ? `
+                            <button onclick="viewStudentDetails(${submission.id})" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-600 dark:hover:bg-slate-500 text-text-dark dark:text-text-light font-semibold rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">visibility</span>
+                                <span>View Details</span>
+                            </button>
+                        ` : status === 'Processing' ? `
+                            <div class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-primary rounded-lg">
+                                <span class="material-symbols-outlined text-lg animate-spin">autorenew</span>
+                                <span class="font-medium">Processing...</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            cardView.appendChild(card);
         });
         
         document.getElementById('totalStudents').textContent = submissions.length;
@@ -1793,6 +1898,7 @@ async function generateStudentResults() {
     } catch (error) {
         console.error('Error loading student submissions:', error);
         tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error loading student submissions</td></tr>';
+        cardView.innerHTML = '<div class="p-4 text-center text-red-500">Error loading student submissions</div>';
     }
 }
 
@@ -1837,13 +1943,24 @@ window.addEventListener('beforeunload', () => {
 
 // Filter functionality
 function applyFilters() {
-    const filterStudentId = document.getElementById('filterStudentId').value.toLowerCase();
-    const filterStudentName = document.getElementById('filterStudentName').value.toLowerCase();
-    const filterStatus = document.getElementById('filterStatus').value;
+    // Get filter values from whichever set of inputs is visible (mobile or desktop)
+    const mobileStudentId = document.getElementById('filterStudentId')?.value || '';
+    const desktopStudentId = document.getElementById('desktopFilterStudentId')?.value || '';
+    const filterStudentId = (mobileStudentId || desktopStudentId).toLowerCase();
+    
+    const mobileStudentName = document.getElementById('filterStudentName')?.value || '';
+    const desktopStudentName = document.getElementById('desktopFilterStudentName')?.value || '';
+    const filterStudentName = (mobileStudentName || desktopStudentName).toLowerCase();
+    
+    const mobileStatus = document.getElementById('filterStatus')?.value || '';
+    const desktopStatus = document.getElementById('desktopFilterStatus')?.value || '';
+    const filterStatus = mobileStatus || desktopStatus;
     
     const rows = document.querySelectorAll('.student-row');
+    const cards = document.querySelectorAll('#studentsCardView > div');
     let visibleCount = 0;
     
+    // Filter table rows
     rows.forEach(row => {
         let showRow = true;
         
@@ -1875,18 +1992,62 @@ function applyFilters() {
         }
     });
     
+    // Filter mobile cards
+    cards.forEach(card => {
+        let showCard = true;
+        
+        const studentId = card.getAttribute('data-student-id').toLowerCase();
+        const studentName = card.getAttribute('data-student-name');
+        const status = card.getAttribute('data-status');
+        
+        // Apply Student ID filter
+        if (filterStudentId && !studentId.includes(filterStudentId)) {
+            showCard = false;
+        }
+        
+        // Apply Student Name filter
+        if (filterStudentName && !studentName.includes(filterStudentName)) {
+            showCard = false;
+        }
+        
+        // Apply Status filter
+        if (filterStatus && status !== filterStatus) {
+            showCard = false;
+        }
+        
+        // Show/hide card
+        card.style.display = showCard ? 'block' : 'none';
+    });
+    
     // Update total count
     document.getElementById('totalStudents').textContent = visibleCount;
 }
 
 function clearFilters() {
-    document.getElementById('filterStudentId').value = '';
-    document.getElementById('filterStudentName').value = '';
-    document.getElementById('filterStatus').value = '';
+    // Clear both mobile and desktop filter inputs
+    const mobileStudentId = document.getElementById('filterStudentId');
+    const desktopStudentId = document.getElementById('desktopFilterStudentId');
+    const mobileStudentName = document.getElementById('filterStudentName');
+    const desktopStudentName = document.getElementById('desktopFilterStudentName');
+    const mobileStatus = document.getElementById('filterStatus');
+    const desktopStatus = document.getElementById('desktopFilterStatus');
+    
+    if (mobileStudentId) mobileStudentId.value = '';
+    if (desktopStudentId) desktopStudentId.value = '';
+    if (mobileStudentName) mobileStudentName.value = '';
+    if (desktopStudentName) desktopStudentName.value = '';
+    if (mobileStatus) mobileStatus.value = '';
+    if (desktopStatus) desktopStatus.value = '';
     
     const rows = document.querySelectorAll('.student-row');
+    const cards = document.querySelectorAll('#studentsCardView > div');
+    
     rows.forEach(row => {
         row.style.display = '';
+    });
+    
+    cards.forEach(card => {
+        card.style.display = 'block';
     });
     
     document.getElementById('totalStudents').textContent = rows.length;

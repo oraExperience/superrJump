@@ -1873,17 +1873,17 @@ async function generateStudentResults() {
                 <!-- Card Body -->
                 <div class="p-3">
                     <!-- Marks Display -->
-                    <div class="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3">
-                        <div class="flex items-center gap-2 mb-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-base">school</span>
-                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Marks Obtained</span>
+                            <span class="text-xs text-gray-600 dark:text-gray-400">Marks Obtained</span>
                         </div>
-                        <div class="flex flex-col items-center gap-1">
-                            <div class="text-2xl font-bold ${getPercentageColor(percentage)}">${percentage}%</div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                                <div class="${getProgressBarColor(percentage)} h-full rounded-full transition-all" style="width: ${percentage}%"></div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold ${getPercentageColor(percentage)} mb-1">${percentage}%</div>
+                            <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden mb-1">
+                                <div class="${getProgressBarColor(percentage)} h-1.5 rounded-full transition-all" style="width: ${percentage}%"></div>
                             </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">${formattedMarks}/${formattedTotal}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">${formattedMarks}/${formattedTotal}</div>
                         </div>
                     </div>
                 </div>

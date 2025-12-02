@@ -490,8 +490,9 @@
                     <span class="text-sm font-bold text-primary whitespace-nowrap">
                         <span id="totalMarksObtained">0</span>/<span id="totalMarksPossible">0</span>
                     </span>
-                    <button onclick="approveAndFinalize()" id="approveButton" class="flex items-center gap-1 px-2 py-1 bg-gray-400 text-white rounded text-xs font-medium opacity-50 cursor-not-allowed" disabled>
-                        <span class="material-symbols-outlined text-sm">check</span>
+                    <button onclick="approveAndFinalize()" id="approveButton" class="flex items-center gap-1.5 px-4 py-2 bg-gray-400 text-white rounded-lg text-sm font-semibold opacity-50 cursor-not-allowed whitespace-nowrap" disabled>
+                        <span class="material-symbols-outlined text-lg">check</span>
+                        <span>Submit</span>
                     </button>
                 </div>
             </div>
@@ -548,7 +549,7 @@
             
             <button onclick="approveAndFinalize()" id="approveButton" class="flex items-center gap-2 px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold transition-colors flex-shrink-0 opacity-50 cursor-not-allowed text-base" disabled>
                 <span class="material-symbols-outlined text-2xl">check_circle</span>
-                <span>Approve & Finalize</span>
+                <span>Submit Grades</span>
             </button>
         </div>
     </div>
@@ -707,35 +708,35 @@
     </div>
 </div>
 
-<!-- Approve & Finalize Modal -->
-<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+<!-- Submit Grades Modal -->
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] overflow-y-auto">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-6 border-b-4 border-green-500">
-            <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400">check_circle</span>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Approve & Finalize Submission</h3>
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-4 md:p-6 border-b-4 border-green-500">
+            <div class="flex items-center gap-2 md:gap-3">
+                <span class="material-symbols-outlined text-3xl md:text-4xl text-green-600 dark:text-green-400">check_circle</span>
+                <h3 class="text-base md:text-xl font-bold text-gray-900 dark:text-white">Submit Grades</h3>
             </div>
         </div>
         
         <!-- Content -->
-        <div class="p-6 space-y-4">
+        <div class="p-4 md:p-6 space-y-3 md:space-y-4">
             <!-- Assessment Info -->
-            <div class="bg-gradient-to-r from-purple-50/50 to-pink-50/30 dark:from-purple-900/10 dark:to-pink-900/10 rounded-lg p-5 border-l-[6px] border-purple-600 dark:border-purple-500 shadow-sm">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="material-symbols-outlined text-xl text-purple-600 dark:text-purple-400">description</span>
-                    <span class="font-semibold text-purple-600 dark:text-purple-400 text-sm uppercase tracking-wide">Assessment</span>
+            <div class="bg-gradient-to-r from-purple-50/50 to-pink-50/30 dark:from-purple-900/10 dark:to-pink-900/10 rounded-lg p-3 md:p-5 border-l-4 md:border-l-[6px] border-purple-600 dark:border-purple-500 shadow-sm">
+                <div class="flex items-center gap-2 mb-2 md:mb-3">
+                    <span class="material-symbols-outlined text-lg md:text-xl text-purple-600 dark:text-purple-400">description</span>
+                    <span class="font-semibold text-purple-600 dark:text-purple-400 text-xs md:text-sm uppercase tracking-wide">Assessment</span>
                 </div>
                 <div>
-                    <p class="font-bold text-gray-900 dark:text-white text-xl mb-2" id="approveAssessmentTitle">-</p>
-                    <div class="flex gap-4 text-sm">
+                    <p class="font-bold text-gray-900 dark:text-white text-base md:text-xl mb-1 md:mb-2" id="approveAssessmentTitle">-</p>
+                    <div class="flex gap-2 md:gap-4 text-xs md:text-sm flex-wrap">
                         <div class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
-                            <span class="material-symbols-outlined text-base">school</span>
+                            <span class="material-symbols-outlined text-sm md:text-base">school</span>
                             <span class="font-medium" id="approveAssessmentClass">-</span>
                         </div>
                         <span class="text-gray-400">•</span>
                         <div class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
-                            <span class="material-symbols-outlined text-base">menu_book</span>
+                            <span class="material-symbols-outlined text-sm md:text-base">menu_book</span>
                             <span class="font-medium" id="approveAssessmentSubject">-</span>
                         </div>
                     </div>
@@ -743,21 +744,21 @@
             </div>
             
             <!-- Student Info -->
-            <div class="bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-lg p-5 border-l-[6px] border-blue-600 dark:border-blue-500 shadow-sm">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="material-symbols-outlined text-xl text-blue-600 dark:text-blue-400">person</span>
-                    <span class="font-semibold text-blue-600 dark:text-blue-400 text-sm uppercase tracking-wide">Student</span>
+            <div class="bg-gradient-to-r from-blue-50/50 to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-lg p-3 md:p-5 border-l-4 md:border-l-[6px] border-blue-600 dark:border-blue-500 shadow-sm">
+                <div class="flex items-center gap-2 mb-2 md:mb-3">
+                    <span class="material-symbols-outlined text-lg md:text-xl text-blue-600 dark:text-blue-400">person</span>
+                    <span class="font-semibold text-blue-600 dark:text-blue-400 text-xs md:text-sm uppercase tracking-wide">Student</span>
                 </div>
                 <div>
-                    <p class="font-bold text-gray-900 dark:text-white text-xl mb-2" id="approveStudentName">-</p>
-                    <div class="flex items-center gap-4 text-sm">
+                    <p class="font-bold text-gray-900 dark:text-white text-base md:text-xl mb-1 md:mb-2" id="approveStudentName">-</p>
+                    <div class="flex items-center gap-2 md:gap-4 text-xs md:text-sm flex-wrap">
                         <div class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium">
-                            <span class="material-symbols-outlined text-base">badge</span>
+                            <span class="material-symbols-outlined text-sm md:text-base">badge</span>
                             <span id="approveStudentId">-</span>
                         </div>
                         <span class="text-gray-400">•</span>
                         <div class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium">
-                            <span class="material-symbols-outlined text-base">school</span>
+                            <span class="material-symbols-outlined text-sm md:text-base">school</span>
                             <span id="approveStudentClass">-</span>
                         </div>
                     </div>
@@ -765,37 +766,37 @@
             </div>
             
             <!-- Results -->
-            <div class="bg-gradient-to-r from-green-50/50 to-emerald-50/30 dark:from-green-900/10 dark:to-emerald-900/10 rounded-lg p-5 border-l-[6px] border-green-600 dark:border-green-500 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-gray-700 dark:text-gray-300 font-semibold text-base">Final Score</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-4xl font-bold text-blue-600 dark:text-blue-400" id="approveMarksObtained">0</span>
-                        <span class="text-2xl text-gray-400 dark:text-gray-500">/</span>
-                        <span class="text-2xl font-semibold text-gray-600 dark:text-gray-400" id="approveTotalMarks">0</span>
+            <div class="bg-gradient-to-r from-green-50/50 to-emerald-50/30 dark:from-green-900/10 dark:to-emerald-900/10 rounded-lg p-3 md:p-5 border-l-4 md:border-l-[6px] border-green-600 dark:border-green-500 shadow-sm">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <span class="text-gray-700 dark:text-gray-300 font-semibold text-sm md:text-base">Final Score</span>
+                    <div class="flex items-center gap-1 md:gap-2">
+                        <span class="text-2xl md:text-4xl font-bold text-blue-600 dark:text-blue-400" id="approveMarksObtained">0</span>
+                        <span class="text-lg md:text-2xl text-gray-400 dark:text-gray-500">/</span>
+                        <span class="text-lg md:text-2xl font-semibold text-gray-600 dark:text-gray-400" id="approveTotalMarks">0</span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-gray-700 dark:text-gray-300 font-semibold text-base">Percentage</span>
-                    <span class="text-3xl font-bold text-green-600 dark:text-green-400" id="approvePercentage">0%</span>
+                    <span class="text-gray-700 dark:text-gray-300 font-semibold text-sm md:text-base">Percentage</span>
+                    <span class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400" id="approvePercentage">0%</span>
                 </div>
             </div>
             
             <!-- Warning Message -->
-            <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded">
-                <p class="text-sm text-amber-800 dark:text-amber-200">
+            <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-3 md:p-4 rounded">
+                <p class="text-xs md:text-sm text-amber-800 dark:text-amber-200">
                     ⚠️ This action will lock the grades and mark the submission as approved. This cannot be undone.
                 </p>
             </div>
         </div>
         
         <!-- Footer -->
-        <div class="bg-gray-50 dark:bg-slate-700/30 px-6 py-4 flex gap-3 justify-end border-t border-gray-200 dark:border-slate-700">
-            <button onclick="closeApproveModal(false)" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors">
+        <div class="bg-gray-50 dark:bg-slate-700/30 px-4 md:px-6 py-3 md:py-4 flex gap-2 md:gap-3 justify-end border-t border-gray-200 dark:border-slate-700">
+            <button onclick="closeApproveModal(false)" class="px-4 md:px-6 py-2 md:py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors text-sm md:text-base">
                 Cancel
             </button>
-            <button onclick="closeApproveModal(true)" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined">check_circle</span>
-                <span>Approve & Finalize</span>
+            <button onclick="closeApproveModal(true)" class="px-4 md:px-6 py-2 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base">
+                <span class="material-symbols-outlined text-lg md:text-xl">check_circle</span>
+                <span>Submit</span>
             </button>
         </div>
     </div>
@@ -1987,7 +1988,7 @@ async function verifyCurrentQuestion() {
     }
 }
 
-// Final approval is now handled by the "Approve & Finalize" button in the header
+// Final approval is now handled by the "Submit Grades" button in the header
 // No separate phase needed
 
 // Update marks display in header
@@ -2178,8 +2179,8 @@ function updateNavigationButtons() {
             const isAlreadyVerified = currentGrade && currentGrade.verified;
             
             primaryBtn.innerHTML = isLastQuestion
-                ? `<span class="hidden md:inline">Verify</span><span class="md:hidden">✓</span> <span class="material-symbols-outlined text-base md:text-2xl">check</span>`
-                : `<span class="hidden md:inline">Verify, next</span><span class="md:hidden">Verify</span> <span class="material-symbols-outlined text-base md:text-2xl">arrow_forward</span>`;
+                ? `<span>Approve</span> <span class="material-symbols-outlined text-base md:text-2xl">check</span>`
+                : `<span>Next</span> <span class="material-symbols-outlined text-base md:text-2xl">arrow_forward</span>`;
             
             // Disable button if already verified
             primaryBtn.disabled = isAlreadyVerified;

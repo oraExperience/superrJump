@@ -9,15 +9,15 @@ module.exports = {
       enabled: true,  // ✅ Primary vision model via OpenRouter
       
       // CHANGE MODEL HERE - Available OpenRouter Vision Models:
-      // 'anthropic/claude-3.5-sonnet'    - Best for math, $3/$15 per 1M tokens (current)
-      // 'google/gemini-pro-1.5'          - Fast & cheap, $0.50/$1.50 per 1M tokens
-      // 'google/gemini-flash-1.5'        - Fastest, $0.075/$0.30 per 1M tokens
-      // 'openai/gpt-4o'                  - Good quality, $2.50/$10 per 1M tokens
-      // 'anthropic/claude-3-opus'        - Highest quality, $15/$75 per 1M tokens
-      // 'meta-llama/llama-3.2-90b-vision' - Open source, $0.50/$0.80 per 1M tokens
+      // 'google/gemini-2.0-flash-exp:free' - 🚀 TESTING: Latest Gemini, FREE tier!
+      // 'google/gemini-flash-1.5'        - Stable cheap, $0.075/$0.30 per 1M (~$0.002 per 4 pages)
+      // 'openai/gpt-4o-mini'             - Tested: $0.15/$0.60 per 1M (~$0.024 per 4 pages)
+      // 'anthropic/claude-3-haiku'       - Fast & cheap, $0.25/$1.25 per 1M (~$0.007 per 4 pages)
+      // 'anthropic/claude-3-5-sonnet'    - High quality, $3/$15 per 1M (~$0.08 per 4 pages)
+      // 'anthropic/claude-3-5-haiku'     - Balanced, $0.80/$4 per 1M (~$0.022 per 4 pages)
       
-      model: 'anthropic/claude-3.5-sonnet',  // Current model
-      maxTokens: 1000,  // Response limit (adjust based on credits)
+      model: 'openai/gpt-4o-mini',  // FINAL: Proven working, 93% cost savings
+      maxTokens: 1000,  // Response limit
       priority: 1  // Try first
     },
     openai: {

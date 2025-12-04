@@ -120,24 +120,24 @@
         <header
             class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
             <div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
-                <div class="flex items-center gap-3 text-text-dark dark:text-text-light">
+                <div class="flex items-center gap-2 md:gap-3 text-text-dark dark:text-text-light">
                     <button onclick="toggleSidebar()"
-                        class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
-                        <span class="material-symbols-outlined text-2xl">menu</span>
+                        class="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl md:text-2xl">menu</span>
                     </button>
-                    <a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
-                        <div class="text-primary flex items-center" style="width: 28px; height: 28px;">
+                    <a href="/dashboard" class="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                        <div class="text-primary flex items-center" style="width: 24px; height: 24px;">
                             <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                                 <path clip-rule="evenodd"
                                     d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
                                     fill="currentColor" fill-rule="evenodd"></path>
                             </svg>
                         </div>
-                        <h2 class="text-xl font-bold leading-none">SuperrJump</h2>
+                        <h2 class="text-base md:text-xl font-bold leading-none">SuperrJump</h2>
                     </a>
                 </div>
-                <div class="flex items-center gap-4">
-                    <span id="orgName" class="text-sm font-medium">Organization Name</span>
+                <div class="flex items-center gap-2 md:gap-4">
+                    <span id="orgName" class="text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
                 </div>
             </div>
         </header>
@@ -146,9 +146,9 @@
             <div class="w-full max-w-7xl px-4 md:px-8 py-10">
                 <!-- Welcome Section -->
                 <div
-                    class="mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-6 rounded-xl border-l-4 border-accent-yellow">
-                    <h1 class="text-4xl font-bold mb-2">Welcome back, <span id="displayName"></span>!</h1>
-                    <p class="text-lg text-text-dark/70 dark:text-text-light/70">Here's your profile information</p>
+                    class="mb-6 md:mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
+                    <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 md:mb-2">Welcome back, <span id="displayName"></span>!</h1>
+                    <p class="text-sm md:text-base lg:text-lg text-text-dark/70 dark:text-text-light/70">Here's your profile information</p>
                 </div>
 
                 <!-- User Info Card -->

@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
 const { convertPdfToImages } = require('./pdfImageServiceRemote');
+const visionConfig = require('../config/visionConfig');
 
 /**
  * Extract questions by sending PDF images to OpenAI Vision
@@ -129,7 +130,7 @@ Return ONLY the array, no markdown or extra text.`;
             ]
           }
         ],
-        max_tokens: 4000,
+        max_tokens: 10000,  // Increased for complex grading responses
         temperature: 0.2
       })
     });
@@ -233,7 +234,7 @@ async function parseWithVision(pdfUrls, prompt) {
       : 'https://api.openai.com/v1/chat/completions';
     
     const model = useOpenRouter
-      ? 'anthropic/claude-3.5-sonnet' // OpenRouter model
+      ? visionConfig.models.openrouter.model // Use config model (GPT-4o-mini)
       : 'gpt-4o'; // OpenAI model
     
     console.log(`📡 Using ${useOpenRouter ? 'OpenRouter' : 'OpenAI'} with model: ${model}`);
@@ -441,7 +442,7 @@ async function parseWithVision(pdfUrls, prompt) {
             ]
           }
         ],
-        max_tokens: 750,
+        max_tokens: visionConfig.models.openrouter.maxTokens,
         temperature: 0.2
       })
     });

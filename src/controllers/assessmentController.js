@@ -472,8 +472,17 @@ async function processQuestionExtraction(assessmentId, assessment) {
     const deleteResult = await pool.query(`DELETE FROM questions WHERE assessment_id = $1`, [assessmentId]);
     console.log(`   ✓ Deleted ${deleteResult.rowCount} existing questions from database`);
 
-    // STEP 2: Extract questions with images
+    // Clear PDF page cache for this assessment
     const pdfSource = assessment.localFilePath || assessment.question_paper_link;
+    try {
+      const { clearCache } = require('../services/pdfPageService');
+      clearCache(pdfSource);
+      console.log(`   ✓ Cleared PDF page cache`);
+    } catch (cacheError) {
+      console.log(`   ⚠️  Cache clear failed (non-critical):`, cacheError.message);
+    }
+
+    // STEP 2: Extract questions with images
     console.log(`\n📄 STEP 2: Extracting questions from PDF`);
     console.log(`   PDF Source: ${pdfSource}`);
     console.log(`   Using AI Service...`);
@@ -662,7 +671,7 @@ exports.getAssessmentQuestions = async (req, res) => {
 exports.updateQuestion = async (req, res) => {
   try {
     const { assessmentId, questionId } = req.params;
-    const { question_text, max_marks, verified } = req.body;
+    const { question_text, max_marks, verified, question_identifier, topics } = req.body;
     const userId = req.user.id;
 
     // Verify assessment belongs to user and is not approved yet
@@ -691,16 +700,26 @@ exports.updateQuestion = async (req, res) => {
       });
     }
 
-    // Update question (including verified status if provided)
+    // Update question (including verified status, identifier, and topics if provided)
     const updateQuery = `
       UPDATE questions
       SET question_text = COALESCE($1, question_text),
           max_marks = COALESCE($2, max_marks),
-          verified = COALESCE($3, verified)
-      WHERE id = $4 AND assessment_id = $5
+          verified = COALESCE($3, verified),
+          question_identifier = COALESCE($4, question_identifier),
+          topics = COALESCE($5, topics)
+      WHERE id = $6 AND assessment_id = $7
       RETURNING *
     `;
-    const result = await pool.query(updateQuery, [question_text, max_marks, verified, questionId, assessmentId]);
+    const result = await pool.query(updateQuery, [
+      question_text,
+      max_marks,
+      verified,
+      question_identifier,
+      topics ? JSON.stringify(topics) : null,
+      questionId,
+      assessmentId
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -742,7 +761,7 @@ exports.updateQuestion = async (req, res) => {
 exports.addQuestion = async (req, res) => {
   try {
     const { assessmentId } = req.params;
-    const { question_number, question_text, max_marks } = req.body;
+    const { question_number, question_text, max_marks, question_identifier, topics } = req.body;
     const userId = req.user.id;
 
     // Verify assessment belongs to user
@@ -767,13 +786,21 @@ exports.addQuestion = async (req, res) => {
       });
     }
 
-    // Insert new question
+    // Insert new question with identifier and topics (no auto-generation)
+    // Mark as manual_question = TRUE for manually added questions
     const insertQuery = `
-      INSERT INTO questions (assessment_id, question_number, question_text, max_marks, verified)
-      VALUES ($1, $2, $3, $4, false)
+      INSERT INTO questions (assessment_id, question_number, question_text, max_marks, question_identifier, topics, verified, manual_question)
+      VALUES ($1, $2, $3, $4, $5, $6, false, true)
       RETURNING *
     `;
-    const result = await pool.query(insertQuery, [assessmentId, question_number, question_text, max_marks]);
+    const result = await pool.query(insertQuery, [
+      assessmentId,
+      question_number,
+      question_text,
+      max_marks,
+      question_identifier || null, // Don't auto-generate, leave empty
+      topics ? JSON.stringify(topics) : null
+    ]);
 
     // Update question count and total marks
     const countQuery = `SELECT COUNT(*) as count, SUM(max_marks) as total FROM questions WHERE assessment_id = $1`;
@@ -1573,6 +1600,15 @@ exports.updateQuestionPaper = async (req, res) => {
       );
       
       console.log(`   ✅ Uploaded to R2: ${r2Url}`);
+      
+      // Clear cache for old PDF
+      try {
+        const { clearCache } = require('../services/pdfPageService');
+        clearCache(assessment.question_paper_link);
+        console.log(`   ✓ Cleared old PDF cache`);
+      } catch (cacheError) {
+        console.log(`   ⚠️  Cache clear failed (non-critical):`, cacheError.message);
+      }
       
       // Update assessment with R2 URL
       await pool.query(

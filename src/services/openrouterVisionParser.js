@@ -85,14 +85,21 @@ RULES:
    "Q8. Find ∫e^x dx [5] OR Find ∫sec²x dx [5]"
    → "Find integral e^x dx OR Find integral sec²x dx"
 
-4. Skip: Instructions, headers, page numbers
+4. Visual/Diagram questions: Include answer with brief reason
+   Ex: "Read the abacus [diagram shown]"
+   → "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)"
+   
+   Ex: "Count shapes [diagram shown]"
+   → "Count the shapes. Answer: 8 triangles (4 small + 4 large)"
+
+5. Skip: Instructions, headers, page numbers
 
 Symbol guide: ∫="integral", x²="x squared", π="pi", √="root", ∨="or", →="implies"
 
 Return as array of tuples (NOT objects) to save tokens:
 [
+  ["F1", "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)", 2, 1, [["Number System", 100]]],
   ["Q3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, 1, [["Fractions", 100]]],
-  ["Q3(ii)", "Write TRUE or FALSE: Sum of all sides of a shape is called its Area.", 1, 1, [["Geometry", 100]]],
   ["Q6", "Write any three equivalent fractions for: (a) 2/5 (b) 3/7", 3, 1, [["Fractions", 80], ["Algebra", 20]]]
 ]
 
@@ -102,6 +109,7 @@ Format: [question_identifier, question_text, marks, page_number, topics]
 IMPORTANT:
 - Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
 - topics: Array of [topic_name, weight] tuples - identify curriculum topics covered
+- For visual/diagram questions, ALWAYS add "Answer: [value] (brief reason)" to question_text
 - Return ONLY the array of tuples, no additional text or markdown`;
 
     // Build content array with prompt + all images
@@ -159,12 +167,58 @@ IMPORTANT:
     
     const result = await response.json();
     
-    // Log response
+    // Log FULL response for debugging
     console.log('\n' + '='.repeat(80));
-    console.log('📝 OPENROUTER VISION RESPONSE (ALL PAGES):');
+    console.log('📊 OPENROUTER API RESPONSE - FULL DETAILS');
+    console.log('='.repeat(80));
+    console.log('🤖 Model Used:', visionConfig.models.openrouter.model);
+    console.log('📝 Response ID:', result.id);
+    console.log('🏢 Provider:', result.provider);
+    console.log('⏱️  Created:', new Date(result.created * 1000).toISOString());
+    
+    // Usage & Cost Information
+    if (result.usage) {
+      console.log('\n💰 TOKEN USAGE & COST:');
+      console.log('   📥 Prompt Tokens:', result.usage.prompt_tokens || 0);
+      console.log('   📤 Completion Tokens:', result.usage.completion_tokens || 0);
+      console.log('   📊 Total Tokens:', result.usage.total_tokens || 0);
+      
+      if (result.usage.prompt_cost !== undefined) {
+        console.log('   💵 Prompt Cost: $' + (result.usage.prompt_cost || 0).toFixed(6));
+      }
+      if (result.usage.completion_cost !== undefined) {
+        console.log('   💵 Completion Cost: $' + (result.usage.completion_cost || 0).toFixed(6));
+      }
+      if (result.usage.total_cost !== undefined) {
+        console.log('   💰 Total Cost: $' + (result.usage.total_cost || 0).toFixed(6));
+      }
+    }
+    
+    // Model-specific metadata
+    if (result.model) {
+      console.log('\n🎯 MODEL INFO:');
+      console.log('   Model:', result.model);
+    }
+    
+    // System fingerprint
+    if (result.system_fingerprint) {
+      console.log('   System Fingerprint:', result.system_fingerprint);
+    }
+    
+    console.log('\n📋 FULL RAW RESPONSE:');
+    console.log(JSON.stringify(result, null, 2));
+    console.log('='.repeat(80) + '\n');
+    
+    // Log message content
+    console.log('\n' + '='.repeat(80));
+    console.log('📝 EXTRACTED MESSAGE CONTENT:');
     console.log('='.repeat(80));
     const responseText = result.choices[0]?.message?.content || '[]';
     console.log(responseText);  // Print full response
+    console.log('\n📏 CONTENT METRICS:');
+    console.log('   Type:', typeof responseText);
+    console.log('   Length:', responseText.length, 'characters');
+    console.log('   Lines:', responseText.split('\n').length);
     console.log('='.repeat(80) + '\n');
     
     // Parse response
@@ -244,14 +298,18 @@ RULES:
    "Q8. Find ∫e^x dx [5] OR Find ∫sec²x dx [5]"
    → "Find integral e^x dx OR Find integral sec²x dx"
 
-4. Skip: Instructions, headers, page numbers
+4. Visual/Diagram questions: Include answer with brief reason
+   Ex: "Read the abacus [diagram shown]"
+   → "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)"
+
+5. Skip: Instructions, headers, page numbers
 
 Symbol guide: ∫="integral", x²="x squared", π="pi", √="root", ∨="or", →="implies"
 
 Return as array of tuples (NOT objects) to save tokens:
 [
+  ["F1", "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)", 2, [["Number System", 100]]],
   ["Q3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, [["Fractions", 100]]],
-  ["Q3(ii)", "Write TRUE or FALSE: Sum of all sides of a shape is called its Area.", 1, [["Geometry", 100]]],
   ["Q6", "Write any three equivalent fractions for: (a) 2/5 (b) 3/7", 3, [["Fractions", 80], ["Algebra", 20]]]
 ]
 
@@ -261,6 +319,7 @@ Format: [question_identifier, question_text, marks, topics]
 IMPORTANT:
 - Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
 - topics: Array of [topic_name, weight] tuples - identify curriculum topics covered
+- For visual/diagram questions, ALWAYS add "Answer: [value] (brief reason)" to question_text
 - Return ONLY the array of tuples, no additional text or markdown`;
 
     // Log prompt
@@ -311,12 +370,53 @@ IMPORTANT:
     
     const result = await response.json();
     
-    // Log full response
+    // Log FULL response with all metadata
     console.log('\n' + '='.repeat(80));
-    console.log('📝 OPENROUTER VISION RESPONSE:');
+    console.log('📊 OPENROUTER API RESPONSE - PAGE ' + pageNumber);
+    console.log('='.repeat(80));
+    console.log('🤖 Model Used:', visionConfig.models.openrouter.model);
+    console.log('📝 Response ID:', result.id);
+    console.log('🏢 Provider:', result.provider);
+    console.log('⏱️  Created:', new Date(result.created * 1000).toISOString());
+    
+    // Usage & Cost Information
+    if (result.usage) {
+      console.log('\n💰 TOKEN USAGE & COST (Page ' + pageNumber + '):');
+      console.log('   📥 Prompt Tokens:', result.usage.prompt_tokens || 0);
+      console.log('   📤 Completion Tokens:', result.usage.completion_tokens || 0);
+      console.log('   📊 Total Tokens:', result.usage.total_tokens || 0);
+      
+      if (result.usage.prompt_cost !== undefined) {
+        console.log('   💵 Prompt Cost: $' + (result.usage.prompt_cost || 0).toFixed(6));
+      }
+      if (result.usage.completion_cost !== undefined) {
+        console.log('   💵 Completion Cost: $' + (result.usage.completion_cost || 0).toFixed(6));
+      }
+      if (result.usage.total_cost !== undefined) {
+        console.log('   💰 Total Cost: $' + (result.usage.total_cost || 0).toFixed(6));
+      }
+    }
+    
+    // Model info
+    if (result.model) {
+      console.log('\n🎯 ACTUAL MODEL USED:');
+      console.log('   ', result.model);
+    }
+    
+    console.log('\n📋 FULL RAW RESPONSE:');
+    console.log(JSON.stringify(result, null, 2));
+    console.log('='.repeat(80) + '\n');
+    
+    // Log message content
+    console.log('\n' + '='.repeat(80));
+    console.log('📝 EXTRACTED MESSAGE CONTENT (Page ' + pageNumber + '):');
     console.log('='.repeat(80));
     const responseText = result.choices[0]?.message?.content || '[]';
     console.log(responseText);  // Print full response
+    console.log('\n📏 CONTENT METRICS:');
+    console.log('   Type:', typeof responseText);
+    console.log('   Length:', responseText.length, 'characters');
+    console.log('   Is Empty Array:', responseText.trim() === '[]');
     console.log('='.repeat(80) + '\n');
     
     // Parse response

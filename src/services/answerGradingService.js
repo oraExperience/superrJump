@@ -135,15 +135,15 @@ async function gradeAnswerSheet(submissionId, assessmentId, answerSheetLink) {
 
         const { total, completed } = allSubmissionsCheck.rows[0];
 
-        // If all submissions are completed (graded or failed), update assessment status to "Ans Pending Approval"
+        // If all submissions are completed (graded or failed), update assessment status to "Completed"
         if (parseInt(total) > 0 && parseInt(total) === parseInt(completed)) {
             await pool.query(
                 `UPDATE assessments
-                 SET status = 'Ans Pending Approval', updated_at = CURRENT_TIMESTAMP
+                 SET status = 'Completed', updated_at = CURRENT_TIMESTAMP
                  WHERE id = $1 AND status = 'Processing Ans'`,
                 [assessmentId]
             );
-            console.log(`✅ All submissions completed for assessment ${assessmentId}. Status updated to "Ans Pending Approval"`);
+            console.log(`✅ All submissions completed for assessment ${assessmentId}. Status updated to "Completed"`);
         }
 
         return {
@@ -159,11 +159,44 @@ async function gradeAnswerSheet(submissionId, assessmentId, answerSheetLink) {
 
         // Update submission status to "Failed"
         await pool.query(
-            `UPDATE student_submissions 
-             SET status = 'Failed' 
+            `UPDATE student_submissions
+             SET status = 'Failed'
              WHERE id = $1`,
             [submissionId]
         );
+
+        // Check if there are any non-failed submissions and update assessment status accordingly
+        console.log('🔄 Checking assessment status after submission failure...');
+        const submissionsCheck = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (WHERE status != 'Failed') as successful_count,
+                COUNT(*) as total_count
+             FROM student_submissions
+             WHERE assessment_id = $1`,
+            [assessmentId]
+        );
+
+        const { successful_count, total_count } = submissionsCheck.rows[0];
+        console.log(`📊 Submissions status: ${successful_count} successful out of ${total_count} total`);
+
+        let newAssessmentStatus;
+        if (parseInt(successful_count) > 0) {
+            // At least one successful submission exists
+            newAssessmentStatus = 'Completed';
+            console.log('✅ Setting assessment status to "Completed" (has successful submissions)');
+        } else {
+            // All submissions have failed
+            newAssessmentStatus = 'Ready for Grading';
+            console.log('⚠️  Setting assessment status to "Ready for Grading" (all submissions failed)');
+        }
+
+        await pool.query(
+            `UPDATE assessments
+             SET status = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [newAssessmentStatus, assessmentId]
+        );
+        console.log(`✅ Assessment status updated to: ${newAssessmentStatus}`);
 
         throw error;
     }

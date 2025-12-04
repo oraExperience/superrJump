@@ -466,6 +466,7 @@
             border-top-color: #374151;
         }
     }
+    
 </style>
 </head>
 <body class="font-display bg-background-light dark:bg-background-dark text-text-dark dark:text-text-light">
@@ -530,6 +531,11 @@
                 </div>
             </div>
             
+            <button onclick="addNewQuestionInline()" class="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 flex-shrink-0 text-base">
+                <span class="material-symbols-outlined">add</span>
+                <span>Add Question</span>
+            </button>
+            
             <button onclick="approveAndFinalize()" id="finalizeBtn" disabled class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 text-base">
                 <span class="material-symbols-outlined">check_circle</span>
                 <span>Approve & Finalize</span>
@@ -556,6 +562,48 @@
 <button id="mobileQuestionsBtn" onclick="toggleMobileQuestionsSidebar()" class="md:hidden fixed bottom-20 left-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700 transition-colors">
     <span class="material-symbols-outlined text-2xl">format_list_numbered</span>
 </button>
+
+<!-- Add Question Button (Outside sidebar) -->
+<button id="addQuestionBtn" onclick="addNewQuestionInline()" class="md:hidden fixed bottom-36 left-4 z-50 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors">
+    <span class="material-symbols-outlined text-2xl">add</span>
+</button>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full">
+        <div class="p-6">
+            <div class="flex items-start gap-4 mb-4">
+                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-2xl">warning</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-text-dark dark:text-text-light mb-2">Delete Question?</h3>
+                    <p class="text-gray-600 dark:text-gray-400" id="deleteConfirmMessage">
+                        Are you sure you want to delete this question?
+                    </p>
+                    <p class="text-sm text-red-600 dark:text-red-400 mt-2 font-semibold">
+                        This action cannot be undone.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button
+                    onclick="closeDeleteConfirmModal()"
+                    class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-text-dark dark:text-text-light rounded-lg font-semibold transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    id="confirmDeleteBtn"
+                    class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Split Screen Container -->
 <div class="split-container sidebar-hidden" id="splitContainer">
@@ -812,6 +860,10 @@ function calculateTotalMarks() {
     const total = questions.reduce((sum, q) => sum + parseFloat(q.maxMarks || 0), 0);
     document.getElementById('totalMarks').textContent = formatNumber(total);
     document.getElementById('totalMarksMobile').textContent = formatNumber(total);
+    
+    // Also update question count
+    document.getElementById('totalQuestions').textContent = questions.length;
+    document.getElementById('totalQuestionsMobile').textContent = questions.length;
 }
 
 // Initialize the page
@@ -843,7 +895,9 @@ async function loadQuestionsFromAPI() {
                 verified: q.verified || false,
                 pageNumber: q.page_number || 1, // Page number in PDF
                 question_image_blob: null, // Will be populated when rendering
-                topics: q.topics || [], // Topics with weightage from AI
+                topics: Array.isArray(q.topics) ? q.topics : [], // Ensure it's always an array
+                question_identifier: q.question_identifier || '', // Don't prefill - let user enter
+                manual_question: q.manual_question || false, // TRUE = manually added, FALSE = AI-extracted
                 dbId: q.id  // Store database ID for updates
             }));
             
@@ -995,11 +1049,18 @@ function renderQuestionsSidebar() {
             ? '<span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>'
             : '<span class="material-symbols-outlined text-gray-400 text-xl">radio_button_unchecked</span>';
         
+        const identifier = q.question_identifier || '';
+        const isEmpty = !q.question && q.maxMarks === 0 && !q.question_identifier;
+        const incompleteWarning = isEmpty ? '<span class="text-xs text-red-500 font-semibold">⚠ Incomplete</span>' : '';
+        
         navItem.innerHTML = `
             ${statusIcon}
             <div class="flex-1">
-                <p class="text-sm font-semibold text-text-dark dark:text-text-light">Question ${q.questionNumber}</p>
-                <p class="text-xs font-bold text-primary mt-1">${formatNumber(q.maxMarks)} marks</p>
+                <div class="flex items-center gap-2">
+                    <p class="text-sm font-semibold text-text-dark dark:text-text-light">Q${q.questionNumber}</p>
+                    ${identifier ? `<span class="text-xs px-1.5 py-0.5 ${isEmpty ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-primary/10 text-primary'} rounded font-semibold">${identifier}</span>` : ''}
+                </div>
+                ${isEmpty ? incompleteWarning : `<p class="text-xs font-bold text-primary mt-1">${formatNumber(q.maxMarks)} marks</p>`}
             </div>
         `;
         
@@ -1066,75 +1127,174 @@ function renderCurrentQuestion() {
     // Display PDF page in right panel
     displayPdfPage();
     
+    const questionIdentifier = q.question_identifier || '';
+    const isEmpty = !q.question && q.maxMarks === 0 && !q.question_identifier;
+    const requiredMark = '<span class="text-red-500">*</span>';
+    
     container.innerHTML = `
         <div class="question-card bg-white dark:bg-slate-800 rounded-xl p-3 md:p-6 shadow-sm">
-        <!-- Question Header with Marks -->
-        <div class="flex items-center justify-between mb-4 md:mb-6">
+        <!-- Question Header with Identifier, Marks, and Delete -->
+        <div class="flex items-center justify-between mb-4 md:mb-6 gap-2">
             <div class="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                 <span class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full font-bold text-sm md:text-lg flex-shrink-0">
                     ${q.questionNumber}
                 </span>
-                <h3 class="text-sm md:text-xl font-bold text-text-dark dark:text-text-light truncate">Question ${q.questionNumber}</h3>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm md:text-xl font-bold text-text-dark dark:text-text-light mb-1">Question ${q.questionNumber}</h3>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-gray-500 dark:text-gray-400">ID: ${requiredMark}</label>
+                        <input
+                            type="text"
+                            id="identifier_${q.id}"
+                            value="${questionIdentifier}"
+                            oninput="updateQuestionIdentifier(${q.id})"
+                            class="px-2 py-0.5 text-xs md:text-sm font-semibold rounded border ${isEmpty ? 'border-red-300' : 'border-gray-300'} dark:border-gray-600 bg-white dark:bg-slate-700 text-primary focus:ring-2 focus:ring-primary focus:border-primary w-20 md:w-24"
+                            placeholder="e.g., Q${q.questionNumber}"
+                            required
+                        />
+                    </div>
+                </div>
             </div>
-            <div class="flex items-center gap-1 md:gap-2 flex-shrink-0 ${q.verified ? 'text-green-600' : ''}">
-                <input
-                    type="number"
-                    id="marks_${q.id}"
-                    min="0"
-                    step="0.1"
-                    value="${q.maxMarks}"
-                    oninput="updateMarks(${q.id})"
-                    class="w-12 md:w-16 px-1 md:px-2 py-1 rounded border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-center font-bold text-sm md:text-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                />
-                <span class="text-text-dark dark:text-text-light font-bold text-sm md:text-lg">marks</span>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="flex flex-col items-end gap-1">
+                    <label class="text-xs text-gray-500 dark:text-gray-400">Marks ${requiredMark}</label>
+                    <div class="flex items-center gap-1 ${q.verified ? 'text-green-600' : ''}">
+                        <input
+                            type="number"
+                            id="marks_${q.id}"
+                            min="0"
+                            step="0.1"
+                            value="${q.maxMarks}"
+                            oninput="updateMarks(${q.id})"
+                            class="w-12 md:w-16 px-1 md:px-2 py-1 rounded border-2 ${isEmpty ? 'border-red-300' : 'border-gray-300'} dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-center font-bold text-sm md:text-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            ${isEmpty ? 'required' : ''}
+                        />
+                        <span class="text-text-dark dark:text-text-light font-bold text-xs md:text-base">marks</span>
+                    </div>
+                </div>
+                <button
+                    onclick="confirmDeleteQuestion(${q.id})"
+                    class="p-1.5 md:p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    title="Delete question"
+                >
+                    <span class="material-symbols-outlined text-lg md:text-xl">delete</span>
+                </button>
             </div>
         </div>
         
         <!-- Question Text (for search/metadata) -->
         <div class="mb-4 md:mb-6">
             <label class="block text-xs md:text-sm font-semibold text-text-dark dark:text-text-light mb-2">
-                Question (extracted by AI)
+                Question Text ${requiredMark}
             </label>
             <textarea
                 id="question_${q.id}"
                 rows="3"
                 oninput="updateQuestionText(${q.id})"
-                class="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary resize-none"
+                minlength="10"
+                class="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base rounded-lg border ${isEmpty ? 'border-red-300' : 'border-gray-300'} dark:border-gray-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light focus:ring-2 focus:ring-primary resize-none"
+                placeholder="Enter the question text here... (minimum 10 characters)"
+                required
             >${q.question}</textarea>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span class="material-symbols-outlined text-xs">info</span>
-                ${q.question_image_blob ? 'Extracted text for search purposes. See the PDF page on the right panel.' : 'Edit the question text extracted by AI if needed'}
-            </p>
+            <div id="questionTextError_${q.id}" class="text-xs mt-1"></div>
+            ${q.question_image_blob ? `
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span class="material-symbols-outlined text-xs">info</span>
+                    Extracted text for search purposes. See the PDF page on the right panel.
+                </p>
+            ` : ''}
         </div>
         
-        <!-- Topics Covered -->
+        <!-- Topics Covered (Editable for manual questions, Read-only for AI-extracted) -->
         <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-3 md:p-4 border border-purple-200 dark:border-purple-800">
-            <div class="flex items-start gap-1.5 md:gap-2 mb-2 md:mb-3">
-                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-lg md:text-xl">school</span>
-                <div class="flex-1">
-                    <p class="text-xs md:text-sm font-semibold text-text-dark dark:text-text-light mb-0.5 md:mb-1">Topics Covered (AI Analysis)</p>
-                    <p class="text-xs text-gray-600 dark:text-gray-400">
-                        AI-identified topics with their coverage weightage
-                    </p>
+            <div class="flex items-start justify-between gap-2 mb-3">
+                <div class="flex items-start gap-1.5 md:gap-2">
+                    <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-lg md:text-xl">school</span>
+                    <div class="flex-1">
+                        <p class="text-xs md:text-sm font-semibold text-text-dark dark:text-text-light mb-0.5">
+                            Topics Covered ${q.manual_question ? '<span class="text-red-500">*</span>' : '<span class="text-xs font-normal text-gray-500 dark:text-gray-400">(AI-suggested)</span>'}
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">
+                            ${q.manual_question ? 'Required: 1-3 topics, weightage must sum to 100%' : 'These topics were automatically suggested by AI'}
+                        </p>
+                    </div>
                 </div>
+                ${q.manual_question ? `
+                <button
+                    onclick="addTopic(${q.id})"
+                    class="flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="addTopicBtn_${q.id}"
+                    ${(q.topics && q.topics.length >= 3) ? 'disabled' : ''}
+                >
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    <span class="hidden md:inline">Add</span>
+                </button>
+                ` : ''}
             </div>
-            ${q.topics && q.topics.length > 0 ? `
-                <div class="flex flex-wrap gap-1.5 md:gap-2">
-                    ${q.topics.map(t => `
-                        <div class="inline-flex items-center gap-1.5 md:gap-2 bg-white dark:bg-slate-700 px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-purple-300 dark:border-purple-600 shadow-sm">
-                            <span class="text-xs md:text-sm font-medium text-gray-800 dark:text-gray-200">${t.topic}</span>
-                            <span class="inline-flex items-center justify-center min-w-[32px] md:min-w-[40px] px-1.5 md:px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full">
-                                ${t.weight}%
-                            </span>
+            
+            <div id="topicsContainer_${q.id}">
+                ${q.topics && q.topics.length > 0 ? (
+                    q.manual_question ? `
+                    <div class="space-y-2">
+                        ${q.topics.map((t, idx) => `
+                        <div class="flex items-center gap-2 bg-white dark:bg-slate-700 p-2 md:p-3 rounded-lg border border-purple-200 dark:border-purple-700">
+                            <input
+                                type="text"
+                                value="${t.topic}"
+                                placeholder="Topic name"
+                                required
+                                oninput="updateTopicName(${q.id}, ${idx}, this.value)"
+                                class="flex-1 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-text-dark dark:text-text-light focus:ring-2 focus:ring-purple-500"
+                            />
+                            <input
+                                type="number"
+                                value="${t.weight}"
+                                placeholder="%"
+                                min="0"
+                                max="100"
+                                step="1"
+                                required
+                                oninput="updateTopicWeight(${q.id}, ${idx}, this.value)"
+                                onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 8"
+                                class="w-16 md:w-20 px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-text-dark dark:text-text-light text-center focus:ring-2 focus:ring-purple-500"
+                            />
+                            <span class="text-xs md:text-sm font-semibold text-gray-600 dark:text-gray-400">%</span>
+                            <button
+                                onclick="removeTopic(${q.id}, ${idx})"
+                                class="p-1 md:p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                title="Remove topic"
+                            >
+                                <span class="material-symbols-outlined text-base md:text-lg">close</span>
+                            </button>
                         </div>
-                    `).join('')}
-                </div>
-            ` : `
-                <div class="flex items-center gap-1.5 md:gap-2 text-gray-500 dark:text-gray-400 text-xs md:text-sm">
-                    <span class="material-symbols-outlined text-sm md:text-base">info</span>
-                    <span>No topics identified yet. This will be added during extraction.</span>
-                </div>
-            `}
+                        `).join('')}
+                    </div>
+                    ` : `
+                    <div class="flex flex-wrap gap-2">
+                        ${q.topics.map((t, idx) => `
+                        <div class="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-white dark:bg-slate-700 rounded-full border border-purple-200 dark:border-purple-700 shadow-sm">
+                            <span class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">${t.topic}</span>
+                            <span class="text-xs md:text-sm font-bold text-purple-600 dark:text-purple-400">${t.weight}%</span>
+                        </div>
+                        `).join('')}
+                    </div>
+                    `
+                ) : `
+                    ${q.manual_question ? `
+                    <div class="flex items-center gap-1.5 md:gap-2 text-red-600 dark:text-red-400 text-xs md:text-sm p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                        <span class="material-symbols-outlined text-sm md:text-base">warning</span>
+                        <span>Required: Click "Add" to add at least one topic.</span>
+                    </div>
+                    ` : `
+                    <div class="flex items-center gap-1.5 md:gap-2 text-gray-600 dark:text-gray-400 text-xs md:text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                        <span class="material-symbols-outlined text-sm md:text-base">info</span>
+                        <span>No topics were suggested by AI for this question.</span>
+                    </div>
+                    `}
+                `}
+            </div>
+            
+            ${q.manual_question ? `<div id="topicsValidation_${q.id}" class="mt-2 text-xs md:text-sm font-semibold"></div>` : ''}
         </div>
         
     </div>
@@ -1203,8 +1363,11 @@ async function updateQuestionText(questionId) {
     
     question.question = newText;
     
+    // Clear any previous error when user starts typing
+    const errorDiv = document.getElementById(`questionTextError_${questionId}`);
+    if (errorDiv) errorDiv.innerHTML = '';
+    
     // Reset verified status if text changed after verification
-    // (don't save yet - will save when user clicks Verify button)
     if (question.verified) {
         question.verified = false;
         renderQuestionsSidebar();
@@ -1227,7 +1390,9 @@ async function saveQuestionToAPI(question) {
             body: JSON.stringify({
                 question_text: question.question,
                 max_marks: question.maxMarks,
-                verified: question.verified  // Include verified status in update
+                verified: question.verified,
+                question_identifier: question.question_identifier,
+                topics: question.topics
             })
         });
 
@@ -1241,6 +1406,386 @@ async function saveQuestionToAPI(question) {
     } catch (error) {
         console.error('Error saving question:', error);
         showAlert('Failed to save changes. Please try again.', 'Error', 'error');
+    }
+}
+
+// Update question identifier
+async function updateQuestionIdentifier(questionId) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    const identifierInput = document.getElementById(`identifier_${questionId}`);
+    const newIdentifier = identifierInput.value.trim();
+    
+    // Only update if identifier actually changed
+    if (question.question_identifier === newIdentifier) return;
+    
+    question.question_identifier = newIdentifier;
+    
+    // Reset verified status if identifier changed after verification
+    if (question.verified) {
+        question.verified = false;
+        renderQuestionsSidebar();
+        updateGradeBoxStyling(questionId);
+        updateNavigationButtons();
+        updateFinalizeButton();
+    }
+}
+
+// Add new question inline (creates empty question and navigates to it)
+async function addNewQuestionInline() {
+    try {
+        // Generate next question number
+        const nextNumber = questions.length > 0 ? Math.max(...questions.map(q => q.questionNumber)) + 1 : 1;
+        
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(`/api/assessments/${assessmentId}/questions`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                question_number: nextNumber,
+                question_text: '', // Empty - user will fill
+                max_marks: 0, // Default 0 - user will fill
+                question_identifier: '' // Empty - user will fill
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add question');
+        }
+        
+        const data = await response.json();
+        
+        // Add new question to local array (manually added = editable topics)
+        const newQuestion = {
+            id: data.question.id,
+            questionNumber: data.question.question_number,
+            question: '', // Empty
+            maxMarks: 0, // Default 0
+            verified: false,
+            pageNumber: 1,
+            question_image_blob: null,
+            topics: [], // Empty array for topics - user must add
+            question_identifier: data.question.question_identifier || '',
+            manual_question: true, // Manually added question = editable topics
+            dbId: data.question.id
+        };
+        
+        questions.push(newQuestion);
+        
+        // Re-render UI
+        calculateTotalMarks();
+        renderQuestionsSidebar();
+        updateFinalizeButton();
+        
+        // Navigate to new question
+        currentQuestionIndex = questions.length - 1;
+        renderCurrentQuestion();
+        updateNavigationButtons();
+        
+        // Focus on identifier input
+        setTimeout(() => {
+            const identifierInput = document.getElementById(`identifier_${newQuestion.id}`);
+            if (identifierInput) identifierInput.focus();
+        }, 100);
+        
+        showAlert('New question added. Please fill in the details.', 'Question Added', 'success');
+        
+    } catch (error) {
+        console.error('Error adding question:', error);
+        showAlert(error.message || 'Failed to add question. Please try again.', 'Error', 'error');
+    }
+}
+
+// Store question ID for deletion
+let questionToDelete = null;
+
+// Open delete confirmation modal
+function confirmDeleteQuestion(questionId) {
+    console.log('🔔 confirmDeleteQuestion called with ID:', questionId);
+    const question = questions.find(q => q.id === questionId);
+    if (!question) {
+        console.error('❌ Question not found for ID:', questionId);
+        return;
+    }
+    
+    const identifier = question.question_identifier || `Q${question.questionNumber}`;
+    
+    // Update modal message
+    document.getElementById('deleteConfirmMessage').textContent =
+        `Are you sure you want to delete ${identifier}?`;
+    
+    // Store question ID
+    questionToDelete = questionId;
+    console.log('💾 Stored questionToDelete:', questionToDelete);
+    
+    // Show modal
+    document.getElementById('deleteConfirmModal').classList.remove('hidden');
+    
+    // Set up confirm button click handler with closure to preserve questionId
+    document.getElementById('confirmDeleteBtn').onclick = async () => {
+        console.log('🔘 Confirm button clicked, questionToDelete:', questionToDelete);
+        const idToDelete = questionToDelete; // Capture the ID before closing
+        closeDeleteConfirmModal();
+        await deleteQuestion(idToDelete);
+    };
+}
+
+// Close delete confirmation modal
+function closeDeleteConfirmModal() {
+    document.getElementById('deleteConfirmModal').classList.add('hidden');
+    questionToDelete = null;
+}
+
+// Topics Management Functions
+function addTopic(questionId) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    // Only allow editing for manually added questions
+    if (!question.manual_question) {
+        showAlert('Topics are AI-suggested and cannot be edited for AI-extracted questions', 'Not Editable', 'info');
+        return;
+    }
+    
+    // Max 3 topics
+    if (question.topics.length >= 3) {
+        showAlert('Maximum 3 topics allowed', 'Limit Reached', 'warning');
+        return;
+    }
+    
+    // Add new empty topic
+    question.topics.push({ topic: '', weight: 0 });
+    
+    // Re-render question
+    renderCurrentQuestion();
+    
+    // Reset verified status
+    if (question.verified) {
+        question.verified = false;
+        renderQuestionsSidebar();
+        updateNavigationButtons();
+        updateFinalizeButton();
+    }
+}
+
+function removeTopic(questionId, topicIndex) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    // Only allow editing for manually added questions
+    if (!question.manual_question) {
+        showAlert('Topics are AI-suggested and cannot be edited for AI-extracted questions', 'Not Editable', 'info');
+        return;
+    }
+    
+    // Remove topic
+    question.topics.splice(topicIndex, 1);
+    
+    // Re-render question
+    renderCurrentQuestion();
+    
+    // Reset verified status
+    if (question.verified) {
+        question.verified = false;
+        renderQuestionsSidebar();
+        updateNavigationButtons();
+        updateFinalizeButton();
+    }
+}
+
+function updateTopicName(questionId, topicIndex, value) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question || !question.topics[topicIndex]) return;
+    
+    // Only allow editing for manually added questions
+    if (!question.manual_question) return;
+    
+    question.topics[topicIndex].topic = value;
+    
+    // Clear error when user starts typing
+    const validationEl = document.getElementById(`topicsValidation_${questionId}`);
+    if (validationEl) validationEl.innerHTML = '';
+    
+    // Reset verified status
+    if (question.verified) {
+        question.verified = false;
+        renderQuestionsSidebar();
+        updateNavigationButtons();
+        updateFinalizeButton();
+    }
+}
+function updateTopicWeight(questionId, topicIndex, value) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question || !question.topics[topicIndex]) return;
+    
+    // Only allow editing for manually added questions
+    if (!question.manual_question) return;
+    
+    let weight = parseInt(value) || 0;
+    
+    // Calculate sum of OTHER topics (excluding current one)
+    const otherTopicsSum = question.topics.reduce((sum, t, idx) => {
+        if (idx !== topicIndex) {
+            return sum + (parseInt(t.weight) || 0);
+        }
+        return sum;
+    }, 0);
+    
+    // Maximum allowed for this topic is (100 - sum of others)
+    const maxAllowed = 100 - otherTopicsSum;
+    
+    // Enforce 0 minimum and calculated maximum
+    let corrected = false;
+    if (weight < 0) {
+        weight = 0;
+        corrected = true;
+    } else if (weight > maxAllowed) {
+        weight = maxAllowed;
+        corrected = true;
+    }
+    
+    question.topics[topicIndex].weight = weight;
+    
+    // Clear error when user changes value
+    const validationEl = document.getElementById(`topicsValidation_${questionId}`);
+    if (validationEl) validationEl.innerHTML = '';
+    
+    // Only update the input value if it was corrected (to prevent cursor loss)
+    if (corrected) {
+        const inputId = `topicWeight_${questionId}_${topicIndex}`;
+        const input = document.querySelector(`input[oninput*="updateTopicWeight(${questionId}, ${topicIndex}"]`);
+        if (input && input.value !== weight.toString()) {
+            input.value = weight;
+        }
+    }
+    
+    // Reset verified status
+    if (question.verified) {
+        question.verified = false;
+        renderQuestionsSidebar();
+        updateNavigationButtons();
+        updateFinalizeButton();
+    }
+}
+
+function validateTopics(questionId) {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+    
+    const validationEl = document.getElementById(`topicsValidation_${questionId}`);
+    const addBtn = document.getElementById(`addTopicBtn_${questionId}`);
+    
+    if (!validationEl) return;
+    
+    // Check if topics exist
+    if (question.topics.length === 0) {
+        validationEl.innerHTML = '';
+        if (addBtn) addBtn.disabled = false;
+        return;
+    }
+    
+    // Calculate total weight
+    const totalWeight = question.topics.reduce((sum, t) => sum + (parseInt(t.weight) || 0), 0);
+    
+    // Check for empty names
+    const hasEmptyNames = question.topics.some(t => !t.topic || t.topic.trim() === '');
+    
+    // Validation messages
+    if (hasEmptyNames) {
+        validationEl.innerHTML = `<span class="text-red-600 dark:text-red-400">⚠ All topics must have names</span>`;
+    } else if (totalWeight !== 100 && question.topics.length > 0) {
+        const diff = 100 - totalWeight;
+        validationEl.innerHTML = `<span class="text-amber-600 dark:text-amber-400">⚠ Total: ${totalWeight}% (${diff > 0 ? '+' : ''}${diff}% to reach 100%)</span>`;
+    } else if (totalWeight === 100) {
+        validationEl.innerHTML = `<span class="text-green-600 dark:text-green-400">✓ Total: 100%</span>`;
+    } else {
+        validationEl.innerHTML = '';
+    }
+    
+    // Disable add button if 3 topics reached
+    if (addBtn) {
+        addBtn.disabled = question.topics.length >= 3;
+    }
+}
+
+// Delete question
+async function deleteQuestion(questionId) {
+    try {
+        console.log('🗑️ Deleting question:', questionId);
+        const token = sessionStorage.getItem('token');
+        const question = questions.find(q => q.id === questionId);
+        
+        if (!question) {
+            console.error('❌ Question not found in local array:', questionId);
+            return;
+        }
+        
+        console.log('📝 Question details:', { id: question.id, dbId: question.dbId, questionNumber: question.questionNumber });
+        console.log('🌐 DELETE URL:', `/api/assessments/${assessmentId}/questions/${question.dbId}`);
+        
+        const response = await fetch(`/api/assessments/${assessmentId}/questions/${question.dbId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ Delete failed:', errorData);
+            throw new Error(errorData.message || 'Failed to delete question');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Delete successful:', data);
+        
+        // Remove from local array
+        const index = questions.findIndex(q => q.id === questionId);
+        if (index !== -1) {
+            questions.splice(index, 1);
+        }
+        
+        // Adjust current index if needed
+        if (currentQuestionIndex >= questions.length) {
+            currentQuestionIndex = Math.max(0, questions.length - 1);
+        }
+        
+        // Re-render UI
+        if (questions.length === 0) {
+            // No questions left
+            document.getElementById('currentQuestionContainer').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-center p-6">
+                    <span class="material-symbols-outlined text-6xl text-gray-400 mb-4">inbox</span>
+                    <h3 class="text-xl font-bold text-gray-600 dark:text-gray-400 mb-2">No Questions</h3>
+                    <p class="text-gray-500 dark:text-gray-500">Click "Add" to create a new question</p>
+                </div>
+            `;
+        } else {
+            renderCurrentQuestion();
+        }
+        
+        // Force update all counts immediately
+        calculateTotalMarks();
+        renderQuestionsSidebar();
+        updateNavigationButtons();
+        updateFinalizeButton();
+        
+        // Also force update the header counts directly
+        document.getElementById('totalQuestions').textContent = questions.length;
+        document.getElementById('totalQuestionsMobile').textContent = questions.length;
+        
+        showAlert('Question deleted successfully', 'Success', 'success');
+        
+    } catch (error) {
+        console.error('Error deleting question:', error);
+        showAlert(error.message || 'Failed to delete question. Please try again.', 'Error', 'error');
     }
 }
 
@@ -1300,6 +1845,65 @@ async function nextQuestion() {
     // Mark current question as verified locally (changes not saved yet)
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion) {
+        let hasErrors = false;
+        
+        // Validate question text length (minimum 10 characters)
+        const errorDiv = document.getElementById(`questionTextError_${currentQuestion.id}`);
+        if (!currentQuestion.question || currentQuestion.question.trim().length < 10) {
+            if (errorDiv) {
+                const length = currentQuestion.question ? currentQuestion.question.trim().length : 0;
+                errorDiv.innerHTML = `<span class="text-red-600 dark:text-red-400 flex items-center gap-1 font-semibold"><span class="material-symbols-outlined text-sm">error</span>Question text must be at least 10 characters (currently ${length})</span>`;
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                hasErrors = true;
+            }
+        }
+        
+        if (!currentQuestion.maxMarks || currentQuestion.maxMarks <= 0) {
+            hasErrors = true;
+        }
+        
+        if (!currentQuestion.question_identifier || currentQuestion.question_identifier.trim() === '') {
+            hasErrors = true;
+        }
+        
+        // Validate topics (only for manually added questions)
+        // AI-extracted questions have AI-suggested topics that are read-only
+        if (currentQuestion.manual_question) {
+            const topicsValidationDiv = document.getElementById(`topicsValidation_${currentQuestion.id}`);
+            if (!currentQuestion.topics || currentQuestion.topics.length === 0) {
+                if (topicsValidationDiv) {
+                    topicsValidationDiv.innerHTML = `<span class="text-red-600 dark:text-red-400 flex items-center gap-1 font-semibold"><span class="material-symbols-outlined text-sm">error</span>At least one topic is required. Click "Add" to add a topic.</span>`;
+                    if (!hasErrors) topicsValidationDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    hasErrors = true;
+                }
+            } else {
+                // Check for empty topic names
+                const hasEmptyNames = currentQuestion.topics.some(t => !t.topic || t.topic.trim() === '');
+                if (hasEmptyNames) {
+                    if (topicsValidationDiv) {
+                        topicsValidationDiv.innerHTML = `<span class="text-red-600 dark:text-red-400 flex items-center gap-1 font-semibold"><span class="material-symbols-outlined text-sm">error</span>All topics must have names</span>`;
+                        if (!hasErrors) topicsValidationDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        hasErrors = true;
+                    }
+                } else {
+                    // Check if weights sum to 100
+                    const totalWeight = currentQuestion.topics.reduce((sum, t) => sum + (parseInt(t.weight) || 0), 0);
+                    if (totalWeight !== 100) {
+                        if (topicsValidationDiv) {
+                            const diff = 100 - totalWeight;
+                            topicsValidationDiv.innerHTML = `<span class="text-red-600 dark:text-red-400 flex items-center gap-1 font-semibold"><span class="material-symbols-outlined text-sm">error</span>Topic weightages must sum to 100% (currently ${totalWeight}%, ${diff > 0 ? 'need +' : ''}${diff}%)</span>`;
+                            if (!hasErrors) topicsValidationDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            hasErrors = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (hasErrors) {
+            return;
+        }
+        
         currentQuestion.verified = true;
         console.log(`✓ Question ${currentQuestion.questionNumber} marked as verified locally (not saved to database yet)`);
     }
@@ -1486,7 +2090,9 @@ async function approveAndFinalize() {
                     body: JSON.stringify({
                         question_text: question.question,
                         max_marks: question.maxMarks,
-                        verified: question.verified
+                        verified: question.verified,
+                        question_identifier: question.question_identifier,
+                        topics: question.topics
                     })
                 });
                 

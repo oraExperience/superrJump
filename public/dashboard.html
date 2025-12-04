@@ -200,7 +200,7 @@
                     </div>
 
                     <!-- Pending Reviews (with graded coloring) -->
-                    <div id="pendingReviewsCard" class="stat-card bg-yellow-50 dark:bg-yellow-900/10 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer hover:shadow-xl transition-shadow"
+                    <div id="pendingReviewsCard" class="stat-card bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 rounded-xl shadow-lg border-l-4 border-accent-yellow p-4 md:p-6 cursor-pointer hover:shadow-xl transition-shadow"
                         onclick="window.location.href='/assessments?filter=pending'">
                         <div class="flex items-center justify-between">
                             <div>
@@ -365,28 +365,25 @@
             document.getElementById('totalAssessments').textContent = stats.totalAssessments || 0;
             document.getElementById('activeClasses').textContent = stats.activeClasses || 0;
             
-            // Update Pending Reviews with graded left border (keep icon and box yellow)
+            // Update Pending Reviews with graded left border (gradient background stays)
             const pendingCount = stats.pendingReviews || 0;
             document.getElementById('pendingReviews').textContent = pendingCount;
             
             const card = document.getElementById('pendingReviewsCard');
             
             // Remove all border color classes
-            card.classList.remove(
-                'border-l-4', 'border-l-green-500', 'border-l-yellow-500',
-                'border-l-orange-500'
-            );
+            card.classList.remove('border-accent-yellow', 'border-green-500', 'border-orange-500');
             
-            // Apply graded border coloring based on count (icon and box stay yellow)
+            // Apply graded border coloring based on count (gradient background stays)
             if (pendingCount === 0) {
                 // Green - All caught up!
-                card.classList.add('border-l-4', 'border-l-green-500');
+                card.classList.add('border-green-500');
             } else if (pendingCount <= 5) {
-                // Yellow - Moderate
-                card.classList.add('border-l-4', 'border-l-yellow-500');
+                // Yellow - Moderate (default accent-yellow)
+                card.classList.add('border-accent-yellow');
             } else {
                 // Orange - Needs attention
-                card.classList.add('border-l-4', 'border-l-orange-500');
+                card.classList.add('border-orange-500');
             }
         }
 

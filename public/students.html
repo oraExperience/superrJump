@@ -133,48 +133,61 @@
         </header>
 
         <main class="flex flex-col items-center w-full flex-1">
-            <div class="w-full max-w-7xl px-4 md:px-8 py-10">
-                <!-- Header -->
+            <div class="w-full max-w-7xl px-4 md:px-8 py-6 md:py-10">
+                <!-- Page Header -->
                 <div
-                    class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
+                    class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
                     <div>
-                        <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 md:mb-2">Student Management</h1>
-                        <p class="text-sm md:text-base lg:text-lg text-text-dark/70 dark:text-text-light/70">Manage your student database for
-                            accurate matching</p>
+                        <h1 class="text-lg md:text-3xl font-bold mb-1 md:mb-2">Students</h1>
+                        <p class="text-xs md:text-base text-text-dark/70 dark:text-text-light/70">Manage your student database</p>
                     </div>
-                    <div class="flex gap-3 w-full md:w-auto">
+                    <div class="flex flex-row gap-2 md:gap-3 w-full md:w-auto">
                         <button onclick="openBulkUploadModal()"
-                            class="flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light border border-gray-300 dark:border-slate-600 rounded-lg font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors w-full md:w-auto">
-                            <span class="material-symbols-outlined !text-xl">upload_file</span>
+                            class="flex items-center justify-center gap-2 px-4 py-2.5 md:px-6 md:py-3 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light border border-gray-300 dark:border-slate-600 rounded-lg font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors text-xs md:text-base">
+                            <span class="material-symbols-outlined !text-base md:!text-xl">upload_file</span>
                             <span>Bulk Upload</span>
                         </button>
                         <button onclick="openAddStudentModal()"
-                            class="flex items-center justify-center gap-2 px-6 py-3 bg-accent-yellow text-text-dark rounded-lg font-semibold shadow-sm hover:bg-yellow-500 transition-colors w-full md:w-auto">
-                            <span class="material-symbols-outlined !text-xl">add</span>
+                            class="flex items-center justify-center gap-2 px-4 py-2.5 md:px-6 md:py-3 bg-accent-yellow text-text-dark rounded-lg font-semibold shadow-sm transition-transform hover:scale-105 text-xs md:text-base">
+                            <span class="material-symbols-outlined !text-base md:!text-xl">add</span>
                             <span>Add Student</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Filters -->
-                <div class="flex flex-wrap gap-3 mb-6">
-                    <div class="relative flex-1 min-w-[200px]">
-                        <span
-                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">search</span>
-                        <input type="text" id="searchInput" placeholder="Search students..."
-                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all">
+                <!-- Search and Filter Section -->
+                <div class="mb-6">
+                    <!-- Mobile: Two rows, Desktop: Single row -->
+                    <div class="flex flex-col md:flex-row gap-3 md:gap-4">
+                        <!-- Search Input (Full width on mobile, flex-1 on desktop) -->
+                        <div class="relative w-full md:flex-1 md:min-w-[200px]">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">search</span>
+                            <input type="text" id="searchInput" placeholder="Search students..."
+                                class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                oninput="filterStudents()">
+                        </div>
+                        
+                        <!-- Class Filter and Clear (Row on mobile, inline on desktop) -->
+                        <div class="flex gap-3 md:contents">
+                            <select id="classFilter"
+                                class="flex-1 md:flex-none md:w-auto px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none cursor-pointer md:min-w-[140px]"
+                                onchange="filterStudents()">
+                                <option value="">All Classes</option>
+                                <!-- Options populated dynamically -->
+                            </select>
+                            <button onclick="clearFilters()"
+                                class="px-4 py-2 text-sm font-medium text-primary hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap">
+                                Clear
+                            </button>
+                        </div>
                     </div>
-                    <select id="classFilter"
-                        class="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-text-dark dark:text-text-light text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none cursor-pointer min-w-[140px]">
-                        <option value="">All Classes</option>
-                        <!-- Options populated dynamically -->
-                    </select>
                 </div>
 
                 <!-- Students Table -->
                 <div
-                    class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg border-y md:border border-border-light dark:border-border-dark overflow-hidden">
-                    <div class="overflow-x-auto">
+                    class="-mx-4 md:mx-0 bg-white dark:bg-slate-800 md:rounded-xl shadow-lg md:border border-border-light dark:border-border-dark overflow-hidden">
+                    <!-- Desktop Table View -->
+                    <div class="overflow-x-auto hidden md:block">
                         <table class="w-full" style="min-width: 1200px;">
                             <thead class="bg-primary">
                                 <tr>
@@ -222,6 +235,12 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Mobile Card View -->
+                    <div class="md:hidden" id="studentsCardView">
+                        <!-- Cards will be dynamically generated here -->
+                    </div>
+
                     <!-- Pagination -->
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                         <div class="text-sm text-text-dark/70 dark:text-text-light/70">
@@ -443,6 +462,15 @@
         const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
         document.getElementById('orgName').textContent = orgName;
 
+        // Clear filters function
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('classFilter').value = '';
+            filterStudents();
+        }
+
+
+
         let allStudents = [];
         let currentPage = 1;
         const itemsPerPage = 10;
@@ -481,9 +509,10 @@
             }
         }
 
-        // Render Table
+        // Render Table and Cards
         function renderStudents(students) {
             const tbody = document.getElementById('studentsTableBody');
+            const cardView = document.getElementById('studentsCardView');
 
             if (students.length === 0) {
                 tbody.innerHTML = `
@@ -496,9 +525,17 @@
                         <td class="sticky right-0 z-10 bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-600"></td>
                     </tr>
                 `;
+                cardView.innerHTML = `
+                    <div class="px-6 py-12 text-center">
+                        <span class="material-symbols-outlined !text-6xl text-gray-400 mb-4">school</span>
+                        <h3 class="text-xl font-semibold mb-2">No Students Yet</h3>
+                        <p class="text-text-dark/70 dark:text-text-light/70 mb-6">Add students to get started</p>
+                    </div>
+                `;
                 return;
             }
 
+            // Render desktop table rows
             tbody.innerHTML = students.map(student => `
                 <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group">
                     <td class="sticky left-0 z-10 px-6 py-4 border-r border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 group-hover:bg-gray-50 dark:group-hover:bg-slate-700/50 shadow-[4px_0_8px_rgba(0,0,0,0.1)]">
@@ -540,12 +577,100 @@
                             <button onclick="editStudent(${student.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-600 rounded-lg transition-colors" title="Edit">
                                 <span class="material-symbols-outlined text-xl">edit</span>
                             </button>
-                            <button onclick="deleteStudent(${student.id})" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-slate-600 rounded-lg transition-colors" title="Delete">
-                                <span class="material-symbols-outlined text-xl">delete</span>
-                            </button>
                         </div>
                     </td>
                 </tr>
+            `).join('');
+
+            // Render mobile cards
+            cardView.innerHTML = students.map(student => `
+                <div class="mx-4 mb-6 bg-white dark:bg-slate-700 rounded-xl shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 overflow-hidden transition-all duration-200">
+                    <!-- Card Header with colored accent -->
+                    <div class="bg-gradient-to-r from-primary to-blue-600 p-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-white/80 text-xs font-medium mb-1">ID: ${student.student_identifier}</div>
+                                <h3 class="text-white font-bold text-xl leading-tight truncate">${student.student_name}</h3>
+                            </div>
+                            <div class="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center ml-3">
+                                <span class="text-white font-bold text-xl">${student.student_name.charAt(0).toUpperCase()}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="p-4">
+                        <!-- Student Info Grid - Always show all fields -->
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-4 pb-4 mb-4 border-b border-gray-200 dark:border-gray-600">
+                            <!-- Class -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">school</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Class</div>
+                                    <div class="font-bold text-text-dark dark:text-text-light truncate">${student.class || '-'}</div>
+                                </div>
+                            </div>
+                            <!-- Roll Number -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">tag</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Roll No.</div>
+                                    <div class="font-bold text-text-dark dark:text-text-light truncate">${student.roll_number || '-'}</div>
+                                </div>
+                            </div>
+                            <!-- Email -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">email</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Email</div>
+                                    <div class="font-bold text-sm text-text-dark dark:text-text-light truncate">${student.email || '-'}</div>
+                                </div>
+                            </div>
+                            <!-- Phone -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">phone</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Phone</div>
+                                    <div class="font-bold text-sm text-text-dark dark:text-text-light truncate">${student.phone || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Parent Information - Always show both fields -->
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-4 pb-4 mb-4 border-b border-gray-200 dark:border-gray-600">
+                            <!-- Parent Name -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">person</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Parent Name</div>
+                                    <div class="font-bold text-text-dark dark:text-text-light truncate">${student.parent_name || '-'}</div>
+                                </div>
+                            </div>
+                            <!-- Parent Phone -->
+                            <div class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">call</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Parent Phone</div>
+                                    <div class="font-bold text-sm text-text-dark dark:text-text-light truncate">${student.parent_phone || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons - 2 column grid -->
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <button onclick="viewStudentSubmissions(${student.id})"
+                                class="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-sm">
+                                <span class="material-symbols-outlined text-xl">assignment</span>
+                                <span>Submissions</span>
+                            </button>
+                            <button onclick="editStudent(${student.id})"
+                                class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-sm">
+                                <span class="material-symbols-outlined text-xl">edit</span>
+                                <span>Edit</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             `).join('');
         }
 
@@ -681,6 +806,7 @@
         function populateClassFilter() {
             const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
             const select = document.getElementById('classFilter');
+            
             select.innerHTML = '<option value="">All Classes</option>' +
                 classes.map(c => `<option value="${c}">${c}</option>`).join('');
         }

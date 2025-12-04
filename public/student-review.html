@@ -57,6 +57,20 @@
         grid-template-columns: 60px 0px 1fr 1fr;
     }
     
+    /* Mobile responsive layout */
+    @media (max-width: 768px) {
+        .split-container {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            min-height: calc(100vh - 60px);
+        }
+        
+        .split-container.sidebar-hidden {
+            display: flex;
+        }
+    }
+    
     .question-numbers-column {
         background: #f1f5f9;
         border-right: 2px solid #e7ecf3;

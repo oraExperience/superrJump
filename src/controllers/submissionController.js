@@ -1,7 +1,6 @@
 
 const { Pool } = require('pg');
 const answerGradingService = require('../services/answerGradingService');
-const studentExtractionService = require('../services/studentExtractionService');
 const studentMatchingService = require('../services/studentMatchingService');
 const fileStorage = require('../utils/fileStorage');
 

@@ -224,45 +224,45 @@
 <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-border-light dark:border-border-dark transform -translate-x-full transition-transform duration-300 ease-in-out">
 <div class="flex flex-col h-full">
 <!-- Sidebar Header -->
-<div class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between px-4 py-3 border-b border-border-light dark:border-border-dark">
 <div class="flex items-center gap-2">
-<div class="text-primary size-6">
+<div class="text-primary size-5">
 <svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
 </svg>
 </div>
-<h2 class="text-lg font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+<h2 class="text-base font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
 </div>
-<button onclick="toggleSidebar()" class="text-text-dark dark:text-text-light hover:text-primary transition-colors">
-<span class="material-symbols-outlined">close</span>
+<button onclick="toggleSidebar()" class="text-text-dark dark:text-text-light hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-xl">close</span>
 </button>
 </div>
 
 <!-- Sidebar Menu Items -->
-<nav class="flex-1 px-4 py-6 space-y-2">
-<a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
-<span class="material-symbols-outlined">dashboard</span>
+<nav class="flex-1 px-3 py-4 space-y-1">
+<a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+<span class="material-symbols-outlined text-xl">dashboard</span>
 <span>Dashboard</span>
 </a>
-<a href="/assessments" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
-<span class="material-symbols-outlined">assignment</span>
+<a href="/assessments" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary text-sm font-medium transition-colors">
+<span class="material-symbols-outlined text-xl">assignment</span>
 <span>Assessments</span>
 </a>
-<a href="/students" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
-<span class="material-symbols-outlined">school</span>
+<a href="/students" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+<span class="material-symbols-outlined text-xl">school</span>
 <span>Students</span>
 </a>
-<a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
-<span class="material-symbols-outlined">person</span>
+<a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+<span class="material-symbols-outlined text-xl">person</span>
 <span>Profile</span>
 </a>
 </nav>
-
 <!-- Sidebar Footer -->
-<div class="mt-auto px-4 py-4 border-t border-border-light dark:border-border-dark">
-<button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
-<span class="material-symbols-outlined">logout</span>
-<span>Logout</span>
+<div class="mt-auto px-3 py-3 border-t border-border-light dark:border-border-dark">
+    <button onclick="logout()"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
+        <span class="material-symbols-outlined text-xl">logout</span>
+        <span>Logout</span>
 </button>
 </div>
 </div>
@@ -273,7 +273,7 @@
 
 <!-- TopNavBar -->
 <header class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
-<div class="flex items-center justify-between w-full max-w-7xl px-3 py-2 md:px-8 md:py-3">
+<div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
 <div class="flex items-center gap-2 md:gap-3 text-text-dark dark:text-text-light">
 <button onclick="toggleSidebar()" class="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
 <span class="material-symbols-outlined text-xl md:text-2xl">menu</span>
@@ -284,10 +284,10 @@
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
 </svg>
 </div>
-<h2 class="text-lg md:text-xl font-bold leading-none">SuperrJump</h2>
+<h2 class="text-base md:text-xl font-bold leading-none">SuperrJump</h2>
 </a>
 </div>
-<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 md:gap-4">
     <span id="orgName" class="text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
 </div>
 </div>
@@ -297,7 +297,7 @@
 <div id="questionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
     <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 p-6 border-b-4 border-primary flex items-center justify-between">
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 p-4 md:p-6 border-b-4 border-primary flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-4xl text-primary">quiz</span>
                 <div>

@@ -77,52 +77,52 @@
             <div class="flex flex-col h-full">
                 <!-- Sidebar Header -->
                 <div
-                    class="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+                    class="flex items-center justify-between px-4 py-3 border-b border-border-light dark:border-border-dark">
                     <div class="flex items-center gap-2">
-                        <div class="text-primary size-6">
+                        <div class="text-primary size-5">
                             <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                                 <path clip-rule="evenodd"
                                     d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
                                     fill="currentColor" fill-rule="evenodd"></path>
                             </svg>
                         </div>
-                        <h2 class="text-lg font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+                        <h2 class="text-base font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
                     </div>
                     <button onclick="toggleSidebar()"
-                        class="text-text-dark dark:text-text-light hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined">close</span>
+                        class="text-text-dark dark:text-text-light hover:text-primary transition-colors p-1">
+                        <span class="material-symbols-outlined text-xl">close</span>
                     </button>
                 </div>
 
                 <!-- Sidebar Menu Items -->
-                <nav class="flex-1 px-4 py-6 space-y-2">
+                <nav class="flex-1 px-3 py-4 space-y-1">
                     <a href="/dashboard"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary text-sm font-medium transition-colors">
+                        <span class="material-symbols-outlined text-xl">dashboard</span>
                         <span>Dashboard</span>
                     </a>
                     <a href="/assessments"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
-                        <span class="material-symbols-outlined">assignment</span>
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">assignment</span>
                         <span>Assessments</span>
                     </a>
                     <a href="/students"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
-                        <span class="material-symbols-outlined">school</span>
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">school</span>
                         <span>Students</span>
                     </a>
                     <a href="/profile"
-                        class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light transition-colors">
-                        <span class="material-symbols-outlined">person</span>
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">person</span>
                         <span>Profile</span>
                     </a>
                 </nav>
 
                 <!-- Sidebar Footer -->
-                <div class="mt-auto px-4 py-4 border-t border-border-light dark:border-border-dark">
+                <div class="mt-auto px-3 py-3 border-t border-border-light dark:border-border-dark">
                     <button onclick="logout()"
-                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
-                        <span class="material-symbols-outlined">logout</span>
+                        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                        <span class="material-symbols-outlined text-xl">logout</span>
                         <span>Logout</span>
                     </button>
                 </div>
@@ -170,59 +170,59 @@
                 </div>
 
                 <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     <!-- Total Students -->
-                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer"
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer hover:shadow-xl transition-shadow"
                         onclick="window.location.href='/students'">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-xs md:text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Total Students</p>
                                 <p class="text-2xl md:text-3xl font-bold text-text-dark dark:text-text-light" id="totalStudents">-</p>
                             </div>
-                            <div class="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                            <div class="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                                 <span class="material-symbols-outlined text-primary text-2xl md:text-3xl">school</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Total Assessments -->
-                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer"
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer hover:shadow-xl transition-shadow"
                         onclick="window.location.href='/assessments'">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-xs md:text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Total Assessments</p>
                                 <p class="text-2xl md:text-3xl font-bold text-text-dark dark:text-text-light" id="totalAssessments">-</p>
                             </div>
-                            <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                            <div class="w-12 h-12 md:w-14 md:h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                                 <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-2xl md:text-3xl">assignment</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pending Reviews -->
-                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 cursor-pointer"
+                    <!-- Pending Reviews (with graded coloring) -->
+                    <div id="pendingReviewsCard" class="stat-card bg-yellow-50 dark:bg-yellow-900/10 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer hover:shadow-xl transition-shadow"
                         onclick="window.location.href='/assessments?filter=pending'">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Pending Reviews</p>
-                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="pendingReviews">-</p>
+                                <p class="text-xs md:text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Pending Reviews</p>
+                                <p class="text-2xl md:text-3xl font-bold text-text-dark dark:text-text-light" id="pendingReviews">-</p>
                             </div>
-                            <div class="w-14 h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
-                                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-3xl">pending_actions</span>
+                            <div id="pendingReviewsIcon" class="w-12 h-12 md:w-14 md:h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400 text-2xl md:text-3xl">pending_actions</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Active Classes -->
-                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-6 cursor-pointer"
+                    <div class="stat-card bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-border-light dark:border-border-dark p-4 md:p-6 cursor-pointer hover:shadow-xl transition-shadow"
                         onclick="window.location.href='/students'">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Active Classes</p>
-                                <p class="text-3xl font-bold text-text-dark dark:text-text-light" id="activeClasses">-</p>
+                                <p class="text-xs md:text-sm font-medium text-text-dark/70 dark:text-text-light/70 mb-1">Active Classes</p>
+                                <p class="text-2xl md:text-3xl font-bold text-text-dark dark:text-text-light" id="activeClasses">-</p>
                             </div>
-                            <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-3xl">class</span>
+                            <div class="w-12 h-12 md:w-14 md:h-14 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-2xl md:text-3xl">class</span>
                             </div>
                         </div>
                     </div>
@@ -363,8 +363,31 @@
         function updateStatistics(stats) {
             document.getElementById('totalStudents').textContent = stats.totalStudents || 0;
             document.getElementById('totalAssessments').textContent = stats.totalAssessments || 0;
-            document.getElementById('pendingReviews').textContent = stats.pendingReviews || 0;
             document.getElementById('activeClasses').textContent = stats.activeClasses || 0;
+            
+            // Update Pending Reviews with graded left border (keep icon and box yellow)
+            const pendingCount = stats.pendingReviews || 0;
+            document.getElementById('pendingReviews').textContent = pendingCount;
+            
+            const card = document.getElementById('pendingReviewsCard');
+            
+            // Remove all border color classes
+            card.classList.remove(
+                'border-l-4', 'border-l-green-500', 'border-l-yellow-500',
+                'border-l-orange-500'
+            );
+            
+            // Apply graded border coloring based on count (icon and box stay yellow)
+            if (pendingCount === 0) {
+                // Green - All caught up!
+                card.classList.add('border-l-4', 'border-l-green-500');
+            } else if (pendingCount <= 5) {
+                // Yellow - Moderate
+                card.classList.add('border-l-4', 'border-l-yellow-500');
+            } else {
+                // Orange - Needs attention
+                card.classList.add('border-l-4', 'border-l-orange-500');
+            }
         }
 
         function updateCharts(stats) {

@@ -124,26 +124,23 @@ async function gradeAnswerSheet(submissionId, assessmentId, answerSheetLink) {
         console.log(`✅ Grading completed: ${totalMarksObtained}/${totalMarksPossible} (${percentage.toFixed(2)}%)`);
         console.log(`📊 Total marks are calculated from answers table, not stored in student_submissions`);
 
-        // Check if ALL submissions for this assessment are now graded (including failed ones)
-        const allSubmissionsCheck = await pool.query(
-            `SELECT COUNT(*) as total,
-                    COUNT(CASE WHEN status IN ('Ready for Verification', 'Verifying', 'Approved', 'Failed') THEN 1 END) as completed
+        // Check if any submissions are ready for verification
+        const readyForVerificationCheck = await pool.query(
+            `SELECT COUNT(*) as count
              FROM student_submissions
-             WHERE assessment_id = $1`,
+             WHERE assessment_id = $1 AND status = 'Ready for Verification'`,
             [assessmentId]
         );
 
-        const { total, completed } = allSubmissionsCheck.rows[0];
-
-        // If all submissions are completed (graded or failed), update assessment status to "Completed"
-        if (parseInt(total) > 0 && parseInt(total) === parseInt(completed)) {
+        // If any submissions are ready for verification, update assessment status to "Ans Pending Approval"
+        if (parseInt(readyForVerificationCheck.rows[0].count) > 0) {
             await pool.query(
                 `UPDATE assessments
-                 SET status = 'Completed', updated_at = CURRENT_TIMESTAMP
+                 SET status = 'Ans Pending Approval', updated_at = CURRENT_TIMESTAMP
                  WHERE id = $1 AND status = 'Processing Ans'`,
                 [assessmentId]
             );
-            console.log(`✅ All submissions completed for assessment ${assessmentId}. Status updated to "Completed"`);
+            console.log(`✅ Assessment ${assessmentId} status updated to "Ans Pending Approval" (submissions ready for teacher verification)`);
         }
 
         return {

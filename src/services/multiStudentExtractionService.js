@@ -114,48 +114,62 @@ async function analyzeMultiStudentPDF(pdfUrl, assessmentContext) {
  * Build AI prompt for multi-student detection
  */
 function buildMultiStudentPrompt(assessmentContext) {
-    return `You are analyzing a PDF containing answer sheets from multiple students for the same assessment.
+    return `You are analyzing a PDF containing answer sheets from MULTIPLE DIFFERENT STUDENTS for the same assessment.
 
 **Assessment Context:**
 - Title: ${assessmentContext.title || 'Not provided'}
 - Class: ${assessmentContext.class || 'Not provided'}
 - Subject: ${assessmentContext.subject || 'Not provided'}
 
-**Your Task:**
-Analyze EACH PAGE of this PDF and identify:
-1. Which student the page belongs to
-2. If this is the first page of a new student (student name/ID header visible)
+**CRITICAL INSTRUCTIONS:**
+1. This PDF contains answer sheets from MULTIPLE STUDENTS (typically 2-10 students)
+2. You MUST analyze ALL pages in the PDF - do NOT stop early
+3. Each student's answer sheet starts with a page showing their name/ID
+4. When you see a NEW name on a page, that's a NEW STUDENT starting
+5. Pages without names belong to the PREVIOUS student
 
-**IMPORTANT:**
-- Each student typically has their name/ID on the FIRST page of their answer sheet
-- Subsequent pages may not have student info but belong to the same student
-- Look for clear indicators like: "Student Name:", "Roll No:", "Admission No:"
-- If a page has no student info, it belongs to the previous student
+**How to Detect Students:**
+- Look for: "Name:", "Student Name:", "Roll No:", "Admission No:", "ID:", etc.
+- The FIRST page of each student has their identifying information
+- Subsequent pages of the same student may not have this info
+- When you see a DIFFERENT name/ID, that's a NEW student
+
+**Example for 2 students:**
+Page 1: Shows "Name: Ravi Kumar" → Student 1 starts
+Page 2: No name visible → Still Student 1 (Ravi Kumar)
+Page 3: No name visible → Still Student 1 (Ravi Kumar)
+Page 4: Shows "Name: Priya Singh" → Student 2 starts (NEW STUDENT!)
+Page 5: No name visible → Still Student 2 (Priya Singh)
+Page 6: No name visible → Still Student 2 (Priya Singh)
 
 **Output Format:**
-Return as array of tuples (NOT objects) to save tokens:
+Return as array of tuples for ALL pages:
 
 [
   [1, "Ravi Kumar", "2024-ADM-001", "15", "10B"],
   [2, "Ravi Kumar", "2024-ADM-001", "15", "10B"],
-  [3, "Priya Singh", "2024-ADM-002", "16", "10B"]
+  [3, "Ravi Kumar", "2024-ADM-001", "15", "10B"],
+  [4, "Priya Singh", "2024-ADM-002", "16", "10B"],
+  [5, "Priya Singh", "2024-ADM-002", "16", "10B"],
+  [6, "Priya Singh", "2024-ADM-002", "16", "10B"]
 ]
 
 Format: [page_number, student_name, student_identifier, roll_number, class]
 
-**Guidelines:**
-- page_number: Integer page number (1, 2, 3...)
-- student_name: Full name as written on page (use PREVIOUS student's name if page has no header)
-- student_identifier: Student ID/Admission number (use PREVIOUS if not visible)
-- roll_number: Roll number (use PREVIOUS if not visible)
-- class: Class/Grade (e.g., "10B", "Class 10") - use from header or assessment context
+**Field Guidelines:**
+- page_number: Page number (1, 2, 3, 4, 5, 6...)
+- student_name: Full name (or just first name if that's all visible)
+- student_identifier: Student ID/Admission number (empty string "" if not visible)
+- roll_number: Roll number (empty string "" if not visible)
+- class: Class/Grade (use "${assessmentContext.class}" if not visible on page)
 
-**IMPORTANT:**
-- First page of each student has name/ID header
-- Continuation pages: use same student info as previous page
-- Detect new student when you see a NEW name/ID header
+**CRITICAL:**
+- Return entries for EVERY SINGLE PAGE in the PDF
+- Do NOT skip pages
+- If page has no name, use the previous student's name
+- Return ONLY the array, no markdown, no explanation
 
-Return ONLY the array of tuples, no additional text or markdown.`;
+Analyze ALL pages now and return the complete array.`;
 }
 
 /**

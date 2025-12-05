@@ -182,6 +182,22 @@ exports.uploadAnswerSheetNew = async (req, res) => {
                     [submissionId]
                 );
                 console.log(`✅ Submission ${submissionId} ready for verification`);
+                
+                // Update assessment status to "Ans Pending Approval" if any submissions are ready for verification
+                const readyCount = await pool.query(
+                    `SELECT COUNT(*) as count FROM student_submissions
+                     WHERE assessment_id = $1 AND status = 'Ready for Verification'`,
+                    [assessmentId]
+                );
+                
+                if (parseInt(readyCount.rows[0].count) > 0) {
+                    await pool.query(
+                        `UPDATE assessments SET status = 'Ans Pending Approval', updated_at = CURRENT_TIMESTAMP
+                         WHERE id = $1 AND status = 'Processing Ans'`,
+                        [assessmentId]
+                    );
+                    console.log(`✅ Assessment ${assessmentId} status updated to "Ans Pending Approval"`);
+                }
             })
                     .catch(error => {
                         console.error(`❌ Processing failed for submission ${submissionId}:`, error);

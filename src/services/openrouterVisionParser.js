@@ -77,37 +77,50 @@ RULES:
    Ex: "Q3. Write TRUE/FALSE. (i) Sum of sides is Area"
    → "Write TRUE or FALSE: Sum of sides is Area"
 
-2. Math symbols: Write exactly as shown
+2. MCQ questions: ALWAYS include ALL options in question_text
+   Ex: "The integrating factor is ___. (a) x (b) 1/x (c) x² (d) 1/x²"
+   → "The integrating factor of linear differential equation x(dy/dx) + 2y = x²log x is ___. Options: (a) x (b) 1/x (c) x² (d) 1/x²"
+
+3. Math symbols and matrices: Write exactly as shown
    ∫ = "integral", ∑ = "sum", √ = "square root"
    x² = "x squared", sin⁴x = "sine to power 4 of x"
+   
+   Matrices: Use bracket notation [row1; row2; ...]
+   Ex: "Check whether the matrix [cosθ sinθ; -sinθ cosθ] is invertible"
+   Ex: "Find determinant of matrix [1 2 3; 4 5 6; 7 8 9]"
 
-3. OR questions: Combine both options
+4. OR questions: Combine both options
    "Q8. Find ∫e^x dx [5] OR Find ∫sec²x dx [5]"
    → "Find integral e^x dx OR Find integral sec²x dx"
 
-4. Visual/Diagram questions: Include answer with brief reason
+5. Visual/Diagram questions: Include answer with brief reason
    Ex: "Read the abacus [diagram shown]"
    → "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)"
    
    Ex: "Count shapes [diagram shown]"
    → "Count the shapes. Answer: 8 triangles (4 small + 4 large)"
 
-5. Skip: Instructions, headers, page numbers
+6. Skip: Instructions, headers, page numbers
 
 Symbol guide: ∫="integral", x²="x squared", π="pi", √="root", ∨="or", →="implies"
 
 Return as array of tuples (NOT objects) to save tokens:
 [
   ["F1", "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)", 2, 1, [["Number System", 100]]],
-  ["Q3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, 1, [["Fractions", 100]]],
-  ["Q6", "Write any three equivalent fractions for: (a) 2/5 (b) 3/7", 3, 1, [["Fractions", 80], ["Algebra", 20]]]
+  ["Q.3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, 1, [["Fractions", 100]]],
+  ["Q.4", "Check whether the matrix [cosθ sinθ; -sinθ cosθ] is invertible or not.", 3, 1, [["Matrices", 100]]],
+  ["Q.6", "Write any three equivalent fractions for: (a) 2/5 (b) 3/7", 3, 1, [["Fractions", 80], ["Algebra", 20]]]
 ]
 
 Format: [question_identifier, question_text, marks, page_number, topics]
 - Topics format: [[topic_name, weight_percentage], [topic_name, weight_percentage]]
 
+CRITICAL FOR question_identifier:
+- question_identifier = ONLY the question NUMBER/LABEL from the paper (e.g., "Q.4", "i", "ii", "Q3(i)", "1a", "Q.1")
+- DO NOT include the question text in the identifier
+- Examples: "Q.4", "Q.10", "i", "ii", "a", "b", "Q1(a)", "Q3.ii"
+
 IMPORTANT:
-- Use "question_identifier" for the original question numbering from the paper (e.g., "i", "ii", "Q3(i)", "1a", "Q1")
 - topics: Array of [topic_name, weight] tuples - identify curriculum topics covered
 - For visual/diagram questions, ALWAYS add "Answer: [value] (brief reason)" to question_text
 - Return ONLY the array of tuples, no additional text or markdown`;

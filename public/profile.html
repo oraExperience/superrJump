@@ -220,10 +220,10 @@
                 <!-- Class-Subject Mappings Card -->
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 border border-border-light dark:border-border-dark mt-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold">Class & Subject Assignments</h2>
+                        <h2 class="text-xl font-bold">Class & Subject</h2>
                         <button onclick="showAddMappingModal()" class="px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                             <span class="material-symbols-outlined text-lg">add</span>
-                            Add Assignment
+                            Add
                         </button>
                     </div>
                     
@@ -290,23 +290,12 @@
 
     <!-- Add Mapping Modal -->
     <div id="addMappingModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-border-light dark:border-border-dark">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-border-light dark:border-border-dark">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold">Add Class-Subject Assignment</h3>
+                <h3 class="text-xl font-bold">Add Class & Subject</h3>
                 <button onclick="closeAddMappingModal()" class="text-text-dark/70 dark:text-text-light/70 hover:text-text-dark dark:hover:text-text-light transition-colors">
                     <span class="material-symbols-outlined">close</span>
                 </button>
-            </div>
-
-            <!-- Current Mappings Display -->
-            <div id="currentMappingsInModal" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-blue-900 dark:text-blue-100">
-                    <span class="material-symbols-outlined text-base">info</span>
-                    Your Current Assignments
-                </h4>
-                <div id="modalMappingsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                    <!-- Will be populated dynamically -->
-                </div>
             </div>
             
             <form id="addMappingForm" class="space-y-4">
@@ -456,29 +445,15 @@
             `).join('');
         }
 
-        // Store current mappings for modal display
+        // Store current mappings for duplicate validation
         let currentMappings = [];
 
         // Modal functions
-        async function showAddMappingModal() {
+        function showAddMappingModal() {
             document.getElementById('addMappingModal').classList.remove('hidden');
             document.getElementById('newClass').value = '';
             document.getElementById('newSubject').value = '';
             document.getElementById('addMappingError').classList.add('hidden');
-            
-            // Display current mappings in modal
-            const modalList = document.getElementById('modalMappingsList');
-            if (currentMappings.length > 0) {
-                modalList.innerHTML = currentMappings.map(m => `
-                    <div class="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded border border-blue-200 dark:border-blue-700">
-                        <span class="material-symbols-outlined text-sm text-blue-600 dark:text-blue-400">check_circle</span>
-                        <span class="text-blue-900 dark:text-blue-100"><strong>${m.class}</strong> - ${m.subject}</span>
-                    </div>
-                `).join('');
-                document.getElementById('currentMappingsInModal').classList.remove('hidden');
-            } else {
-                document.getElementById('currentMappingsInModal').classList.add('hidden');
-            }
         }
 
         function closeAddMappingModal() {

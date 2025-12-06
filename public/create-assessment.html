@@ -231,7 +231,7 @@
 </header>
 
 <main class="flex flex-col items-center w-full flex-1">
-<div class="w-full max-w-7xl px-4 md:px-8 py-10">
+<div class="w-full max-w-7xl px-4 md:px-8 py-5">
 <!-- Page Header -->
 <div class="mb-6 md:mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
     <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 md:mb-2">Create New Assessment</h1>
@@ -302,11 +302,17 @@ Question Paper <span class="text-red-500">*</span>
 <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
 Upload the question paper. AI will extract questions and marks for your verification.
 </p>
+<div id="questionPaperError" class="hidden mb-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+    <p class="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">error</span>
+        <span id="questionPaperErrorText"></span>
+    </p>
+</div>
 <div class="file-upload-area rounded-lg p-6 text-center cursor-pointer" id="questionPaperArea">
 <input
 type="file"
 id="questionPaper"
-accept=".pdf,.doc,.docx"
+accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 required
 class="hidden"
 onchange="handleFileSelect(this, 'questionPaperName', 'questionPaperPreview')"
@@ -760,9 +766,54 @@ function toggleGradingSidebar() {
 // File upload handling
 function handleFileSelect(input, displayId, previewId) {
     const displayElement = document.getElementById(displayId);
+    const errorDiv = document.getElementById(input.id + 'Error');
+    const errorText = document.getElementById(input.id + 'ErrorText');
+    
     if (input.files && input.files[0]) {
-        const fileName = input.files[0].name;
-        const fileSize = (input.files[0].size / (1024 * 1024)).toFixed(2);
+        const file = input.files[0];
+        const fileName = file.name;
+        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        
+        // Validate file type - only allow PDF, DOC, DOCX
+        const allowedExtensions = ['pdf', 'doc', 'docx'];
+        const allowedMimeTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        
+        // Check if file is an image
+        const isImage = file.type.startsWith('image/') ||
+                       ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'heic', 'heif'].includes(fileExtension);
+        
+        if (isImage) {
+            // Show error for images
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Image files are not supported. Please upload a PDF, DOC, or DOCX file.';
+                errorDiv.classList.remove('hidden');
+            }
+            // Clear the input
+            input.value = '';
+            return;
+        }
+        
+        if (!allowedExtensions.includes(fileExtension) && !allowedMimeTypes.includes(file.type)) {
+            // Show error for unsupported file types
+            if (errorDiv && errorText) {
+                errorText.textContent = 'Unsupported file type. Please upload a PDF, DOC, or DOCX file.';
+                errorDiv.classList.remove('hidden');
+            }
+            // Clear the input
+            input.value = '';
+            return;
+        }
+        
+        // Hide error if previously shown
+        if (errorDiv) {
+            errorDiv.classList.add('hidden');
+        }
+        
         displayElement.textContent = `${fileName} (${fileSize} MB)`;
         
         // Show preview, hide upload prompt
@@ -802,6 +853,8 @@ function changeFile(inputId) {
 function setupDragAndDrop(areaId, inputId) {
     const area = document.getElementById(areaId);
     const input = document.getElementById(inputId);
+    const errorDiv = document.getElementById(inputId + 'Error');
+    const errorText = document.getElementById(inputId + 'ErrorText');
     
     area.addEventListener('click', () => input.click());
     
@@ -819,6 +872,41 @@ function setupDragAndDrop(areaId, inputId) {
         area.classList.remove('drag-over');
         
         if (e.dataTransfer.files.length) {
+            const file = e.dataTransfer.files[0];
+            const fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            
+            // Check if file is an image
+            const isImage = file.type.startsWith('image/') ||
+                           ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'heic', 'heif'].includes(fileExtension);
+            
+            if (isImage) {
+                // Show error for images
+                if (errorDiv && errorText) {
+                    errorText.textContent = 'Image files are not supported. Please upload a PDF, DOC, or DOCX file.';
+                    errorDiv.classList.remove('hidden');
+                }
+                return;
+            }
+            
+            // Validate file type
+            const allowedExtensions = ['pdf', 'doc', 'docx'];
+            const allowedMimeTypes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            
+            if (!allowedExtensions.includes(fileExtension) && !allowedMimeTypes.includes(file.type)) {
+                // Show error for unsupported file types
+                if (errorDiv && errorText) {
+                    errorText.textContent = 'Unsupported file type. Please upload a PDF, DOC, or DOCX file.';
+                    errorDiv.classList.remove('hidden');
+                }
+                return;
+            }
+            
+            // File is valid, proceed
             input.files = e.dataTransfer.files;
             input.dispatchEvent(new Event('change'));
         }

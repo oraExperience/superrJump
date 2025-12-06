@@ -143,7 +143,7 @@
         </header>
 
         <main class="flex flex-col items-center w-full flex-1">
-            <div class="w-full max-w-7xl px-4 md:px-8 py-10">
+            <div class="w-full max-w-7xl px-4 md:px-8 py-5">
                 <!-- Welcome Section -->
                 <div
                     class="mb-6 md:mb-8 bg-gradient-to-r from-accent-yellow/20 to-accent-yellow/5 dark:from-accent-yellow/10 dark:to-accent-yellow/5 p-4 md:p-6 rounded-xl border-l-4 border-accent-yellow">
@@ -216,6 +216,33 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Class-Subject Mappings Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 border border-border-light dark:border-border-dark mt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold">Class & Subject Assignments</h2>
+                        <button onclick="showAddMappingModal()" class="px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                            Add Assignment
+                        </button>
+                    </div>
+                    
+                    <div id="mappingsLoading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p class="mt-2 text-sm text-text-dark/70 dark:text-text-light/70">Loading assignments...</p>
+                    </div>
+                    
+                    <div id="mappingsContent" class="hidden">
+                        <div id="mappingsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Mappings will be populated here -->
+                        </div>
+                        <div id="noMappings" class="hidden text-center py-8">
+                            <span class="material-symbols-outlined text-5xl text-gray-400 mb-3">assignment</span>
+                            <p class="text-text-dark/70 dark:text-text-light/70">No class-subject assignments yet</p>
+                            <p class="text-sm text-text-dark/50 dark:text-text-light/50 mt-1">Click "Add Assignment" to get started</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -236,6 +263,77 @@
                 </div>
             </div>
         </footer>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-border-light dark:border-border-dark">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl text-red-600 dark:text-red-400">warning</span>
+                </div>
+                <h3 class="text-xl font-bold">Remove Assignment</h3>
+            </div>
+            
+            <p class="text-text-dark/80 dark:text-text-light/80 mb-6" id="deleteConfirmText"></p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeDeleteConfirmModal()" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-medium transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                    Remove
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Mapping Modal -->
+    <div id="addMappingModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-border-light dark:border-border-dark">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold">Add Class-Subject Assignment</h3>
+                <button onclick="closeAddMappingModal()" class="text-text-dark/70 dark:text-text-light/70 hover:text-text-dark dark:hover:text-text-light transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Current Mappings Display -->
+            <div id="currentMappingsInModal" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h4 class="text-sm font-semibold mb-3 flex items-center gap-2 text-blue-900 dark:text-blue-100">
+                    <span class="material-symbols-outlined text-base">info</span>
+                    Your Current Assignments
+                </h4>
+                <div id="modalMappingsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+            
+            <form id="addMappingForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Class <span class="text-red-500">*</span></label>
+                    <input type="text" id="newClass" required placeholder="e.g., 10th, 12th Science, Grade 8" class="w-full px-4 py-2 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Subject <span class="text-red-500">*</span></label>
+                    <input type="text" id="newSubject" required placeholder="e.g., Mathematics, Physics, English" class="w-full px-4 py-2 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                
+                <div id="addMappingError" class="hidden p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p class="text-sm text-red-600 dark:text-red-400"></p>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeAddMappingModal()" class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-dark dark:text-text-light rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                        Add Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -295,6 +393,202 @@
                 backdrop.classList.add('hidden');
             }
         }
+
+        // Load class-subject mappings
+        async function loadMappings() {
+            const token = sessionStorage.getItem('token');
+            console.log('Loading mappings for user:', user);
+            console.log('Token exists:', !!token);
+            
+            try {
+                const response = await fetch('/api/mappings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                document.getElementById('mappingsLoading').classList.add('hidden');
+                document.getElementById('mappingsContent').classList.remove('hidden');
+
+                if (data.success && data.mappings && data.mappings.length > 0) {
+                    console.log('Found mappings:', data.mappings.length);
+                    currentMappings = data.mappings; // Store for modal display
+                    displayMappings(data.mappings);
+                } else {
+                    console.log('No mappings found or error:', data);
+                    currentMappings = [];
+                    document.getElementById('noMappings').classList.remove('hidden');
+                    document.getElementById('mappingsList').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading mappings:', error);
+                document.getElementById('mappingsLoading').innerHTML = '<p class="text-red-600 dark:text-red-400">Failed to load assignments. Check console for details.</p>';
+            }
+        }
+
+        function displayMappings(mappings) {
+            const list = document.getElementById('mappingsList');
+            const noMappings = document.getElementById('noMappings');
+            
+            if (mappings.length === 0) {
+                list.classList.add('hidden');
+                noMappings.classList.remove('hidden');
+                return;
+            }
+
+            list.classList.remove('hidden');
+            noMappings.classList.add('hidden');
+            
+            list.innerHTML = mappings.map(mapping => `
+                <div class="p-4 bg-background-light dark:bg-background-dark rounded-lg border border-border-light dark:border-border-dark flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold text-lg">${mapping.class}</p>
+                        <p class="text-sm text-text-dark/70 dark:text-text-light/70">${mapping.subject}</p>
+                    </div>
+                    <button onclick="deleteMapping(${mapping.id}, '${mapping.class}', '${mapping.subject}')" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors p-2" title="Remove assignment">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Store current mappings for modal display
+        let currentMappings = [];
+
+        // Modal functions
+        async function showAddMappingModal() {
+            document.getElementById('addMappingModal').classList.remove('hidden');
+            document.getElementById('newClass').value = '';
+            document.getElementById('newSubject').value = '';
+            document.getElementById('addMappingError').classList.add('hidden');
+            
+            // Display current mappings in modal
+            const modalList = document.getElementById('modalMappingsList');
+            if (currentMappings.length > 0) {
+                modalList.innerHTML = currentMappings.map(m => `
+                    <div class="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded border border-blue-200 dark:border-blue-700">
+                        <span class="material-symbols-outlined text-sm text-blue-600 dark:text-blue-400">check_circle</span>
+                        <span class="text-blue-900 dark:text-blue-100"><strong>${m.class}</strong> - ${m.subject}</span>
+                    </div>
+                `).join('');
+                document.getElementById('currentMappingsInModal').classList.remove('hidden');
+            } else {
+                document.getElementById('currentMappingsInModal').classList.add('hidden');
+            }
+        }
+
+        function closeAddMappingModal() {
+            document.getElementById('addMappingModal').classList.add('hidden');
+        }
+
+        // Add mapping form submission
+        document.getElementById('addMappingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = sessionStorage.getItem('token');
+            const className = document.getElementById('newClass').value.trim();
+            const subject = document.getElementById('newSubject').value.trim();
+            const errorDiv = document.getElementById('addMappingError');
+
+            if (!className || !subject) {
+                errorDiv.querySelector('p').textContent = 'Both class and subject are required';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Check for duplicate in current mappings
+            const isDuplicate = currentMappings.some(m =>
+                m.class.toLowerCase() === className.toLowerCase() &&
+                m.subject.toLowerCase() === subject.toLowerCase()
+            );
+
+            if (isDuplicate) {
+                errorDiv.querySelector('p').textContent = `You are already assigned to teach ${subject} for ${className}.`;
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/mappings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        class: className,
+                        subject: subject
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeAddMappingModal();
+                    loadMappings(); // Reload the list
+                } else {
+                    errorDiv.querySelector('p').textContent = data.message || 'Failed to add assignment';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error adding mapping:', error);
+                errorDiv.querySelector('p').textContent = 'An error occurred while adding assignment';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Store mapping to delete
+        let mappingToDelete = null;
+
+        // Show delete confirmation modal
+        function deleteMapping(id, className, subject) {
+            mappingToDelete = { id, className, subject };
+            document.getElementById('deleteConfirmText').textContent =
+                `Are you sure you want to remove the assignment for ${className} - ${subject}?`;
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+        }
+
+        // Close delete confirmation modal
+        function closeDeleteConfirmModal() {
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+            mappingToDelete = null;
+        }
+
+        // Confirm and execute delete
+        async function confirmDelete() {
+            if (!mappingToDelete) return;
+
+            const { id } = mappingToDelete;
+            const token = sessionStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`/api/mappings/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeDeleteConfirmModal();
+                    loadMappings(); // Reload the list
+                } else {
+                    alert(data.message || 'Failed to delete assignment');
+                }
+            } catch (error) {
+                console.error('Error deleting mapping:', error);
+                alert('An error occurred while deleting assignment');
+            }
+        }
+
+        // Load mappings on page load
+        loadMappings();
     </script>
 </body>
 

@@ -13,4 +13,10 @@ router.get('/', mappingController.getUserMappings);
 // Check if user has permission for specific class-subject
 router.get('/check', mappingController.checkPermission);
 
+// Add new class-subject mapping
+router.post('/', mappingController.addMapping);
+
+// Delete class-subject mapping
+router.delete('/:id', mappingController.deleteMapping);
+
 module.exports = router;

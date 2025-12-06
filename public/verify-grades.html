@@ -505,6 +505,12 @@
                 <span class="font-medium">Back</span>
             </button>
             
+            <div class="flex items-center gap-2 md:gap-4 flex-shrink-0">
+                <span id="orgName" class="text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
+            </div>
+            
+            <div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+            
             <div id="headerCard" class="flex-1 bg-gradient-to-r from-amber-100 to-white dark:from-amber-900/30 dark:to-gray-800/30 rounded-xl px-5 py-3 border-l-4 border-amber-500">
                 <h2 class="text-lg font-bold text-text-dark dark:text-text-light mb-1.5" id="assessmentTitle">Assessment Title</h2>
                 <div class="flex flex-wrap items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
@@ -818,6 +824,10 @@ const user = JSON.parse(sessionStorage.getItem('user'));
 if (!user) {
     window.location.href = '/home';
 }
+
+// Display organization name
+const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
+document.getElementById('orgName').textContent = orgName;
 
 // Get submission ID from URL
 const urlParams = new URLSearchParams(window.location.search);

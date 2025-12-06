@@ -434,25 +434,6 @@
     </div>
 </div>
 
-<!-- AI Grading Progress (shown only for In Progress assessments) -->
-<div id="gradingProgressSection" class="hidden mb-6">
-<!-- Main Card with Blue Background -->
-<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md">
-<div class="flex items-start gap-4 mb-6">
-<span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
-<div class="flex-1">
-<h3 class="text-xl md:text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Grading Your Assessment</h3>
-<p class="text-sm md:text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is analyzing all student responses. This usually takes a few minutes. We'll notify you once grading is complete.</p>
-</div>
-</div>
-
-<!-- Inspirational Quote Card -->
-<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
-<p class="text-base md:text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed" id="inspirationalQuote">The beautiful thing about learning is that no one can take it away from you.</p>
-</div>
-</div>
-</div>
-
 <!-- View Questions Section (shown after verification) -->
 <div id="viewQuestionsSection" class="hidden mb-6">
 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-md border-l-4 border-primary overflow-hidden">
@@ -492,6 +473,25 @@ Edit Questions
 <!-- Questions will be loaded here -->
 </div>
 </div>
+</div>
+</div>
+</div>
+
+<!-- AI Grading Progress (shown only for In Progress assessments) -->
+<div id="gradingProgressSection" class="hidden mb-6">
+<!-- Main Card with Blue Background -->
+<div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-l-4 border-primary shadow-md">
+<div class="flex items-start gap-4 mb-6">
+<span class="material-symbols-outlined text-3xl text-primary dark:text-blue-400 animate-spin">autorenew</span>
+<div class="flex-1">
+<h3 class="text-xl md:text-2xl font-bold text-text-dark dark:text-text-light mb-2">AI is Grading Your Assessment</h3>
+<p class="text-sm md:text-base text-text-dark/70 dark:text-text-light/70">Sit back and relax! Our AI is analyzing all student responses. This usually takes a few minutes. We'll notify you once grading is complete.</p>
+</div>
+</div>
+
+<!-- Inspirational Quote Card -->
+<div class="bg-white dark:bg-slate-700 rounded-xl p-5 border-l-4 border-primary shadow-md">
+<p class="text-base md:text-lg font-medium text-text-dark dark:text-text-light italic leading-relaxed" id="inspirationalQuote">The beautiful thing about learning is that no one can take it away from you.</p>
 </div>
 </div>
 </div>
@@ -947,6 +947,9 @@ async function showGradingProgress() {
     // This covers both student detection phase and actual grading phase
     const progressSection = document.getElementById('gradingProgressSection');
     progressSection.classList.remove('hidden');
+    
+    // Show questions section so users can see questions while AI is grading
+    showQuestionsSection();
     
     // Rotate inspirational quotes
     rotateQuotes();

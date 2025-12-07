@@ -10,6 +10,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",
     "@aws-sdk/s3-request-presigner": "^3.940.0",
+    "@emailjs/nodejs": "^5.0.2",
     "@google/generative-ai": "^0.24.1",
     "@napi-rs/canvas": "^0.1.53",
     "bcryptjs": "^2.4.3",
@@ -22,11 +23,13 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "node-fetch": "^2.7.0",
+    "nodemailer": "^7.0.11",
     "pdf-lib": "^1.17.1",
     "pdf-to-img": "^5.0.0",
     "pdf2json": "^4.0.0",
     "pdfjs-dist": "^3.11.174",
     "pg": "^8.16.3",
+    "resend": "^6.5.2",
     "sharp": "^0.34.5",
     "xlsx": "^0.18.5"
   },

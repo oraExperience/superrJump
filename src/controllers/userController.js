@@ -124,9 +124,264 @@ exports.register = async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'An error occurred during registration' 
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred during registration'
+    });
+  }
+};
+
+// Import email service (using Nodemailer)
+const { sendOTPEmail, sendPasswordResetConfirmation } = require('../services/emailService');
+
+// Generate 6-digit OTP
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Send OTP for password reset
+exports.sendResetOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Check if user exists
+    const userQuery = 'SELECT id, name, email FROM users WHERE email = $1';
+    const userResult = await pool.query(userQuery, [email]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email address'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Generate OTP
+    const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+    // Store OTP in database
+    const updateQuery = `
+      UPDATE users
+      SET reset_otp = $1,
+          reset_otp_expires = $2,
+          reset_otp_attempts = 0
+      WHERE email = $3
+    `;
+    await pool.query(updateQuery, [otp, expiresAt, email]);
+
+    // Send OTP email
+    try {
+      await sendOTPEmail(email, otp, user.name);
+      
+      res.status(200).json({
+        success: true,
+        message: 'OTP sent successfully to your email',
+        email: email
+      });
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      
+      // Clear OTP from database if email fails
+      await pool.query('UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL WHERE email = $1', [email]);
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP email. Please try again.'
+      });
+    }
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while sending OTP'
+    });
+  }
+};
+
+// Verify OTP
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Validate input
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    // Get user with OTP details
+    const userQuery = `
+      SELECT id, email, reset_otp, reset_otp_expires, reset_otp_attempts
+      FROM users
+      WHERE email = $1
+    `;
+    const userResult = await pool.query(userQuery, [email]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Check if OTP exists
+    if (!user.reset_otp || !user.reset_otp_expires) {
+      return res.status(400).json({
+        success: false,
+        message: 'No OTP request found. Please request a new OTP.'
+      });
+    }
+
+    // Check if OTP has expired
+    if (new Date() > new Date(user.reset_otp_expires)) {
+      // Clear expired OTP
+      await pool.query('UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL WHERE email = $1', [email]);
+      
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // Check attempts limit (max 5 attempts)
+    if (user.reset_otp_attempts >= 5) {
+      // Clear OTP after too many attempts
+      await pool.query('UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL, reset_otp_attempts = 0 WHERE email = $1', [email]);
+      
+      return res.status(429).json({
+        success: false,
+        message: 'Too many failed attempts. Please request a new OTP.'
+      });
+    }
+
+    // Verify OTP
+    if (user.reset_otp !== otp) {
+      // Increment failed attempts
+      await pool.query('UPDATE users SET reset_otp_attempts = reset_otp_attempts + 1 WHERE email = $1', [email]);
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP. Please try again.',
+        attemptsRemaining: 5 - (user.reset_otp_attempts + 1)
+      });
+    }
+
+    // OTP is valid - don't clear it yet, we'll clear it after password reset
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully',
+      email: email
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while verifying OTP'
+    });
+  }
+};
+
+// Reset password after OTP verification
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    // Validate input
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, OTP, and new password are required'
+      });
+    }
+
+    // Validate password strength (minimum 6 characters)
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    // Get user with OTP details
+    const userQuery = `
+      SELECT id, name, email, reset_otp, reset_otp_expires
+      FROM users
+      WHERE email = $1
+    `;
+    const userResult = await pool.query(userQuery, [email]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify OTP one more time
+    if (!user.reset_otp || user.reset_otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP. Please verify OTP again.'
+      });
+    }
+
+    // Check if OTP has expired
+    if (new Date() > new Date(user.reset_otp_expires)) {
+      await pool.query('UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL WHERE email = $1', [email]);
+      
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear OTP fields
+    const updateQuery = `
+      UPDATE users
+      SET password = $1,
+          reset_otp = NULL,
+          reset_otp_expires = NULL,
+          reset_otp_attempts = 0
+      WHERE email = $2
+    `;
+    await pool.query(updateQuery, [hashedPassword, email]);
+
+    // Send confirmation email (non-blocking)
+    sendPasswordResetConfirmation(email, user.name).catch(err => {
+      console.error('Failed to send confirmation email:', err);
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while resetting password'
     });
   }
 };

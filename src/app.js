@@ -82,9 +82,30 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api', submissionRoutes);
 
-// Health check endpoint
+// Health check endpoints for UptimeRobot monitoring
+// Simple root-level health check
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'SuperrJump',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Detailed API health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: 'ok',
+    service: 'SuperrJump API',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+    }
+  });
 });
 
 // API info endpoint

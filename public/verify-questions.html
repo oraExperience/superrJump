@@ -1842,7 +1842,7 @@ function previousQuestion() {
 }
 
 async function nextQuestion() {
-    // Mark current question as verified locally (changes not saved yet)
+    // Validate and save current question before moving to next
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion) {
         let hasErrors = false;
@@ -1904,8 +1904,14 @@ async function nextQuestion() {
             return;
         }
         
+        // Mark as verified and save to database
         currentQuestion.verified = true;
-        console.log(`✓ Question ${currentQuestion.questionNumber} marked as verified locally (not saved to database yet)`);
+        
+        // Save the current question to database
+        if (currentQuestion.dbId) {
+            await saveQuestionToAPI(currentQuestion);
+            console.log(`✓ Question ${currentQuestion.questionNumber} saved to database`);
+        }
     }
     
     renderQuestionsSidebar();
@@ -2205,19 +2211,17 @@ function closeAlertModal() {
 async function goBack() {
     console.log('goBack called, questions:', questions.length);
     
-    // Always show warning if there are any questions (changes not saved until Approve & Finalize)
+    // Show confirmation before going back
     if (questions.length > 0) {
         const confirmed = await showConfirmModal(
-            'Your changes have not been saved yet. All edits will be lost unless you click "Approve & Finalize" first.\n\nAre you sure you want to leave without saving?',
-            'Unsaved Changes'
+            'Your progress has been saved as you worked through the questions. Questions will remain editable until you click "Approve & Finalize".\n\nDo you want to go back to assessment details?',
+            'Go Back'
         );
         if (confirmed) {
             // Set flag BEFORE navigation to prevent browser dialog
             isIntentionalNavigation = true;
-            // Use setTimeout to ensure flag is set before navigation
-            setTimeout(() => {
-                window.location.href = `/assessment-details?id=${assessmentId}`;
-            }, 0);
+            // Navigate back immediately
+            window.location.href = `/assessment-details?id=${assessmentId}`;
         }
     } else {
         // No questions, navigate directly

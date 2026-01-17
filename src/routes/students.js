@@ -36,6 +36,20 @@ router.get('/search', studentsController.searchStudents);
 router.get('/:id/submissions', studentsController.getStudentSubmissions);
 
 /**
+ * @route   GET /api/students/:id/topic-analysis
+ * @desc    Get topic-level performance analysis for a student
+ * @access  Private
+ */
+router.get('/:id/topic-analysis', studentsController.getTopicAnalysis);
+
+/**
+ * @route   GET /api/students/:id/improvement-plan
+ * @desc    Get improvement plan for a student
+ * @access  Private
+ */
+router.get('/:id/improvement-plan', studentsController.getImprovementPlan);
+
+/**
  * @route   GET /api/students/:id
  * @desc    Get single student by ID
  * @access  Private

@@ -72,6 +72,13 @@ router.get(
     submissionController.getSubmissionDetails
 );
 
+// Get detailed question-level analysis for a submission
+router.get(
+    '/submissions/:submissionId/questions',
+    authenticateToken,
+    require('../controllers/studentsController').getSubmissionQuestions
+);
+
 // Update submission status
 router.patch(
     '/submissions/:submissionId/status',

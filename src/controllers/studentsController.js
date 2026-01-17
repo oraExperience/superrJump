@@ -684,6 +684,262 @@ async function getStudentSubmissions(req, res) {
     }
 }
 
+/**
+ * Get topic-level performance analysis for a student
+ * GET /api/students/:id/topic-analysis
+ */
+async function getTopicAnalysis(req, res) {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Verify student exists and belongs to user's org
+        const studentCheck = await pool.query(
+            `SELECT id FROM students WHERE id = $1 AND created_by = $2`,
+            [id, userId]
+        );
+
+        if (studentCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Student not found'
+            });
+        }
+
+        // Get topic-level performance
+        const result = await pool.query(
+            `WITH topic_scores AS (
+                SELECT
+                    jsonb_array_elements(q.topics)->>'topic' as topic_name,
+                    (jsonb_array_elements(q.topics)->>'weight')::numeric as weight,
+                    a.marks_obtained,
+                    q.max_marks,
+                    (a.marks_obtained / q.max_marks * 100) as score_percentage
+                FROM answers a
+                JOIN questions q ON a.question_id = q.id
+                JOIN student_submissions ss ON a.submission_id = ss.id
+                WHERE ss.student_id = $1 AND a.verified = true AND ss.status = 'Approved'
+            )
+            SELECT
+                topic_name,
+                COUNT(*) as questions_count,
+                ROUND(AVG(score_percentage), 1) as avg_percentage,
+                ROUND(100 - AVG(score_percentage), 1) as gap_percentage,
+                CASE
+                    WHEN AVG(score_percentage) < 50 THEN 'Urgent'
+                    WHEN AVG(score_percentage) < 70 THEN 'Focus'
+                    WHEN AVG(score_percentage) < 85 THEN 'Practice'
+                    ELSE 'Strong'
+                END as priority,
+                CASE
+                    WHEN AVG(score_percentage) < 50 THEN '🔴'
+                    WHEN AVG(score_percentage) < 70 THEN '⚠️'
+                    WHEN AVG(score_percentage) < 85 THEN '📚'
+                    ELSE '✅'
+                END as emoji
+            FROM topic_scores
+            GROUP BY topic_name
+            ORDER BY avg_percentage ASC`,
+            [id]
+        );
+
+        res.json({
+            success: true,
+            topics: result.rows
+        });
+
+    } catch (error) {
+        console.error('Error fetching topic analysis:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch topic analysis'
+        });
+    }
+}
+
+/**
+ * Get improvement plan for a student
+ * GET /api/students/:id/improvement-plan
+ */
+async function getImprovementPlan(req, res) {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const { class: classFilter, subject: subjectFilter } = req.query;
+
+        // Verify student exists
+        const studentCheck = await pool.query(
+            `SELECT id FROM students WHERE id = $1 AND created_by = $2`,
+            [id, userId]
+        );
+
+        if (studentCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Student not found'
+            });
+        }
+
+        // Build filter conditions
+        let filterConditions = 'ss.student_id = $1 AND a.verified = true AND ss.status = \'Approved\'';
+        const queryParams = [id];
+        let paramCount = 2;
+
+        if (classFilter) {
+            filterConditions += ` AND ass.class = $${paramCount}`;
+            queryParams.push(classFilter);
+            paramCount++;
+        }
+
+        if (subjectFilter) {
+            filterConditions += ` AND ass.subject = $${paramCount}`;
+            queryParams.push(subjectFilter);
+            paramCount++;
+        }
+
+        // Get overall performance
+        const overallResult = await pool.query(
+            `SELECT
+                ROUND(AVG((a.marks_obtained / q.max_marks * 100)), 1) as current_percentage,
+                ROUND(100 - AVG((a.marks_obtained / q.max_marks * 100)), 1) as gap_percentage
+            FROM answers a
+            JOIN questions q ON a.question_id = q.id
+            JOIN student_submissions ss ON a.submission_id = ss.id
+            JOIN assessments ass ON q.assessment_id = ass.id
+            WHERE ${filterConditions}`,
+            queryParams
+        );
+
+        const overall = {
+            current: parseFloat(overallResult.rows[0]?.current_percentage || 0),
+            target: 100,
+            gap: parseFloat(overallResult.rows[0]?.gap_percentage || 0)
+        };
+
+        // Get topic gaps
+        const topicsResult = await pool.query(
+            `WITH topic_gaps AS (
+                SELECT
+                    jsonb_array_elements(q.topics)->>'topic' as topic,
+                    SUM(q.max_marks) as total_possible,
+                    SUM(a.marks_obtained) as total_obtained,
+                    SUM(q.max_marks - a.marks_obtained) as marks_gap,
+                    ROUND(AVG((a.marks_obtained / q.max_marks * 100)), 1) as current_percentage,
+                    ROUND(100 - AVG((a.marks_obtained / q.max_marks * 100)), 1) as percentage_gap,
+                    COUNT(*) as question_count
+                FROM answers a
+                JOIN questions q ON a.question_id = q.id
+                JOIN student_submissions ss ON a.submission_id = ss.id
+                JOIN assessments ass ON q.assessment_id = ass.id
+                WHERE ${filterConditions}
+                GROUP BY topic
+            )
+            SELECT
+                topic,
+                current_percentage,
+                percentage_gap,
+                marks_gap,
+                question_count,
+                CASE
+                    WHEN current_percentage >= 90 THEN 'Strong'
+                    WHEN percentage_gap <= 10 THEN 'Easy'
+                    WHEN percentage_gap <= 20 THEN 'Moderate'
+                    WHEN percentage_gap <= 40 THEN 'Challenging'
+                    ELSE 'Major Focus'
+                END as effort_level
+            FROM topic_gaps
+            ORDER BY percentage_gap DESC`,
+            queryParams
+        );
+
+        res.json({
+            success: true,
+            overall,
+            topics: topicsResult.rows
+        });
+
+    } catch (error) {
+        console.error('Error fetching improvement plan:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch improvement plan'
+        });
+    }
+}
+
+/**
+ * Get detailed question analysis for a submission
+ * GET /api/submissions/:id/questions
+ */
+async function getSubmissionQuestions(req, res) {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Verify submission belongs to user's assessment
+        const submissionCheck = await pool.query(
+            `SELECT ss.id
+             FROM student_submissions ss
+             JOIN assessments a ON ss.assessment_id = a.id
+             WHERE ss.id = $1 AND a.created_by = $2`,
+            [id, userId]
+        );
+
+        if (submissionCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Submission not found'
+            });
+        }
+
+        // Get questions with answers
+        const result = await pool.query(
+            `SELECT
+                q.question_number,
+                q.question_text,
+                q.topics,
+                q.max_marks,
+                a.marks_obtained,
+                (q.max_marks - a.marks_obtained) as marks_lost,
+                ROUND(((q.max_marks - a.marks_obtained) / q.max_marks * 100), 1) as percentage_lost,
+                a.ai_explanation,
+                a.user_feedback,
+                a.page_number,
+                CASE
+                    WHEN a.marks_obtained = q.max_marks THEN 'Perfect'
+                    WHEN a.marks_obtained >= q.max_marks * 0.8 THEN 'Excellent'
+                    WHEN a.marks_obtained >= q.max_marks * 0.6 THEN 'Good'
+                    WHEN a.marks_obtained >= q.max_marks * 0.4 THEN 'Average'
+                    ELSE 'Needs Work'
+                END as performance_level,
+                CASE
+                    WHEN a.marks_obtained = q.max_marks THEN '⭐⭐⭐⭐⭐'
+                    WHEN a.marks_obtained >= q.max_marks * 0.8 THEN '⭐⭐⭐⭐⚪'
+                    WHEN a.marks_obtained >= q.max_marks * 0.6 THEN '⭐⭐⭐⚪⚪'
+                    WHEN a.marks_obtained >= q.max_marks * 0.4 THEN '⭐⭐⚪⚪⚪'
+                    ELSE '⭐⚪⚪⚪⚪'
+                END as rating
+            FROM answers a
+            JOIN questions q ON a.question_id = q.id
+            WHERE a.submission_id = $1
+            ORDER BY q.question_number`,
+            [id]
+        );
+
+        res.json({
+            success: true,
+            questions: result.rows
+        });
+
+    } catch (error) {
+        console.error('Error fetching submission questions:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch questions'
+        });
+    }
+}
+
 module.exports = {
     createStudent,
     searchStudents,
@@ -693,5 +949,8 @@ module.exports = {
     getAllStudents,
     bulkUploadStudents,
     downloadSample,
-    getStudentSubmissions
+    getStudentSubmissions,
+    getTopicAnalysis,
+    getImprovementPlan,
+    getSubmissionQuestions
 };

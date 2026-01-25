@@ -9,6 +9,9 @@ router.post('/login', userController.login);
 // Register route
 router.post('/register', userController.register);
 
+// Free trial registration route (from home page)
+router.post('/register-trial', userController.registerFreeTrial);
+
 // Forgot password routes
 router.post('/forgot-password/send-otp', userController.sendResetOTP);
 router.post('/forgot-password/verify-otp', userController.verifyOTP);

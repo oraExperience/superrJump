@@ -32,6 +32,10 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 console.log('dashboardRoutes loaded');
 const proxyRoutes = require('./routes/proxyRoutes');
 console.log('proxyRoutes loaded');
+const contactRoutes = require('./routes/contactRoutes');
+console.log('contactRoutes loaded');
+const paymentRoutes = require('./routes/paymentRoutes');
+console.log('paymentRoutes loaded');
 
 console.log('Creating Express app...');
 const app = express();
@@ -80,6 +84,8 @@ app.use('/api/students', studentRoutes);
 app.use('/api/answers', answerRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/proxy', proxyRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use('/api', submissionRoutes);
 
 // Health check endpoints for UptimeRobot monitoring
@@ -175,6 +181,18 @@ app.get('/verify-grades', (req, res) => {
 
 app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/profile.html'));
+});
+
+app.get('/plans', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/plans.html'));
+});
+
+app.get('/payment', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/payment.html'));
+});
+
+app.get('/payment-callback', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/payment-callback.html'));
 });
 
 // 404 Handler for API routes

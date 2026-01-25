@@ -4,6 +4,7 @@ const router = express.Router();
 const assessmentController = require('../controllers/assessmentController');
 const { authenticateToken } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const checkActiveSubscription = require('../middleware/checkSubscription');
 
 // All routes below require authentication
 router.use(authenticateToken);
@@ -56,13 +57,16 @@ router.get('/:id/submissions', assessmentController.getAssessmentSubmissions);
 
 // Upload PDF and create assessment with Google Drive integration
 // MUST come before /:id route to avoid matching "upload" as an id
-router.post('/upload', upload.single('questionPaper'), assessmentController.uploadPDFAndCreateAssessment);
+// Protected: Requires active subscription (question paper upload)
+router.post('/upload', checkActiveSubscription, upload.single('questionPaper'), assessmentController.uploadPDFAndCreateAssessment);
 
 // Create new assessment (without PDF upload - for backward compatibility)
+// NOT protected - just metadata creation
 router.post('/', assessmentController.createAssessment);
 
 // Update question paper and restart extraction (must come before /:id route)
-router.put('/:id/update-question-paper', upload.single('questionPaper'), assessmentController.updateQuestionPaper);
+// Protected: Requires active subscription (re-uploading question paper)
+router.put('/:id/update-question-paper', checkActiveSubscription, upload.single('questionPaper'), assessmentController.updateQuestionPaper);
 
 // Get single assessment by ID (must come after specific routes)
 router.get('/:id', assessmentController.getAssessmentById);

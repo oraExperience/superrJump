@@ -284,11 +284,25 @@
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
 </svg>
 </div>
-<h2 class="text-base md:text-xl font-bold leading-none">SuperrJump</h2>
+<h2 class="hidden md:block text-base md:text-xl font-bold leading-none">SuperrJump</h2>
+</a>
+<a href="/plans" class="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-purple-600 to-primary text-white rounded-lg text-xs md:text-sm font-semibold hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-1.5">
+    <span class="material-symbols-outlined text-base md:text-lg">workspace_premium</span>
+    <span>Upgrade</span>
 </a>
 </div>
 <div class="flex items-center gap-2 md:gap-4">
-    <span id="orgName" class="text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
+    <span id="orgName" class="hidden md:inline text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
+    <div class="relative group">
+        <button class="flex items-center gap-1.5 px-2 py-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors">
+            <span class="text-sm md:text-base font-bold md:hidden">?</span>
+            <span class="hidden md:inline text-sm font-semibold">Need help?</span>
+        </button>
+        <div class="absolute right-0 top-full mt-2 w-64 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+            <p class="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium">Need Help? Please write to:</p>
+            <a href="mailto:superrjump1@gmail.com" class="text-xs text-primary hover:underline font-medium">superrjump1@gmail.com</a>
+        </div>
+    </div>
 </div>
 </div>
 </header>
@@ -2112,6 +2126,31 @@ async function initializePage() {
 initializePage();
 </script>
 
+
+    <script src="/js/subscription-check.js"></script>
+    <script>
+        // Wrap answer sheet upload with subscription check
+        const originalHandleAnswerSheetUpload = handleAnswerSheetUpload;
+        
+        handleAnswerSheetUpload = async function(input) {
+            const hasActiveSubscription = await checkActiveSubscription();
+            if (hasActiveSubscription) {
+                originalHandleAnswerSheetUpload(input);
+            }
+        };
+        
+        // Wrap upload new question paper with subscription check
+        const originalUploadNewQuestionPaper = uploadNewQuestionPaper;
+        
+        uploadNewQuestionPaper = async function() {
+            const hasActiveSubscription = await checkActiveSubscription();
+            if (hasActiveSubscription) {
+                originalUploadNewQuestionPaper();
+            }
+        };
+    </script>
+
+    <script src="/js/trial-status.js"></script>
 
 </body>
 </html>

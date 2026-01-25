@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const studentsController = require('../controllers/studentsController');
 const auth = require('../middleware/auth');
+const checkActiveSubscription = require('../middleware/checkSubscription');
 
 /**
  * @route   GET /api/students/sample-file
@@ -59,9 +60,9 @@ router.get('/:id', studentsController.getStudent);
 /**
  * @route   POST /api/students
  * @desc    Create a new student
- * @access  Private
+ * @access  Private - Requires active subscription
  */
-router.post('/', studentsController.createStudent);
+router.post('/', checkActiveSubscription, studentsController.createStudent);
 
 /**
  * @route   PATCH /api/students/:id
@@ -80,10 +81,10 @@ router.delete('/:id', studentsController.deleteStudent);
 /**
  * @route   POST /api/students/bulk-upload
  * @desc    Bulk upload students via XLSX
- * @access  Private
+ * @access  Private - Requires active subscription
  */
 const upload = multer({ storage: multer.memoryStorage() });
-router.post('/bulk-upload', upload.single('file'), studentsController.bulkUploadStudents);
+router.post('/bulk-upload', checkActiveSubscription, upload.single('file'), studentsController.bulkUploadStudents);
 
 
 

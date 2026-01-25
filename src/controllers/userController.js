@@ -51,7 +51,8 @@ exports.login = async (req, res) => {
       email: user.email,
       name: user.name,
       role: user.role,
-      organisation: user.organisation
+      organisation: user.organisation,
+      phone: user.phone
     });
 
     // Return user data (excluding password fields) and token
@@ -130,6 +131,104 @@ exports.register = async (req, res) => {
     });
   }
 };
+
+// Generate random 10-character password
+function generateRandomPassword(length = 10) {
+  const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+}
+
+// Register user for free trial (from home page)
+exports.registerFreeTrial = async (req, res) => {
+  try {
+    const { name, email, jobTitle, organisation, countryCode, phone, message } = req.body;
+
+    // Validate input
+    if (!name || !email || !organisation) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Name, email, and organisation are required' 
+      });
+    }
+
+    // Check if user already exists
+    const checkQuery = 'SELECT * FROM users WHERE email = $1';
+    const checkResult = await pool.query(checkQuery, [email]);
+
+    if (checkResult.rows.length > 0) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'An account with this email already exists. Please sign in instead.' 
+      });
+    }
+
+    // Generate random password
+    const randomPassword = generateRandomPassword(10);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    // Calculate trial end date (6 days from now at 23:59:59)
+    // Today counts as day 1, so we add 6 more days for a total of 7 days
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 6);
+    trialEndDate.setHours(23, 59, 59, 999); // End of day
+
+    // Insert new user with trial details
+    const fullPhone = phone ? `${countryCode}${phone}` : null;
+    
+    const insertQuery = `
+      INSERT INTO users (name, email, password, organisation, role, phone, trial_user, subscription_end, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      RETURNING id, name, email, organisation, role, phone, created_at
+    `;
+    
+    const insertResult = await pool.query(insertQuery, [
+      name,
+      email,
+      hashedPassword,
+      organisation,
+      'user',  // Default role for free trial users
+      fullPhone,
+      true,    // trial_user flag = true for new trial users
+      trialEndDate // subscription_end = 7 days at 23:59:59
+    ]);
+
+    const newUser = insertResult.rows[0];
+
+    // Send welcome email with credentials
+    const { sendWelcomeEmail } = require('../services/emailService');
+    try {
+      await sendWelcomeEmail(email, randomPassword, name);
+      console.log(`Welcome email sent to ${email}`);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the registration if email fails
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Your free trial account has been created! Check your email for login credentials.',
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        organisation: newUser.organisation
+      }
+    });
+
+  } catch (error) {
+    console.error('Free trial registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred during registration. Please try again.'
+    });
+  }
+};
+
+
 
 // Import email service (using Nodemailer)
 const { sendOTPEmail, sendPasswordResetConfirmation } = require('../services/emailService');

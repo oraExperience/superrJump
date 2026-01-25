@@ -4,6 +4,7 @@ const router = express.Router();
 const multer = require('multer');
 const submissionController = require('../controllers/submissionController');
 const { authenticateToken } = require('../middleware/auth');
+const checkActiveSubscription = require('../middleware/checkSubscription');
 
 // Configure multer for file upload (memory storage)
 const upload = multer({
@@ -22,14 +23,17 @@ const upload = multer({
 });
 
 // New flow: Upload answer sheet and redirect to verify-grades
+// Protected: Requires active subscription
 router.post(
     '/assessments/:assessmentId/submissions/upload',
     authenticateToken,
+    checkActiveSubscription,
     upload.single('answer_sheet'),
     submissionController.uploadAnswerSheetNew
 );
 
 // Confirm student and start grading (from verify-grades page)
+// NOT protected - This is a continuation of an already uploaded answer sheet
 router.post(
     '/submissions/:submissionId/confirm-student',
     authenticateToken,
@@ -37,13 +41,17 @@ router.post(
 );
 
 // Multi-student PDF upload routes
+// Protected: Requires active subscription (actual file upload)
 router.post(
     '/assessments/:assessmentId/submissions/upload-multi',
     authenticateToken,
+    checkActiveSubscription,
     upload.single('answer_sheet'),
     submissionController.uploadMultiStudentPDF
 );
 
+// Create multi-student submissions (no file upload, just DB records)
+// NOT protected - just creates submission records
 router.post(
     '/assessments/:assessmentId/submissions/create-multi',
     authenticateToken,
@@ -51,9 +59,11 @@ router.post(
 );
 
 // LEGACY: Old upload flow for backward compatibility
+// Protected: Requires active subscription
 router.post(
     '/assessments/:assessmentId/submissions',
     authenticateToken,
+    checkActiveSubscription,
     upload.single('answer_sheet'),
     submissionController.uploadAnswerSheet
 );

@@ -1,0 +1,870 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Pricing Plans - SuperrJump</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2A6EBB",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#111821",
+                        "accent-yellow": "#FFC857",
+                        "accent-green": "#A2D7D2",
+                        "text-dark": "#333333",
+                        "text-light": "#F8FAFC",
+                        "border-light": "#e7ecf3",
+                        "border-dark": "#374151"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .plan-card {
+            transition: all 0.3s ease;
+        }
+        .plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="font-display bg-white dark:bg-background-dark text-text-dark dark:text-text-light min-h-screen">
+    <div class="relative flex min-h-screen w-full flex-col">
+        <!-- Sidebar Menu -->
+        <div id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-border-light dark:border-border-dark transform -translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="flex flex-col h-full">
+                <!-- Sidebar Header -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-border-light dark:border-border-dark">
+                    <div class="flex items-center gap-2">
+                        <div class="text-primary size-5">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd"
+                                    d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z"
+                                    fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-base font-bold text-text-dark dark:text-text-light">SuperrJump</h2>
+                    </div>
+                    <button onclick="toggleSidebar()"
+                        class="text-text-dark dark:text-text-light hover:text-primary transition-colors p-1">
+                        <span class="material-symbols-outlined text-xl">close</span>
+                    </button>
+                </div>
+
+                <!-- Sidebar Menu Items -->
+                <nav class="flex-1 px-3 py-4 space-y-1">
+                    <a href="/dashboard"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">dashboard</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/assessments"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">assignment</span>
+                        <span>Assessments</span>
+                    </a>
+                    <a href="/students"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">school</span>
+                        <span>Students</span>
+                    </a>
+                    <a href="/profile"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-text-dark dark:text-text-light text-sm transition-colors">
+                        <span class="material-symbols-outlined text-xl">person</span>
+                        <span>Profile</span>
+                    </a>
+                    <a href="/plans"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary text-sm font-medium transition-colors">
+                        <span class="material-symbols-outlined text-xl">workspace_premium</span>
+                        <span>Pricing Plans</span>
+                    </a>
+                </nav>
+
+                <!-- Sidebar Footer -->
+                <div class="mt-auto px-3 py-3 border-t border-border-light dark:border-border-dark">
+                    <button onclick="logout()"
+                        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                        <span class="material-symbols-outlined text-xl">logout</span>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Backdrop -->
+        <div id="sidebarBackdrop" class="hidden fixed inset-0 bg-black/50 z-40" onclick="toggleSidebar()"></div>
+
+        <!-- Header -->
+        <header class="sticky top-0 z-30 flex items-center justify-center border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+            <div class="flex items-center justify-between w-full max-w-7xl px-4 py-3 md:px-8">
+                <div class="flex items-center gap-2 md:gap-3 text-text-dark dark:text-text-light">
+                    <button onclick="toggleSidebar()"
+                        class="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl md:text-2xl">menu</span>
+                    </button>
+                    <a href="/dashboard" class="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                        <div class="text-primary flex items-center" style="width: 24px; height: 24px;">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 class="hidden md:block text-base md:text-xl font-bold leading-none">SuperrJump</h2>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2 md:gap-4">
+                    <span id="orgName" class="hidden md:inline text-xs md:text-sm font-medium truncate max-w-[150px] md:max-w-none">Organization Name</span>
+                    <div class="relative group">
+                        <button class="flex items-center gap-1.5 px-2 py-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors">
+                            <span class="text-sm md:text-base font-bold md:hidden">?</span>
+                            <span class="hidden md:inline text-sm font-semibold">Need help?</span>
+                        </button>
+                        <div class="absolute right-0 top-full mt-2 w-64 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <p class="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium">Need Help? Please write to:</p>
+                            <a href="mailto:superrjump1@gmail.com" class="text-xs text-primary hover:underline font-medium">superrjump1@gmail.com</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    <!-- Main Content -->
+    <main class="flex flex-col items-center w-full flex-1">
+        <div class="w-full max-w-7xl px-4 md:px-8 py-6 md:py-10">
+            
+            <!-- Page Header -->
+            <div class="mb-6 md:mb-10 bg-gradient-to-r from-primary/10 to-accent-yellow/10 dark:from-primary/20 dark:to-accent-yellow/20 p-4 md:p-8 rounded-xl border-l-4 border-primary">
+                <h1 class="text-2xl md:text-4xl font-bold mb-2 md:mb-3">Choose Your Plan</h1>
+                <p class="text-sm md:text-lg text-text-dark/70 dark:text-text-light/70">
+                    Select the plan that best fits your needs. Upgrade or downgrade anytime.
+                </p>
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+                
+                <!-- Monthly Plan -->
+                <div class="plan-card bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 border-2 border-gray-200 dark:border-slate-700 shadow-md">
+                    <div class="mb-4 md:mb-6">
+                        <h3 class="text-xl md:text-2xl font-bold text-primary mb-3">Monthly Plan</h3>
+                        <div class="mb-3">
+                            <span class="text-3xl md:text-4xl font-bold">₹1</span>
+                            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">per user per month (Testing)</p>
+                        </div>
+                        <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-3">
+                            Flexible month-to-month billing
+                        </p>
+                    </div>
+                    
+                    <button onclick="initiatePayment('monthly')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4 md:mb-6 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
+                        <span>Subscribe Now</span>
+                        <span class="material-symbols-outlined text-lg md:text-xl">arrow_forward</span>
+                    </button>
+
+                    <p class="text-xs font-semibold mb-3 text-gray-700 dark:text-gray-300">All Features Included:</p>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Unlimited assessments</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Unlimited students</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">AI-powered grading</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Advanced analytics</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Priority support</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Export reports</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Custom rubrics</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Annual Plan (Best Value) -->
+                <div class="plan-card bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 border-2 border-primary shadow-lg relative pt-8">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 whitespace-nowrap">
+                        <span class="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-3 md:px-4 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg">
+                            🔥 SAVE 20% - Best Value!
+                        </span>
+                    </div>
+                    
+                    <div class="mb-4 md:mb-6">
+                        <h3 class="text-xl md:text-2xl font-bold text-primary mb-3">Annual Plan</h3>
+                        <div class="mb-3">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-3xl md:text-4xl font-bold text-primary">₹1</span>
+                            </div>
+                            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">per user per year (Testing)</p>
+                            <div class="mt-2 inline-flex items-center gap-2 bg-gradient-to-r from-orange-100 to-pink-100 dark:from-orange-900/30 dark:to-pink-900/30 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-full text-xs md:text-sm font-bold">
+                                <span>Testing Mode</span>
+                            </div>
+                        </div>
+                        <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300">
+                            Best value for committed educators
+                        </p>
+                    </div>
+                    
+                    <button onclick="initiatePayment('annual')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-pink-600 transition-all mb-4 md:mb-6 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
+                        <span>Subscribe Now</span>
+                        <span class="material-symbols-outlined text-lg md:text-xl">arrow_forward</span>
+                    </button>
+
+                    <p class="text-xs font-semibold mb-3 text-gray-700 dark:text-gray-300">All Features Included:</p>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Unlimited assessments</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Unlimited students</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">AI-powered grading</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Advanced analytics</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Priority support</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Export reports</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Custom rubrics</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Plan -->
+                <div class="plan-card bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 border-2 border-gray-200 dark:border-slate-700 shadow-md">
+                    <div class="mb-4 md:mb-6">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3">Custom Plan</h3>
+                        <div class="mb-3">
+                            <span class="text-3xl md:text-4xl font-bold">Custom</span>
+                            <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Tailored for your needs</p>
+                        </div>
+                        <p class="text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-3">
+                            For large organizations
+                        </p>
+                    </div>
+                    
+                    <button onclick="openContactForm('Custom Pricing')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-gray-800 dark:bg-slate-700 text-white rounded-lg font-semibold hover:bg-gray-900 dark:hover:bg-slate-600 transition-colors mb-4 md:mb-6 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
+                        <span>Request Custom Pricing</span>
+                        <span class="material-symbols-outlined text-lg md:text-xl">arrow_forward</span>
+                    </button>
+
+                    <p class="text-xs font-semibold mb-3 text-gray-700 dark:text-gray-300">Everything included, plus:</p>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">SSO integration</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">LMS integration</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Custom branding</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Account manager</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Advanced security</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Custom SLA</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="material-symbols-outlined text-accent-green text-xl flex-shrink-0">check_circle</span>
+                            <span class="text-xs md:text-sm leading-tight">Volume discounts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact CTA -->
+            <div class="text-center bg-gradient-to-r from-accent-yellow/20 to-accent-green/20 dark:from-accent-yellow/10 dark:to-accent-green/10 rounded-xl p-4 md:p-8 border-l-4 border-accent-yellow">
+                <h3 class="text-lg md:text-xl font-bold mb-2 md:mb-3">Have questions? Need help choosing?</h3>
+                <p class="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4">
+                    Our team is here to help you find the perfect plan for your needs.
+                </p>
+                <button onclick="openContactForm('Need help choosing plan')" class="inline-flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm md:text-base shadow-md hover:shadow-lg">
+                    <span class="material-symbols-outlined text-lg md:text-xl">email</span>
+                    <span>Contact Us</span>
+                </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="py-4 md:py-6 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+            <div class="max-w-7xl mx-auto px-4 text-center text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                <p>&copy; 2026 SuperrJump. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Contact Form Modal -->
+    <div id="contactModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6 md:p-8 relative">
+            <button onclick="closeContactForm()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+            
+            <h3 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">Contact Our Team</h3>
+            <p id="contactModalSubtitle" class="text-sm text-gray-600 dark:text-gray-400 mb-6"></p>
+            
+            <form id="contactForm" onsubmit="submitContactForm(event)" class="space-y-4">
+                <div id="successMessage" class="hidden bg-green-50 dark:bg-green-900/20 border-2 border-green-500 rounded-lg p-4 mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-3xl">check_circle</span>
+                        <div>
+                            <p class="font-semibold text-green-800 dark:text-green-300">Message Sent Successfully!</p>
+                            <p class="text-sm text-green-700 dark:text-green-400 mt-1">We'll get back to you soon.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="hidden bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-lg p-4 mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">error</span>
+                        <div>
+                            <p class="font-semibold text-red-800 dark:text-red-300">Failed to Send Message</p>
+                            <p class="text-sm text-red-700 dark:text-red-400 mt-1">Please try again or email us at superrjump1@gmail.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="formFields">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Your Message</label>
+                        <textarea
+                            id="contactMessage"
+                            required
+                            rows="5"
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-700 dark:text-white resize-none"
+                            placeholder="Tell us about your needs..."
+                        ></textarea>
+                    </div>
+                    
+                    <button
+                        type="submit"
+                        id="submitBtn"
+                        class="w-full py-3 px-6 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 mt-4"
+                    >
+                        <span id="submitBtnText">Send Message</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Check Auth - using sessionStorage like other pages
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        const token = sessionStorage.getItem('token');
+        if (!user || !token) window.location.href = '/login';
+
+        // Display user info
+        const orgName = user.organization || user.organisationName || user.organisation || 'SuperrJump Academy';
+        document.getElementById('orgName').textContent = orgName;
+
+        // Check subscription status on page load
+        checkSubscriptionStatus();
+
+        async function checkSubscriptionStatus() {
+            try {
+                const response = await fetch('/api/payment/subscription', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const subscription = data.subscription;
+
+                    // Check if user has subscription dates
+                    if (subscription.subscription_end) {
+                        const endDate = new Date(subscription.subscription_end);
+                        const now = new Date();
+                        const isTrial = subscription.subscription_status === 'trial' || subscription.trial_user === true;
+
+
+                        // Show subscription message (active or expired)
+                        showActiveSubscriptionMessage(subscription);
+                        
+                        // Only hide upgrade buttons if subscription is active AND user is NOT on trial
+                        // Trial users should be able to purchase subscriptions
+                        if (endDate > now && !isTrial) {
+                            hideUpgradeButtons();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+            }
+        }
+
+        function showActiveSubscriptionMessage(subscription) {
+            const endDate = new Date(subscription.subscription_end);
+            const now = new Date();
+            
+            // Debug logging
+            console.log('Subscription check:', {
+                subscription_end: subscription.subscription_end,
+                endDate: endDate.toISOString(),
+                now: now.toISOString(),
+                trial_user: subscription.trial_user,
+                isExpired: endDate <= now
+            });
+            
+            // Check if subscription is expired
+            const isExpired = endDate <= now;
+            const isTrial = subscription.trial_user === true;
+            
+            // Add subscription banner at top of pricing cards
+            const pricingContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
+            const banner = document.createElement('div');
+            
+            if (isExpired) {
+                // Show different message for trial vs paid subscription expiration
+                banner.className = 'col-span-full bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-500 rounded-xl p-4 mb-6';
+                
+                if (isTrial) {
+                    // Trial expired message
+                    banner.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-orange-600 dark:text-orange-400 text-3xl">schedule</span>
+                            <div>
+                                <p class="font-bold text-orange-800 dark:text-orange-300 text-lg">Trial Expired</p>
+                                <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                    Your 7-day free trial ended on ${endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}. Subscribe now to continue using SuperrJump!
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Paid subscription expired message
+                    banner.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-orange-600 dark:text-orange-400 text-3xl">schedule</span>
+                            <div>
+                                <p class="font-bold text-orange-800 dark:text-orange-300 text-lg">Subscription Expired</p>
+                                <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                                    Your subscription expired on ${endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}. Renew now to continue using SuperrJump.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (isTrial) {
+                // Show trial message with end date
+                const endDateStr = endDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+                banner.className = 'col-span-full bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 rounded-xl p-4 mb-6';
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl">schedule</span>
+                        <div class="flex-1">
+                            <p class="font-bold text-blue-800 dark:text-blue-300 text-lg">7-Day Free Trial Active (Ends ${endDateStr})</p>
+                            <p class="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                                💡 Subscribe now to continue using SuperrJump after your trial ends!
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show active paid subscription message
+                banner.className = 'col-span-full bg-green-50 dark:bg-green-900/20 border-2 border-green-500 rounded-xl p-4 mb-6';
+                banner.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-3xl">check_circle</span>
+                        <div>
+                            <p class="font-bold text-green-800 dark:text-green-300 text-lg">Active Subscription</p>
+                            <p class="text-sm text-green-700 dark:text-green-400 mt-1">
+                                Your subscription is active until ${endDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            pricingContainer.insertBefore(banner, pricingContainer.firstChild);
+        }
+
+        function hideUpgradeButtons() {
+            // Hide all "Subscribe Now" buttons for active subscriptions only
+            const buttons = document.querySelectorAll('button[onclick^="initiatePayment"]');
+            buttons.forEach(button => {
+                button.style.display = 'none';
+            });
+        }
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            backdrop.classList.toggle('hidden');
+        }
+
+        // Logout function
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = '/login';
+        }
+
+        // Contact form functions
+        let currentSource = '';
+
+        function openContactForm(source) {
+            currentSource = source;
+            const modal = document.getElementById('contactModal');
+            const subtitle = document.getElementById('contactModalSubtitle');
+            
+            if (source === 'Custom Pricing') {
+                subtitle.textContent = 'Request a custom pricing quote tailored to your organization\'s needs.';
+            } else if (source === 'Monthly Plan') {
+                subtitle.textContent = 'Subscribe to the Monthly Plan at ₹1,000 per user per month.';
+            } else if (source === 'Annual Plan') {
+                subtitle.textContent = 'Subscribe to the Annual Plan at ₹10,000 per user per year (Save 20%!).';
+            } else if (source === 'Need help choosing plan') {
+                subtitle.textContent = 'We\'re here to help you choose the right plan for your needs.';
+            } else {
+                subtitle.textContent = 'Let us know how we can help you.';
+            }
+            
+            modal.classList.remove('hidden');
+            document.getElementById('contactMessage').value = '';
+        }
+
+        function closeContactForm() {
+            document.getElementById('contactModal').classList.add('hidden');
+            document.getElementById('successMessage').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('formFields').classList.remove('hidden');
+            document.getElementById('contactMessage').value = '';
+            currentSource = '';
+        }
+
+        async function submitContactForm(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const message = document.getElementById('contactMessage').value;
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const formFields = document.getElementById('formFields');
+            
+            // Hide any previous messages
+            successMessage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Sending...';
+            
+            try {
+                const response = await fetch('/api/contact/inquiry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message,
+                        source: currentSource,
+                        userEmail: user.email,
+                        userName: user.name,
+                        userOrganization: orgName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Hide form and show success message
+                    formFields.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                    
+                    // Auto-close after 3 seconds
+                    setTimeout(() => {
+                        closeContactForm();
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Show error message in modal
+                errorMessage.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtnText.textContent = 'Send Message';
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('contactModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeContactForm();
+            }
+        });
+
+        // Razorpay Payment Integration - Popup on plans page
+        async function initiatePayment(plan) {
+            try {
+                showLoadingMessage('Preparing payment...');
+
+                const response = await fetch('/api/payment/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan })
+                });
+
+                const orderData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(orderData.message || 'Failed to create order');
+                }
+
+                hideLoadingMessage();
+
+                // Configure Razorpay options - Popup checkout
+                const options = {
+                    key: orderData.keyId,
+                    amount: orderData.amount,
+                    currency: orderData.currency,
+                    name: 'SuperrJump',
+                    description: `${plan === 'monthly' ? 'Monthly' : 'Annual'} Subscription`,
+                    order_id: orderData.orderId,
+                    prefill: {
+                        name: user.name,
+                        email: user.email,
+                        contact: user.phone || ''
+                    },
+                    theme: {
+                        color: '#2A6EBB'
+                    },
+                    handler: async function(response) {
+                        // Payment successful, verify on backend
+                        await verifyPayment(response, plan, orderData.orderId);
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            showErrorMessage('Payment was cancelled.');
+                            // Record cancellation
+                            recordFailedPayment(orderData.orderId, plan, {
+                                reason: 'user_cancelled',
+                                description: 'User cancelled the payment'
+                            });
+                        }
+                    }
+                };
+
+                // Open Razorpay checkout popup
+                const rzp = new Razorpay(options);
+                
+                // Handle payment errors
+                rzp.on('payment.failed', async function(response) {
+                    console.error('Payment failed:', response.error);
+                    await recordFailedPayment(orderData.orderId, plan, response.error);
+                    showErrorMessage(`Payment failed: ${response.error.description || 'Please try again'}`);
+                });
+                
+                rzp.open();
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                hideLoadingMessage();
+                showErrorMessage('Failed to initiate payment: ' + error.message);
+            }
+        }
+
+        async function verifyPayment(paymentResponse, plan, orderId) {
+            try {
+                showLoadingMessage('Verifying payment...');
+
+                const response = await fetch('/api/payment/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_signature: paymentResponse.razorpay_signature,
+                        plan: plan
+                    })
+                });
+
+                const result = await response.json();
+
+                hideLoadingMessage();
+
+                if (response.ok) {
+                    showSuccessMessage('Payment successful! Your subscription is now active. Refreshing...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Payment verification failed');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                hideLoadingMessage();
+                showErrorMessage('Payment verification failed: ' + error.message);
+            }
+        }
+
+        // UI Message Functions
+        function showSuccessMessage(message) {
+            removeExistingMessages();
+            const banner = document.createElement('div');
+            banner.id = 'paymentMessage';
+            banner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 dark:bg-green-900/20 border-2 border-green-500 rounded-xl p-4 shadow-lg max-w-md animate-fade-in';
+            banner.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-3xl">check_circle</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-green-800 dark:text-green-300">Success!</p>
+                        <p class="text-sm text-green-700 dark:text-green-400 mt-1">${message}</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(banner);
+        }
+
+        function showErrorMessage(message) {
+            removeExistingMessages();
+            const banner = document.createElement('div');
+            banner.id = 'paymentMessage';
+            banner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-xl p-4 shadow-lg max-w-md animate-fade-in';
+            banner.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">error</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-red-800 dark:text-red-300">Payment Failed</p>
+                        <p class="text-sm text-red-700 dark:text-red-400 mt-1">${message}</p>
+                    </div>
+                    <button onclick="removeExistingMessages()" class="text-red-600 hover:text-red-800">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(banner);
+        }
+
+        function showLoadingMessage(message) {
+            removeExistingMessages();
+            const banner = document.createElement('div');
+            banner.id = 'paymentMessage';
+            banner.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 rounded-xl p-4 shadow-lg max-w-md animate-fade-in';
+            banner.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <p class="text-sm text-blue-800 dark:text-blue-300 font-medium">${message}</p>
+                </div>
+            `;
+            document.body.appendChild(banner);
+        }
+
+        function hideLoadingMessage() {
+            removeExistingMessages();
+        }
+
+        function removeExistingMessages() {
+            const existing = document.getElementById('paymentMessage');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
+        // Record failed payment attempt
+        async function recordFailedPayment(orderId, plan, errorData) {
+            try {
+                await fetch('/api/payment/record-failed', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        razorpay_order_id: orderId,
+                        plan: plan,
+                        error_data: errorData
+                    })
+                });
+            } catch (error) {
+                console.error('Error recording failed payment:', error);
+            }
+        }
+    </script>
+</body>
+</html>

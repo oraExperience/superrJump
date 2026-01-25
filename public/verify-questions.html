@@ -540,6 +540,16 @@
                 <span class="material-symbols-outlined">check_circle</span>
                 <span>Approve & Finalize</span>
             </button>
+            
+            <div class="relative group">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors">
+                    <span class="text-base font-bold">?</span>
+                </button>
+                <div class="absolute right-0 top-full mt-2 w-64 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <p class="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium">Need Help? Please write to:</p>
+                    <a href="mailto:superrjump1@gmail.com" class="text-xs text-primary hover:underline font-medium">superrjump1@gmail.com</a>
+                </div>
+            </div>
         </div>
     </div>
 </header>
@@ -2082,45 +2092,8 @@ async function approveAndFinalize() {
     try {
         const token = sessionStorage.getItem('token');
         
-        // Step 1: Save all question changes to database
-        console.log('💾 Saving all question changes...');
-        let savedCount = 0;
-        for (const question of questions) {
-            try {
-                const response = await fetch(`/api/assessments/${assessmentId}/questions/${question.dbId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        question_text: question.question,
-                        max_marks: question.maxMarks,
-                        verified: question.verified,
-                        question_identifier: question.question_identifier,
-                        topics: question.topics
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to save question ${question.questionNumber}`);
-                }
-                savedCount++;
-                console.log(`✅ Saved question ${question.questionNumber}`);
-            } catch (error) {
-                console.error(`Error saving question ${question.questionNumber}:`, error);
-                showAlert(
-                    `Failed to save question ${question.questionNumber}. Please try again.`,
-                    'Save Error',
-                    'error'
-                );
-                return;
-            }
-        }
-        
-        console.log(`✅ Successfully saved ${savedCount} questions`);
-        
-        // Step 2: Approve the assessment
+        // All questions are already saved individually when approved
+        // Just need to mark the assessment as approved
         console.log('✓ Approving assessment...');
         const approveResponse = await fetch(`/api/assessments/${assessmentId}/approve-questions`, {
             method: 'POST',
@@ -2321,5 +2294,7 @@ function rotateRight() {
 // Initialize page by loading data from API
 loadAssessmentData();
 </script>
+    <script src="/js/trial-status.js"></script>
+
 </body>
 </html>

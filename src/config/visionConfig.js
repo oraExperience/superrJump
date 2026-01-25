@@ -16,9 +16,9 @@ module.exports = {
       // 'anthropic/claude-3-haiku'       - Fast & cheap, $0.25/$1.25 per 1M (~$0.007 per 4 pages)
       // 'anthropic/claude-3-5-sonnet'    - High quality, $3/$15 per 1M (~$0.08 per 4 pages)
       // 'anthropic/claude-3-5-haiku'     - Balanced, $0.80/$4 per 1M (~$0.022 per 4 pages)
-      // 'anthropic/claude-4-5-haiku'     - 🚀 LATEST! Fast & intelligent with vision, 2x speed of Sonnet 4
+      // 'anthropic/claude-sonnet-4.5'    - 🚀 BEST! Latest Claude with superior vision & document analysis, $3/$15 per 1M
       
-      model: 'nvidia/nemotron-nano-12b-v2-vl:free',  // 🚀 NVIDIA Nemotron Nano Vision-Language - FREE!
+      model: 'anthropic/claude-sonnet-4.5',  // 🚀 Claude Sonnet 4.5 - Best vision model for educational documents
       maxTokens: 10000,  // Max capacity for complex question papers
       priority: 1  // Try first
     },

@@ -62,7 +62,8 @@ exports.generateToken = (user) => {
       email: user.email,
       name: user.name,
       role: user.role,
-      organisation: user.organisation
+      organisation: user.organisation,
+      phone: user.phone
     },
     JWT_SECRET,
     { expiresIn: '24h' } // Token expires in 24 hours

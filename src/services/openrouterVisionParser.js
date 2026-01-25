@@ -81,16 +81,33 @@ RULES:
    Ex: "The integrating factor is ___. (a) x (b) 1/x (c) x² (d) 1/x²"
    → "The integrating factor of linear differential equation x(dy/dx) + 2y = x²log x is ___. Options: (a) x (b) 1/x (c) x² (d) 1/x²"
 
-3. Match the Following: Extract EACH match pair as a SEPARATE question
-   Ex: "Q4. Match the following. (i) Rotation by 90° (ii) Complete Angle (iii) Area of Square | (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1"
-   → Extract 5 separate questions:
-   - "Match the following: (i) Rotation by 90° Ans:(c) One-Fourth turn"
-   - "Match the following: (ii) Complete Angle Ans:(d) 360°"
-   - "Match the following: (iii) Area of Square Ans:(b) Side x Side"
-   - "Match the following: (iv) Successor of 1 Lac Ans:(e) 1,00,000+1"
-   - "Match the following: (v) Same Denominators Ans:(a) Like Fraction"
+2b. True/False questions: ALWAYS add "- True or False?" at the end
+   Ex: "If the Numerator is smaller than the denominator, it is a Proper Fraction."
+   → "If the Numerator is smaller than the denominator, it is a Proper Fraction. - True or False?"
    
-   IMPORTANT: Divide total marks equally among all match items (e.g., if Q4 is 5 marks for 5 items, each gets 1 mark)
+   Ex: "The sum of two odd numbers is always even."
+   → "The sum of two odd numbers is always even. - True or False?"
+
+3. Match the Following: Extract EACH match pair as a SEPARATE question with ALL options visible
+   Ex: "Q4. Match the following. (5 x 1 = 5)
+   (i) Rotation by 90°      (a) Like Fraction
+   (ii) Complete Angle      (b) Side x Side
+   (iii) Area of Square     (c) One-Fourth turn
+   (iv) Successor of 1 Lac  (d) 360°
+   (v) Same Denominators    (e) 1,00,000+1"
+   
+   → Extract 5 separate questions, EACH showing ALL options:
+   - "Q4(i): Match the following: Rotation by 90°. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1"
+   - "Q4(ii): Match the following: Complete Angle. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1"
+   - "Q4(iii): Match the following: Area of Square. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1"
+   - "Q4(iv): Match the following: Successor of 1 Lac. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1"
+   - "Q4(v): Match the following: Same Denominators. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1"
+   
+   CRITICAL:
+   - Each match item becomes a separate question
+   - Each question MUST include ALL available options (a, b, c, d, e, etc.)
+   - Divide total marks equally (e.g., 5 marks ÷ 5 items = 1 mark each)
+   - Do NOT include the answer in the question text
 
 4. Math symbols and matrices: Write exactly as shown
    ∫ = "integral", ∑ = "sum", √ = "square root"
@@ -118,12 +135,12 @@ Symbol guide: ∫="integral", x²="x squared", π="pi", √="root", ∨="or", �
 Return as array of tuples (NOT objects) to save tokens:
 [
   ["F1", "Read the abacus and write the number. Answer: 7295 (Th=7, H=2, T=9, O=5)", 2, 1, [["Number System", 100]]],
-  ["Q.3(i)", "Write TRUE or FALSE: If the Numerator is smaller than the denominator, it is a Proper Fraction.", 1, 1, [["Fractions", 100]]],
-  ["Q.4(i)", "Match the following: (i) Rotation by 90° Ans:(c) One-Fourth turn", 1, 1, [["Geometry", 100]]],
-  ["Q.4(ii)", "Match the following: (ii) Complete Angle Ans:(d) 360°", 1, 1, [["Geometry", 100]]],
-  ["Q.4(iii)", "Match the following: (iii) Area of Square Ans:(b) Side x Side", 1, 1, [["Geometry", 100]]],
-  ["Q.4(iv)", "Match the following: (iv) Successor of 1 Lac Ans:(e) 1,00,000+1", 1, 1, [["Number System", 100]]],
-  ["Q.4(v)", "Match the following: (v) Same Denominators Ans:(a) Like Fraction", 1, 1, [["Fractions", 100]]],
+  ["Q.3(i)", "If the Numerator is smaller than the denominator, it is a Proper Fraction. - True or False?", 1, 1, [["Fractions", 100]]],
+  ["Q.4(i)", "Match the following: Rotation by 90°. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1", 1, 1, [["Geometry", 100]]],
+  ["Q.4(ii)", "Match the following: Complete Angle. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1", 1, 1, [["Geometry", 100]]],
+  ["Q.4(iii)", "Match the following: Area of Square. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1", 1, 1, [["Geometry", 100]]],
+  ["Q.4(iv)", "Match the following: Successor of 1 Lac. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1", 1, 1, [["Number System", 100]]],
+  ["Q.4(v)", "Match the following: Same Denominators. Options: (a) Like Fraction (b) Side x Side (c) One-Fourth turn (d) 360° (e) 1,00,000+1", 1, 1, [["Fractions", 100]]],
   ["Q.5", "Check whether the matrix [cosθ sinθ; -sinθ cosθ] is invertible or not.", 3, 1, [["Matrices", 100]]],
   ["Q.6", "Write any three equivalent fractions for: (a) 2/5 (b) 3/7", 3, 1, [["Fractions", 80], ["Algebra", 20]]]
 ]

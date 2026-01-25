@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Complete Payment - SuperrJump</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-primary flex items-center" style="width: 32px; height: 32px; color: #2A6EBB;">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <h1 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white">SuperrJump Payment</h1>
+            </div>
+            <button onclick="window.location.href='/plans'" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex items-center gap-1 text-sm">
+                <span class="material-symbols-outlined">close</span>
+                <span class="hidden md:inline">Cancel</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <!-- Loading State -->
+            <div id="loadingState" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Preparing Payment</h2>
+                <p class="text-gray-600 dark:text-gray-300">Please wait while we initialize your payment...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+                <span class="material-symbols-outlined text-red-600 text-7xl mb-4">error</span>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Payment Failed</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-6" id="errorText"></p>
+                <button onclick="window.location.href='/plans'" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold">
+                    Return to Plans
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const plan = urlParams.get('plan');
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        const token = sessionStorage.getItem('token');
+
+        if (!user || !token || !plan) {
+            showError('Invalid payment request. Please try again from the plans page.');
+        } else {
+            initiatePayment(plan);
+        }
+
+        async function initiatePayment(plan) {
+            try {
+                const response = await fetch('/api/payment/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan })
+                });
+
+                const orderData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(orderData.message || 'Failed to create order');
+                }
+
+                // Store order details for verification
+                sessionStorage.setItem('pendingOrder', JSON.stringify({
+                    orderId: orderData.orderId,
+                    plan: plan
+                }));
+
+                // Redirect to Razorpay's hosted payment page (full page, not popup)
+                const paymentUrl = `https://api.razorpay.com/v1/checkout/embedded`;
+                
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = paymentUrl;
+                
+                // Add form fields
+                const fields = {
+                    'key_id': orderData.keyId,
+                    'order_id': orderData.orderId,
+                    'name': 'SuperrJump',
+                    'description': `${plan === 'monthly' ? 'Monthly' : 'Annual'} Subscription`,
+                    'prefill[name]': user.name,
+                    'prefill[email]': user.email,
+                    'prefill[contact]': user.phone || '',
+                    'theme[color]': '#2A6EBB',
+                    'callback_url': `${window.location.origin}/payment-callback`,
+                    'cancel_url': `${window.location.origin}/plans`
+                };
+                
+                for (const [key, value] of Object.entries(fields)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            } catch (error) {
+                console.error('Payment initiation error:', error);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+            document.getElementById('errorText').textContent = message;
+        }
+    </script>
+</body>
+</html>

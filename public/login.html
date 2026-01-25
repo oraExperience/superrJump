@@ -51,6 +51,18 @@
 </div>
 <h1 class="text-xl md:text-2xl font-extrabold text-[#1c180d] dark:text-white">Sign In</h1>
 <!-- <p class="mt-2 text-base text-slate-500 dark:text-white/70">Welcome back! Please enter your details.</p> -->
+
+<!-- Message banner for users -->
+<div id="messageBanner" class="hidden mt-4 p-3 md:p-4 rounded-lg">
+    <div class="flex items-start gap-3">
+        <span id="messageIcon" class="material-symbols-outlined text-xl"></span>
+        <div class="flex-1">
+            <p id="messageTitle" class="text-sm md:text-base font-medium"></p>
+            <p id="messageText" class="text-xs md:text-sm mt-1"></p>
+        </div>
+    </div>
+</div>
+
 <form class="mt-6 md:mt-8 flex flex-col gap-4 md:gap-6">
     <label class="flex flex-col">
         <p class="pb-2 text-xs md:text-sm font-medium leading-normal text-[#1c180d] dark:text-white/90">Email Address</p>
@@ -95,6 +107,41 @@ function togglePassword() {
 </div>
 
 <script>
+// Check for messages
+window.addEventListener('load', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const messageType = urlParams.get('message');
+    const messageBanner = document.getElementById('messageBanner');
+    const messageIcon = document.getElementById('messageIcon');
+    const messageTitle = document.getElementById('messageTitle');
+    const messageText = document.getElementById('messageText');
+    
+    if (messageType === 'already_registered') {
+        messageBanner.className = 'mt-4 p-3 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg';
+        messageIcon.className = 'material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl';
+        messageIcon.textContent = 'info';
+        messageTitle.className = 'text-sm md:text-base font-medium text-blue-800 dark:text-blue-300';
+        messageTitle.textContent = 'This email is already registered';
+        messageText.className = 'text-xs md:text-sm text-blue-600 dark:text-blue-400 mt-1';
+        messageText.textContent = 'Please sign in with your credentials';
+        messageBanner.classList.remove('hidden');
+    } else if (messageType === 'trial_created') {
+        messageBanner.className = 'mt-4 p-3 md:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg';
+        messageIcon.className = 'material-symbols-outlined text-green-600 dark:text-green-400 text-xl';
+        messageIcon.textContent = 'check_circle';
+        messageTitle.className = 'text-sm md:text-base font-medium text-green-800 dark:text-green-300';
+        messageTitle.textContent = 'Trial Created! 🎉';
+        messageText.className = 'text-xs md:text-sm text-green-600 dark:text-green-400 mt-1';
+        messageText.textContent = 'Check your email for your password to sign in.';
+        messageBanner.classList.remove('hidden');
+    }
+    
+    // Clear the URL parameter after showing message
+    if (messageType) {
+        window.history.replaceState({}, document.title, '/login');
+    }
+});
+
 // Prevent forward navigation to authenticated pages without login
 window.addEventListener('load', () => {
     // Clear session data when on login page

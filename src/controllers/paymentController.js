@@ -20,10 +20,10 @@ exports.createOrder = async (req, res) => {
     const { plan } = req.body;
     const userId = req.user.id;
 
-    // Define plan pricing (in paise for Razorpay) - TESTING MODE
+    // Define plan pricing (in paise for Razorpay)
     const planPrices = {
-      monthly: 100, // ₹1 in paise (for testing)
-      annual: 100   // ₹1 in paise (for testing)
+      monthly: 100000,  // ₹1,000 in paise
+      annual: 1000000   // ₹10,000 in paise
     };
 
     if (!planPrices[plan]) {

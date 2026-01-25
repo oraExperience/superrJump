@@ -9,6 +9,7 @@ module.exports = {
       enabled: true,  // ✅ Primary vision model via OpenRouter
       
       // CHANGE MODEL HERE - Available OpenRouter Vision Models:
+      // 'nvidia/nemotron-nano-12b-v2-vl:free' - 🆓 FREE: NVIDIA Nemotron Nano VL, completely free!
       // 'amazon/nova-2-lite-v1:free'     - 🆓 FREE: Amazon Nova 2 Lite, completely free!
       // 'google/gemini-2.0-flash-exp:free' - 🚀 FREE: Latest Gemini, FREE tier!
       // 'google/gemini-flash-1.5'        - Stable cheap, $0.075/$0.30 per 1M (~$0.002 per 4 pages)
@@ -18,7 +19,7 @@ module.exports = {
       // 'anthropic/claude-3-5-haiku'     - Balanced, $0.80/$4 per 1M (~$0.022 per 4 pages)
       // 'anthropic/claude-sonnet-4.5'    - 🚀 BEST! Latest Claude with superior vision & document analysis, $3/$15 per 1M
       
-      model: 'anthropic/claude-sonnet-4.5',  // 🚀 Claude Sonnet 4.5 - Best vision model for educational documents
+      model: 'nvidia/nemotron-nano-12b-v2-vl:free',  // 🆓 NVIDIA Nemotron Nano - Free vision model for testing
       maxTokens: 10000,  // Max capacity for complex question papers
       priority: 1  // Try first
     },

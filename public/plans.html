@@ -190,10 +190,11 @@
                         </p>
                     </div>
                     
-                    <button onclick="initiatePayment('monthly')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4 md:mb-6 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
-                        <span>Subscribe Now</span>
+                    <button onclick="initiatePayment('monthly')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-2 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
+                        <span>Extend by 1 Month</span>
                         <span class="material-symbols-outlined text-lg md:text-xl">arrow_forward</span>
                     </button>
+                    <p id="monthlyNewExpiry" class="text-xs text-center text-gray-600 dark:text-gray-400 mb-4 md:mb-6"></p>
 
                     <p class="text-xs font-semibold mb-3 text-gray-700 dark:text-gray-300">All Features Included:</p>
                     <div class="space-y-2.5">
@@ -252,10 +253,11 @@
                         </p>
                     </div>
                     
-                    <button onclick="initiatePayment('annual')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-pink-600 transition-all mb-4 md:mb-6 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
-                        <span>Subscribe Now</span>
+                    <button onclick="initiatePayment('annual')" class="w-full py-2.5 md:py-3 px-4 md:px-6 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-pink-600 transition-all mb-2 flex items-center justify-center gap-2 text-sm md:text-base shadow-md hover:shadow-lg">
+                        <span>Extend by 1 Year</span>
                         <span class="material-symbols-outlined text-lg md:text-xl">arrow_forward</span>
                     </button>
+                    <p id="annualNewExpiry" class="text-xs text-center text-gray-600 dark:text-gray-400 mb-4 md:mb-6"></p>
 
                     <p class="text-xs font-semibold mb-3 text-gray-700 dark:text-gray-300">All Features Included:</p>
                     <div class="space-y-2.5">
@@ -445,21 +447,26 @@
                     const subscription = data.subscription;
 
                     // Check if user has subscription dates
+                    const now = new Date();
+                    const isTrial = subscription.subscription_status === 'trial' || subscription.trial_user === true;
+                    
                     if (subscription.subscription_end) {
                         const endDate = new Date(subscription.subscription_end);
-                        const now = new Date();
-                        const isTrial = subscription.subscription_status === 'trial' || subscription.trial_user === true;
-
 
                         // Show subscription message (active or expired)
                         showActiveSubscriptionMessage(subscription);
                         
-                        // Only hide upgrade buttons if subscription is active AND user is NOT on trial
-                        // Trial users should be able to purchase subscriptions
-                        if (endDate > now && !isTrial) {
-                            hideUpgradeButtons();
+                        // Only show expiry dates for non-trial users
+                        if (!isTrial) {
+                            updateExpiryDates(endDate, now);
                         }
+                    } else if (!isTrial) {
+                        // No subscription yet and not on trial, calculate from now
+                        updateExpiryDates(now, now);
                     }
+                    
+                    // Update button text based on trial status
+                    updateButtonText(isTrial);
                 }
             } catch (error) {
                 console.error('Error checking subscription:', error);
@@ -552,12 +559,55 @@
             pricingContainer.insertBefore(banner, pricingContainer.firstChild);
         }
 
-        function hideUpgradeButtons() {
-            // Hide all "Subscribe Now" buttons for active subscriptions only
-            const buttons = document.querySelectorAll('button[onclick^="initiatePayment"]');
-            buttons.forEach(button => {
-                button.style.display = 'none';
-            });
+        // Update button text based on trial status
+        function updateButtonText(isTrial) {
+            const monthlyBtn = document.querySelector('button[onclick="initiatePayment(\'monthly\')"] span:first-child');
+            const annualBtn = document.querySelector('button[onclick="initiatePayment(\'annual\')"] span:first-child');
+            
+            if (isTrial) {
+                // For trial users, show "Subscribe Now"
+                if (monthlyBtn) monthlyBtn.textContent = 'Subscribe Now';
+                if (annualBtn) annualBtn.textContent = 'Subscribe Now';
+                
+                // Hide expiry date displays
+                const monthlyExpiry = document.getElementById('monthlyNewExpiry');
+                const annualExpiry = document.getElementById('annualNewExpiry');
+                if (monthlyExpiry) monthlyExpiry.style.display = 'none';
+                if (annualExpiry) annualExpiry.style.display = 'none';
+            } else {
+                // For paying users, show "Extend by..."
+                if (monthlyBtn) monthlyBtn.textContent = 'Extend by 1 Month';
+                if (annualBtn) annualBtn.textContent = 'Extend by 1 Year';
+                
+                // Show expiry date displays
+                const monthlyExpiry = document.getElementById('monthlyNewExpiry');
+                const annualExpiry = document.getElementById('annualNewExpiry');
+                if (monthlyExpiry) monthlyExpiry.style.display = 'block';
+                if (annualExpiry) annualExpiry.style.display = 'block';
+            }
+        }
+
+        // Calculate and display new expiry dates
+        function updateExpiryDates(currentEndDate, now) {
+            // Determine base date (current end date if active, otherwise now)
+            const baseDate = currentEndDate > now ? new Date(currentEndDate) : new Date();
+            
+            // Calculate monthly extension
+            const monthlyNewDate = new Date(baseDate);
+            monthlyNewDate.setMonth(monthlyNewDate.getMonth() + 1);
+            monthlyNewDate.setHours(23, 59, 59, 999);
+            
+            // Calculate annual extension
+            const annualNewDate = new Date(baseDate);
+            annualNewDate.setFullYear(annualNewDate.getFullYear() + 1);
+            annualNewDate.setHours(23, 59, 59, 999);
+            
+            // Format and display
+            const monthlyText = `New expiry: ${monthlyNewDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+            const annualText = `New expiry: ${annualNewDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+            
+            document.getElementById('monthlyNewExpiry').textContent = monthlyText;
+            document.getElementById('annualNewExpiry').textContent = annualText;
         }
 
         // Sidebar toggle

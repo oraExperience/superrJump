@@ -94,9 +94,30 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // Calculate subscription end date (end of day at 23:59:59)
-    const startDate = new Date();
-    const endDate = new Date();
+    // Get current subscription end date
+    const userQuery = await pool.query(
+      'SELECT subscription_end FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    const currentSubEnd = userQuery.rows[0]?.subscription_end;
+    const now = new Date();
+    
+    // Calculate new subscription end date
+    // If user has active subscription, extend from current end date
+    // Otherwise, start from now
+    let baseDate;
+    if (currentSubEnd && new Date(currentSubEnd) > now) {
+      // Extend existing subscription
+      baseDate = new Date(currentSubEnd);
+    } else {
+      // Start new subscription
+      baseDate = new Date();
+    }
+    
+    const startDate = new Date(); // Always record when this payment was made
+    const endDate = new Date(baseDate);
+    
     if (plan === 'monthly') {
       endDate.setMonth(endDate.getMonth() + 1);
     } else if (plan === 'annual') {
@@ -119,8 +140,8 @@ exports.verifyPayment = async (req, res) => {
     `;
 
     const result = await pool.query(updateQuery, [
-      startDate,   // subscription_start
-      endDate,     // subscription_end
+      startDate,   // subscription_start (current payment date)
+      endDate,     // subscription_end (extended date)
       userId       // user id
     ]);
 

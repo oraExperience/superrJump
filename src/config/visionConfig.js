@@ -20,7 +20,7 @@ module.exports = {
       // 'anthropic/claude-sonnet-4.5'    - 🚀 BEST! Latest Claude with superior vision & document analysis, $3/$15 per 1M
       
       model: 'nvidia/nemotron-nano-12b-v2-vl:free',  // 🆓 NVIDIA Nemotron Nano - Free vision model for testing
-      maxTokens: 10000,  // Max capacity for complex question papers
+      maxTokens: 20000,  // Increased capacity for very large/complex question papers
       priority: 1  // Try first
     },
     openai: {

@@ -88,6 +88,42 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api', submissionRoutes);
 
+// Security Headers Middleware
+app.use((req, res, next) => {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // HSTS (HTTP Strict Transport Security)
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  
+  next();
+});
+
+// SSR route for home page (SEO optimized)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/home.html'), {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+    }
+  });
+});
+
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/home.html'), {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+    }
+  });
+});
+
 // Health check endpoints for UptimeRobot monitoring
 // Simple root-level health check
 app.get('/health', (req, res) => {

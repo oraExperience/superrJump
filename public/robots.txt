@@ -1,0 +1,25 @@
+
+# SuperrJump Robots.txt
+User-agent: *
+Allow: /
+Allow: /home
+Allow: /login
+Allow: /plans
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /dashboard
+Disallow: /assessments
+Disallow: /students
+Disallow: /profile
+Disallow: /verify-questions
+Disallow: /verify-grades
+Disallow: /assessment-details
+Disallow: /create-assessment
+Disallow: /student-submissions
+Disallow: /student-review
+
+# Sitemap location
+Sitemap: https://superrjump.com/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 10

@@ -19,7 +19,7 @@ module.exports = {
       // 'anthropic/claude-3-5-haiku'     - Balanced, $0.80/$4 per 1M (~$0.022 per 4 pages)
       // 'anthropic/claude-sonnet-4.5'    - 🚀 BEST! Latest Claude with superior vision & document analysis, $3/$15 per 1M
       
-      model: 'nvidia/nemotron-nano-12b-v2-vl:free',  // 🆓 NVIDIA Nemotron Nano - Free vision model for testing
+      model: 'anthropic/claude-sonnet-4.5',  // 🚀 BEST! Latest Claude with superior vision & document analysis
       maxTokens: 40000,  // Increased capacity for very large/complex question papers
       priority: 1  // Try first
     },

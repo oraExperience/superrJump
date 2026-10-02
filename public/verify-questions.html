@@ -59,7 +59,7 @@
     /* Split screen layout */
     .split-container {
         display: grid;
-        grid-template-columns: 60px 300px 1fr 1fr;
+        grid-template-columns: 60px 160px 1fr 1fr;
         height: calc(100vh - 64px);
         overflow: hidden;
         transition: grid-template-columns 0.3s ease;
@@ -184,12 +184,20 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 0.875rem;
+        font-weight: 700;
+        font-size: 0.65rem;
+        letter-spacing: -0.03em;
+        text-align: center;
+        overflow: visible;
+        line-height: 1.15;
+        padding: 3px;
+        word-break: break-all;
         cursor: pointer;
         transition: all 0.2s ease;
-        border: 2px solid transparent;
+        border: 2px solid #e2e8f0;
         position: relative;
+        background: #f1f5f9;
+        color: #0f172a;
     }
     
     .question-number-badge:hover {
@@ -202,39 +210,42 @@
     }
     
     .question-number-badge.verified {
-        background: #22c55e;
-        color: white;
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #22c55e;
     }
     
     .question-number-badge.verified::after {
         content: '✓';
         position: absolute;
-        bottom: -2px;
-        right: -2px;
-        background: #16a34a;
+        bottom: -4px;
+        right: -4px;
+        background: #22c55e;
         color: white;
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
-        font-size: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid #f1f5f9;
+        font-size: 9px;
+        line-height: 14px;
+        text-align: center;
+        border: 1.5px solid white;
+        z-index: 1;
+    }
+    
+    .dark .question-number-badge {
+        background: #1e293b;
+        color: #f1f5f9;
+        border-color: #334155;
+    }
+    
+    .dark .question-number-badge.verified {
+        background: #14532d;
+        color: #bbf7d0;
+        border-color: #22c55e;
     }
     
     .dark .question-number-badge.verified::after {
         border-color: #0f172a;
-    }
-    
-    .question-number-badge:not(.verified) {
-        background: #e2e8f0;
-        color: #475569;
-    }
-    
-    .dark .question-number-badge:not(.verified) {
-        background: #334155;
-        color: #cbd5e1;
     }
     
     .questions-sidebar {
@@ -325,15 +336,42 @@
         border-color: #2A6EBB;
     }
     
+    .question-nav-item {
+        position: relative;
+    }
+
     .question-nav-item.verified {
         background: #d1fae5;
         border-color: #10b981;
+    }
+
+    .question-nav-item.verified::after {
+        content: '✓';
+        position: absolute;
+        top: -7px;
+        right: -7px;
+        background: #22c55e;
+        color: white;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        border: 2px solid white;
+        z-index: 2;
+    }
+
+    .dark .question-nav-item.verified::after {
+        border-color: #0f172a;
     }
     
     .dark .question-nav-item.verified {
         background: #064e3b;
         border-color: #10b981;
     }
+
     
     .question-nav-item.verified.active {
         background: #a7f3d0;
@@ -1061,22 +1099,14 @@ function renderQuestionsSidebar() {
         navItem.className = `question-nav-item ${index === currentQuestionIndex ? 'active' : ''} ${q.verified ? 'verified' : ''}`;
         navItem.onclick = () => goToQuestion(index);
         
-        const statusIcon = q.verified
-            ? '<span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>'
-            : '<span class="material-symbols-outlined text-gray-400 text-xl">radio_button_unchecked</span>';
-        
         const identifier = q.question_identifier || '';
         const isEmpty = !q.question && q.maxMarks === 0 && !q.question_identifier;
         const incompleteWarning = isEmpty ? '<span class="text-xs text-red-500 font-semibold">⚠ Incomplete</span>' : '';
         
         navItem.innerHTML = `
-            ${statusIcon}
-            <div class="flex-1">
-                <div class="flex items-center gap-2">
-                    <p class="text-sm font-semibold text-text-dark dark:text-text-light">Q${q.questionNumber}</p>
-                    ${identifier ? `<span class="text-xs px-1.5 py-0.5 ${isEmpty ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-primary/10 text-primary'} rounded font-semibold">${identifier}</span>` : ''}
-                </div>
-                ${isEmpty ? incompleteWarning : `<p class="text-xs font-bold text-primary mt-1">${formatNumber(q.maxMarks)} marks</p>`}
+            <div>
+                <p class="text-sm font-semibold text-text-dark dark:text-text-light">${identifier || `Q${q.questionNumber}`}</p>
+                ${isEmpty ? incompleteWarning : `<p class="text-xs font-bold text-primary mt-0.5">${formatNumber(q.maxMarks)} marks</p>`}
             </div>
         `;
         
@@ -1089,7 +1119,7 @@ function renderQuestionsSidebar() {
             e.stopPropagation();
             goToQuestion(index);
         };
-        badge.textContent = q.questionNumber;
+        badge.textContent = q.question_identifier || `Q${q.questionNumber}`;
         
         numbersColumn.appendChild(badge);
     });
@@ -1152,11 +1182,7 @@ function renderCurrentQuestion() {
         <!-- Question Header with Identifier, Marks, and Delete -->
         <div class="flex items-center justify-between mb-4 md:mb-6 gap-2">
             <div class="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                <span class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full font-bold text-sm md:text-lg flex-shrink-0">
-                    ${q.questionNumber}
-                </span>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm md:text-xl font-bold text-text-dark dark:text-text-light mb-1">Question ${q.questionNumber}</h3>
                     <div class="flex items-center gap-2">
                         <label class="text-xs text-gray-500 dark:text-gray-400">ID: ${requiredMark}</label>
                         <input
@@ -1230,9 +1256,7 @@ function renderCurrentQuestion() {
                         <p class="text-xs md:text-sm font-semibold text-text-dark dark:text-text-light mb-0.5">
                             Topics Covered ${q.manual_question ? '<span class="text-red-500">*</span>' : '<span class="text-xs font-normal text-gray-500 dark:text-gray-400">(AI-suggested)</span>'}
                         </p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">
-                            ${q.manual_question ? 'Required: 1-3 topics, weightage must sum to 100%' : 'These topics were automatically suggested by AI'}
-                        </p>
+                        ${q.manual_question ? `<p class="text-xs text-gray-600 dark:text-gray-400">Required: 1-3 topics, weightage must sum to 100%</p>` : ''}
                     </div>
                 </div>
                 ${q.manual_question ? `

@@ -1112,8 +1112,14 @@ async function downloadQuestions() {
             return;
         }
         
+        // Route through proxy to avoid CORS issues with R2
+        const rawUrl = assessmentData.question_paper_link;
+        const fetchUrl = rawUrl.includes('r2.dev')
+            ? `/api/proxy/pdf?url=${encodeURIComponent(rawUrl)}`
+            : rawUrl;
+        
         // Fetch the original PDF
-        const response = await fetch(assessmentData.question_paper_link);
+        const response = await fetch(fetchUrl);
         if (!response.ok) {
             throw new Error('Failed to fetch PDF');
         }

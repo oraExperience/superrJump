@@ -848,10 +848,16 @@ function loadQuestionPaperPDF() {
         const pdfFrame = document.getElementById('pdfFrame');
         const placeholder = document.getElementById('pdfPlaceholder');
         
+        // Route through proxy to avoid CORS issues with R2
+        const rawUrl = assessmentData.questionPaperPdfLink;
+        const pdfSrc = rawUrl.includes('r2.dev')
+            ? `/api/proxy/pdf?url=${encodeURIComponent(rawUrl)}`
+            : rawUrl;
+        
         // Hide placeholder and show PDF
         placeholder.style.display = 'none';
         pdfFrame.style.display = 'block';
-        pdfFrame.src = assessmentData.questionPaperPdfLink;
+        pdfFrame.src = pdfSrc;
     }
 }
 
